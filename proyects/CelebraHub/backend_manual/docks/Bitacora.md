@@ -29,19 +29,25 @@ Verifica la estructura:
 
 ---------------------------------------------------------------------------------------------
 
-## 3. 
+## 3. Crear proyecto NestJS
 
 
 
 ``` bash
+cd /home/josea/ia-lab/dw2026-2/dw-2026-Jose5875/proyects/CelebraHub/backend_manual
+nest new .
+cd backend_manual
 
 ```
 
 
 <p align="center">
-  <img src="imagenes/parte 2.png">
+  <img src="imagenes/instalar njs.png">
 </p>
 
+<p align="center">
+  <img src="imagenes/cd backen.png>
+</p>
 
 
 ---------------------------------------------------------------------------------------------
