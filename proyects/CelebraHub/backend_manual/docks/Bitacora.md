@@ -12,7 +12,7 @@ josea@Labestia:~/ia-lab/dw2026-2/dw-2026-Jose5875/proyects$ sudo chmod 777 -R Ce
 
 ---------------------------------------------------------------------------------------------
 
-## 2. 
+## 2. instalar nest
 
 Ejecutamos el comando para instalar el nestjs y verificar la version:
 
@@ -45,20 +45,21 @@ cd backend_manual
   <img src="imagenes/instalar njs.png">
 </p>
 
-<p align="center">
-  <img src="imagenes/cd backen.png>
-</p>
 
 
 ---------------------------------------------------------------------------------------------
 
-## 4. 
+## 4. Crear `.env` mínimo (puerto)
 
 ``` bash
+cat > .env <<'EOF_BACKEND_MANUAL'
+PORT=3002
+NODE_ENV=development
+EOF_BACKEND_MANUAL
 
 ```
 <p align="center">
-  <img src="imagenes/image-1.png">
+  <img src="imagenes/crear .evn.png">
 </p>
 
 
