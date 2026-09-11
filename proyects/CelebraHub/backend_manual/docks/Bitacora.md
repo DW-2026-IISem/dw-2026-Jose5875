@@ -100,15 +100,437 @@ npm install -D @types/bcrypt @types/passport-jwt sequelize-cli
 
 ------------------------------------------------------------------------
 
-## 7.
+## 7. Verificar arranque base
 
 
 
 ``` bash
 
-
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
 ```
+
+<p align="center">
+  <img src="imagenes/compilando base.png">
+</p>
+
 --------------------------------------------------------------------------------
 
 
 ------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/compilando base.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 7. Verificar arranque base
+
+
+
+``` bash
+
+npm run start:dev
+# Ctrl+C cuando veas el log de arranque
+curl -s http://localhost:3002 || true
+```
+
+<p align="center">
+  <img src="imagenes/dependencias de desarollo.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v
