@@ -71,32 +71,29 @@ EOF_BACKEND_MANUAL
 
 
 ``` bash
-
+npm install @nestjs/config @nestjs/swagger @nestjs/jwt @nestjs/passport @nestjs/mapped-types \
+  passport passport-jwt sequelize sequelize-typescript mysql2 pg tedious oracledb \
+  class-validator class-transformer bcrypt reflect-metadata express compression helmet
 ```
 
 <p align="center">
-  <img src="">
+  <img src="imagenes/dependencia de produccion.png">
 </p>
 
 
 -----------------------------------------------------------------------------------------------
 
-## 6. 
+## 6. Dependencias de desarrollo
 
 
 ``` bash
 
-
-
-```
-
-### 6
-
-``` bash
+npm install -D @types/bcrypt @types/passport-jwt sequelize-cli
 
 ```
+
 <p align="center">
-  <img src="imagenes/image-4.png">
+  <img src="imagenes/dependencias de desarollo.png">
 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------
