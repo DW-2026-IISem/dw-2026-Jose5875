@@ -67,7 +67,7 @@ EOF_BACKEND_MANUAL
 
 ------------------------------------------------------------------------------
 
-## 5. 
+## 5. Dependencias de producción
 
 
 ``` bash
@@ -75,7 +75,7 @@ EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
-  <img src="imagenes/image-3.png">
+  <img src="">
 </p>
 
 
