@@ -872,19 +872,74 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
-
+## 20.  Factory Sequelize (sin modelos aún)
 
 
 ``` bash
+mkdir -p src/infrastructure/database/sequelize
+cat > src/infrastructure/database/sequelize/sequelize.factory.ts <<'EOF_BACKEND_IA'
+import { Sequelize } from 'sequelize-typescript';
+import { DatabaseDialect } from '../../../config/environment/env.interface';
+import { getSequelizeOptions } from './sequelize.options';
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+
+export const ALL_MODELS = [
+  // (aún sin modelos — se agregan por feature)
+];
+
+export async function createSequelizeInstance(
+  dialect: DatabaseDialect,
+): Promise<Sequelize> {
+  const options = getSequelizeOptions(dialect);
+
+  let dialectModule: any;
+
+  switch (dialect) {
+    case DatabaseDialect.MySQL:
+      dialectModule = require('mysql2');
+      break;
+    case DatabaseDialect.Postgres:
+      dialectModule = require('pg');
+      break;
+    case DatabaseDialect.MSSQL:
+      dialectModule = require('tedious');
+      break;
+    case DatabaseDialect.Oracle:
+      dialectModule = require('oracledb');
+      break;
+    default:
+      throw new Error(`Dialecto no soportado: ${dialect}`);
+  }
+
+  const sequelize = new Sequelize({
+    ...options,
+    dialectModule,
+    models: ALL_MODELS,
+  } as any);
+
+  try {
+    await sequelize.authenticate();
+    console.log(`✅ Conexión exitosa a ${dialect.toUpperCase()}`);
+  } catch (error: any) {
+    console.error(
+      `❌ Error conectando a ${dialect.toUpperCase()}:`,
+      error.message,
+    );
+    throw error;
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    await sequelize.sync({ alter: false });
+    console.log('✅ Tablas sincronizadas');
+  }
+
+  return sequelize;
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 183447.png">
 </p>
 
 --------------------------------------------------------------------------------
