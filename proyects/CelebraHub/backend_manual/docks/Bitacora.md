@@ -602,19 +602,37 @@ EOF_BACKEND_MANUAL
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 13. Factory registerAs de entorno
 
 
 
 ``` bash
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+mkdir -p src/config/environment
+cat > src/config/environment/env.config.ts <<'EOF_BACKEND_MANUAL'
+import { registerAs } from '@nestjs/config';
+import { resolveDialectCredentials } from './db-env';
+import { Environment } from './env.interface';
+import { validate } from './env.validation';
+
+export const ENV_CONFIG_NAME = 'environment';
+
+export const envConfig = registerAs(ENV_CONFIG_NAME, () => {
+  const validated = validate(process.env);
+
+  return {
+    app: {
+      port: validated.PORT,
+      nodeEnv: validated.NODE_ENV ?? Environment.Development,
+    },
+    database: resolveDialectCredentials(validated),
+  };
+});
+EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 175118.png">
 </p>
 
 --------------------------------------------------------------------------------
