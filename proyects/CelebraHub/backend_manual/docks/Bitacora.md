@@ -454,7 +454,7 @@ EOF_BACKEND_MANUAL
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 12. Resolver de credenciales por motor
 
 
 
@@ -465,7 +465,7 @@ cat > src/config/environment/db-env.ts <<'EOF_BACKEND_MANUAL'
 import { DatabaseConfig, DatabaseDialect } from './env.interface';
 
 export const DEFAULT_DB_PORTS: Record<DatabaseDialect, number> = {
-  [DatabaseDialect.MySQL]: 3306,
+  [DatabaseDialect.MySQL]: 3307,
   [DatabaseDialect.Postgres]: 5433,
   [DatabaseDialect.MSSQL]: 1433,
   [DatabaseDialect.Oracle]: 1521,
@@ -591,7 +591,7 @@ EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 174341.png">
 </p>
 
 --------------------------------------------------------------------------------
