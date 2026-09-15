@@ -656,7 +656,7 @@ EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 175903.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -667,19 +667,26 @@ EOF_BACKEND_MANUAL
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 15.  Tipos auxiliares de database config
 
 
 
 ``` bash
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+mkdir -p src/config/database
+cat > src/config/database/database.types.ts <<'EOF_BACKEND_MANUAL'
+import { Options as SequelizeOptions } from 'sequelize';
+
+export type DialectOptions =
+  | { dialect: 'mysql'; options?: SequelizeOptions }
+  | { dialect: 'postgres'; options?: SequelizeOptions }
+  | { dialect: 'mssql'; options?: SequelizeOptions }
+  | { dialect: 'oracle'; options?: SequelizeOptions };
+EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 180141.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -690,15 +697,44 @@ curl -s http://localhost:3002 || true
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 16. database.config.ts
 
 
 
 ``` bash
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+mkdir -p src/config/database
+cat > src/config/database/database.config.ts <<'EOF_BACKEND_MANUAL'
+import { registerAs } from '@nestjs/config';
+import { resolveDialectCredentials } from '../environment/db-env';
+import { DatabaseDialect } from '../environment/env.interface';
+
+export const DATABASE_CONFIG_NAME = 'database';
+
+const dialectModuleMap: Record<DatabaseDialect, string> = {
+  [DatabaseDialect.MySQL]: 'mysql2',
+  [DatabaseDialect.Postgres]: 'pg',
+  [DatabaseDialect.MSSQL]: 'tedious',
+  [DatabaseDialect.Oracle]: 'oracledb',
+};
+
+export const databaseConfig = registerAs(DATABASE_CONFIG_NAME, () => {
+  const dialect =
+    (process.env.DB_DIALECT as DatabaseDialect) || DatabaseDialect.MySQL;
+  const credentials = resolveDialectCredentials({
+    DB_DIALECT: dialect,
+    ...process.env,
+  });
+
+  return {
+    ...credentials,
+    dialectModulePath: dialectModuleMap[dialect],
+    autoLoadModels: true,
+    synchronize: process.env.NODE_ENV !== 'production',
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  };
+});
+EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
