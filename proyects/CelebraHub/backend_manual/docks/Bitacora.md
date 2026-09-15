@@ -778,19 +778,19 @@ EOF_BACKEND_MANUAL
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 18. database.providers.ts
 
 
 
 ``` bash
-
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+mkdir -p src/config/database
+cat > src/config/database/database.providers.ts <<'EOF_BACKEND'
+export const DATABASE_PROVIDERS = [];
+EOF_BACKEND
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 182021.png">
 </p>
 
 --------------------------------------------------------------------------------
