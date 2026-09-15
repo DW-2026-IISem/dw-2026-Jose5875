@@ -997,19 +997,43 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
-
-
+## 22. Módulo global Sequelize
 
 ``` bash
+mkdir -p src/infrastructure/database/sequelize
+cat > src/infrastructure/database/sequelize/sequelize.module.ts <<'EOF_BACKEND_IA'
+import { Module, Global } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Sequelize } from 'sequelize-typescript';
+import { DatabaseDialect } from '../../../config/environment/env.interface';
+import { SEQUELIZE_TOKEN } from '../../../common/constants/database.constants';
+import { createSequelizeInstance } from './sequelize.factory';
+import { DatabaseSeederService } from '../seeders/database-seeder.service';
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+@Global()
+@Module({
+  providers: [
+    {
+      provide: SEQUELIZE_TOKEN,
+      useFactory: async (configService: ConfigService): Promise<Sequelize> => {
+        const dialect = configService.get<DatabaseDialect>(
+          'environment.database.dialect',
+          DatabaseDialect.MySQL,
+        );
+        return createSequelizeInstance(dialect);
+      },
+      inject: [ConfigService],
+    },
+    DatabaseSeederService,
+  ],
+  exports: [SEQUELIZE_TOKEN],
+})
+export class SequelizeDatabaseModule {}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 184124.png">
 </p>
 
 --------------------------------------------------------------------------------
