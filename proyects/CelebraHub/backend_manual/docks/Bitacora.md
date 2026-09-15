@@ -749,19 +749,25 @@ EOF_BACKEND_MANUAL
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
-
-
+## 17. database.module.ts / providerss
 
 ``` bash
+mkdir -p src/config/database
+cat > src/config/database/database.module.ts <<'EOF_BACKEND_MANUAL'
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { databaseConfig } from './database.config';
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+@Module({
+  imports: [ConfigModule.forFeature(databaseConfig)],
+  exports: [ConfigModule],
+})
+export class DatabaseConfigModule {}
+EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 181541.png">
 </p>
 
 --------------------------------------------------------------------------------
