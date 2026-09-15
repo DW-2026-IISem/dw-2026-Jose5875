@@ -123,19 +123,29 @@ curl -s http://localhost:3002 || true
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 8. Crear árbol base de carpetas
 
 
 
 ``` bash
+mkdir -p src/config/{app,database,environment,logger,swagger}
+mkdir -p src/common/{constants,decorators,enums,exceptions,filters,guards,interceptors,interfaces,pipes,types,utils,validators}
+mkdir -p src/infrastructure/database/{sequelize,migrations,seeders}
+mkdir -p src/infrastructure/logging
+mkdir -p src/features/shipping/{companies,contacts,addresses,shipments,packages,tracking-events,couriers,routes,rates,delivery-proofs,invoices}/{application/{dto,mappers,use-cases},domain/{entities,enums,exceptions,interfaces,services,validators},infrastructure/persistence/{models,repositories,migrations,seeders},presentation/http/{controllers,decorators,serializers,swagger},tests}
+cat > src/features/shipping/shipping.module.ts <<'EOF_BACKEND'
+import { Module } from '@nestjs/common';
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+@Module({
+  imports: [],
+  exports: [],
+})
+export class ShippingModule {}
+EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/crear arbol.png.png">
 </p>
 
 --------------------------------------------------------------------------------
