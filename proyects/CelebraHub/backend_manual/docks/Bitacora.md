@@ -950,19 +950,43 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 21. DatabaseSeederService (sin seeders aún)
 
 
 
 ``` bash
+mkdir -p src/infrastructure/database/seeders
+cat > src/infrastructure/database/seeders/database-seeder.service.ts <<'EOF_BACKEND_IA'
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+
+/**
+ * Ejecuta seeders en orden de dependencias.
+ * Solo en entornos no productivos.
+ */
+@Injectable()
+export class DatabaseSeederService implements OnModuleInit {
+  private readonly logger = new Logger(DatabaseSeederService.name);
+
+  async onModuleInit(): Promise<void> {
+    if (process.env.NODE_ENV === 'production') {
+      return;
+    }
+
+    try {
+      // sin seeders aún
+      this.logger.log('✅ Seeders ejecutados');
+    } catch (error: any) {
+      this.logger.error(`❌ Error en seeders: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 183822.png">
 </p>
 
 --------------------------------------------------------------------------------
