@@ -738,7 +738,7 @@ EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 180602.png">
 </p>
 
 --------------------------------------------------------------------------------
