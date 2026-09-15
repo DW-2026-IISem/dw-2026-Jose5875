@@ -643,15 +643,16 @@ EOF_BACKEND_MANUAL
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 14. Constante SEQUELIZE_TOKEN
 
 
 
 ``` bash
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+mkdir -p src/common/constants
+cat > src/common/constants/database.constants.ts <<'EOF_BACKEND_MANUAL'
+export const SEQUELIZE_TOKEN = 'SEQUELIZE';
+EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
