@@ -230,19 +230,49 @@ EOF_BACKEND_MANUAL
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
-
-
+## 10. Interface de entorno
 
 ``` bash
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+mkdir -p src/config/environment
+cat > src/config/environment/env.interface.ts <<'EOF_BACKEND_MANUAL'
+export enum Environment {
+  Development = 'development',
+  Production = 'production',
+  Test = 'test',
+}
+
+export enum DatabaseDialect {
+  MySQL = 'mysql',
+  Postgres = 'postgres',
+  MSSQL = 'mssql',
+  Oracle = 'oracle',
+}
+
+export interface AppConfig {
+  port: number;
+  nodeEnv: Environment;
+}
+
+export interface DatabaseConfig {
+  dialect: DatabaseDialect;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  database: string;
+  connectString?: string;
+}
+
+export interface EnvironmentConfig {
+  app: AppConfig;
+  database: DatabaseConfig;
+}
+EOF_BACKEND_MANUAL
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/10 Interface de entorno.png">
 </p>
 
 --------------------------------------------------------------------------------
