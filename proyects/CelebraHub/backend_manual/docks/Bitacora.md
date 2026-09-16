@@ -1516,30 +1516,63 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 25. config/logger/logger.config.ts
+## 39. common/filters/sequelize-exception.filter.ts
 
 
 
 ``` bash
+mkdir -p src/common/filters
+cat > src/common/filters/sequelize-exception.filter.ts <<'EOF_BACKEND_IA'
+import { ExceptionFilter, Catch, ArgumentsHost } from '@nestjs/common';
+import { Response } from 'express';
 
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
+@Catch()
+export class SequelizeExceptionFilter implements ExceptionFilter {
+  catch(exception: any, host: ArgumentsHost): void {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
 
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
+    const sequelizeErrors = [
+      'SequelizeUniqueConstraintError',
+      'SequelizeForeignKeyConstraintError',
+      'SequelizeConnectionError',
+      'SequelizeValidationError',
+      'SequelizeDatabaseError',
+    ];
 
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
+    if (!exception?.name || !sequelizeErrors.includes(exception.name)) {
+      throw exception;
+    }
+
+    let status = 500;
+    let message = 'Error de base de datos';
+
+    if (exception.name === 'SequelizeUniqueConstraintError') {
+      status = 409;
+      message = 'El recurso ya existe (violación de unicidad)';
+    } else if (exception.name === 'SequelizeForeignKeyConstraintError') {
+      status = 400;
+      message = 'Violación de clave foránea';
+    } else if (exception.name === 'SequelizeConnectionError') {
+      status = 503;
+      message = 'No se pudo conectar a la base de datos';
+    } else if (exception.name === 'SequelizeValidationError') {
+      status = 422;
+      message = exception.message || 'Error de validación en base de datos';
+    }
+
+    response.status(status).json({
+      statusCode: status,
+      message,
+      timestamp: new Date().toISOString(),
+    });
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 225757.png">
 </p>
 
 --------------------------------------------------------------------------------
