@@ -2698,20 +2698,43 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 64. features/business/suppliers/infrastructure/persistence/seeders/providers.seeder.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+mkdir -p src/features/business/suppliers/infrastructure/persistence/seeders
+cat > src/features/business/suppliers/infrastructure/persistence/seeders/providers.seeder.ts <<'EOF_BACKEND_IA'
+import { ProviderModel } from '../models/provider.model';
+
+export async function seedProviders(): Promise<void> {
+  const count = await ProviderModel.count();
+  if (count > 0) {
+    return;
+  }
+
+  await ProviderModel.bulkCreate([
+    {
+      nit: '900123456-7',
+      razonSocial: 'Decoraciones y Eventos del Caribe S.A.S.',
+      contacto: 'Laura Gómez',
+      telefono: '3001234567',
+      email: 'contacto@decoracionescaribe.com',
+      isActive: true,
+    },
+    {
+      nit: '901987654-3',
+      razonSocial: 'Catering Riohacha Ltda.',
+      contacto: 'Carlos Pérez',
+      telefono: '3009876543',
+      email: 'ventas@cateringriohacha.com',
+      isActive: true,
+    },
+  ]);
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 150647.png">
 </p>
 
 --------------------------------------------------------------------------------
