@@ -2499,3 +2499,618 @@ EOF_BACKEND_IA
 
 
 ------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 61. features/business/suppliers/infrastructure/persistence/models/provider.model.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/infrastructure/persistence/models
+cat > src/features/business/suppliers/infrastructure/persistence/models/provider.model.ts <<'EOF_BACKEND_IA'
+import {
+  AutoIncrement,
+  Column,
+  CreatedAt,
+  DataType,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
+
+@Table({ tableName: 'providers' })
+export class ProviderModel extends Model {
+  @PrimaryKey
+  @AutoIncrement
+  @Column(DataType.INTEGER)
+  declare id: number;
+
+  @Column({ type: DataType.STRING(20), allowNull: false, unique: true })
+  declare nit: string;
+
+  @Column({ type: DataType.STRING(200), allowNull: false })
+  declare razonSocial: string;
+
+  @Column({ type: DataType.STRING(150), allowNull: false })
+  declare contacto: string;
+
+  @Column({ type: DataType.STRING(20), allowNull: false })
+  declare telefono: string;
+
+  @Column({ type: DataType.STRING(150), allowNull: false })
+  declare email: string;
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  declare isActive: boolean;
+
+  @CreatedAt
+  declare createdAt: Date;
+
+  @UpdatedAt
+  declare updatedAt: Date;
+
+  // Asociación (eventoServicio) se agrega en la fase donde se
+  // construya el feature de events/servicios, con import estático normal.
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 145332.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+
+``` bash
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
