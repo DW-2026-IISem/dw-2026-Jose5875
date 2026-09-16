@@ -1432,30 +1432,25 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 25. config/logger/logger.config.ts
+## 37. common/exceptions/validation.exception.ts
 
 
 
 ``` bash
+mkdir -p src/common/exceptions
+cat > src/common/exceptions/validation.exception.ts <<'EOF_BACKEND_IA'
+import { ApplicationException } from './application.exception';
 
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
-
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
-
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
+export class ValidationException extends ApplicationException {
+  constructor(message: string = 'Error de validación') {
+    super(message, 422);
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 225250.png">
 </p>
 
 --------------------------------------------------------------------------------
