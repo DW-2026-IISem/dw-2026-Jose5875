@@ -1881,3 +1881,22 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
+## 47. common/types/nullable.type.ts
+
+
+
+``` bash
+mkdir -p src/common/types
+cat > src/common/types/nullable.type.ts <<'EOF_BACKEND_IA'
+export type Nullable<T> = T | null;
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 232134.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
