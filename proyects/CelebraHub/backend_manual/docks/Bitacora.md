@@ -1730,30 +1730,54 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 25. config/logger/logger.config.ts
+## 43. common/pipes/validation.pipe.ts
 
 
 
 ``` bash
+mkdir -p src/common/pipes
+cat > src/common/pipes/validation.pipe.ts <<'EOF_BACKEND_IA'
+import {
+  PipeTransform,
+  Injectable,
+  ArgumentMetadata,
+  BadRequestException,
+} from '@nestjs/common';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
+@Injectable()
+export class CustomValidationPipe implements PipeTransform<any> {
+  async transform(value: any, { metatype }: ArgumentMetadata) {
+    if (!metatype || !this.toValidate(metatype)) {
+      return value;
+    }
 
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
+    const object = plainToInstance(metatype, value);
+    const errors = await validate(object);
 
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
+    if (errors.length > 0) {
+      const messages = errors.map(
+        (err) =>
+          `${err.property}: ${Object.values(err.constraints || {}).join(', ')}`,
+      );
+      throw new BadRequestException(messages);
+    }
+
+    return object;
+  }
+
+  private toValidate(metatype: any): boolean {
+    const types = [String, Boolean, Number, Array, Object];
+    return !types.includes(metatype);
+  }
 }
 EOF_BACKEND_IA
+
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 231007.png">
 </p>
 
 --------------------------------------------------------------------------------
