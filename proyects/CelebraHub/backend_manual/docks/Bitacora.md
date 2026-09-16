@@ -3604,20 +3604,43 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 82. Actualizar app.module.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
-}
+mkdir -p src
+cat > src/app.module.ts <<'EOF_BACKEND_IA'
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { envConfig } from './config/environment/env.config';
+import { appConfig } from './config/app/app.config';
+import { LoggerModule } from './config/logger/logger.module';
+import { SequelizeDatabaseModule } from './infrastructure/database/sequelize/sequelize.module';
+import { BusinessModule } from './features/business/business.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [envConfig, appConfig],
+      envFilePath: '.env',
+    }),
+    SequelizeDatabaseModule,
+    LoggerModule,
+    BusinessModule,
+  ],
+  controllers: [AppController],
+  providers: [
+    AppService,
+  ],
+})
+export class AppModule {}
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 161358.png">
 </p>
 
 --------------------------------------------------------------------------------
