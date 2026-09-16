@@ -1826,30 +1826,29 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 25. config/logger/logger.config.ts
+## 45. common/interfaces/pagination.interface.ts
 
 
 
 ``` bash
+mkdir -p src/common/interfaces
+cat > src/common/interfaces/pagination.interface.ts <<'EOF_BACKEND_IA'
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
 
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
-
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
-
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
+export interface PaginatedResult<T> {
+  items: T[];
+  meta: PaginationMeta;
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 231658.png">
 </p>
 
 --------------------------------------------------------------------------------
