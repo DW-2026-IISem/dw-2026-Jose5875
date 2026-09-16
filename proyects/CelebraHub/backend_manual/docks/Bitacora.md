@@ -2791,20 +2791,46 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 66. features/business/suppliers/application/dto/provider-response.dto.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+mkdir -p src/features/business/suppliers/application/dto
+cat > src/features/business/suppliers/application/dto/provider-response.dto.ts <<'EOF_BACKEND_IA'
+import { ApiProperty } from '@nestjs/swagger';
+
+export class ProviderResponseDto {
+  @ApiProperty({ example: 1 })
+  id: number;
+
+  @ApiProperty({ example: '900123456-7' })
+  nit: string;
+
+  @ApiProperty({ example: 'Decoraciones y Eventos del Caribe S.A.S.' })
+  razonSocial: string;
+
+  @ApiProperty({ example: 'Laura Gómez' })
+  contacto: string;
+
+  @ApiProperty({ example: '3001234567' })
+  telefono: string;
+
+  @ApiProperty({ example: 'contacto@decoracionescaribe.com' })
+  email: string;
+
+  @ApiProperty({ example: true })
+  isActive: boolean;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 151140.png">
 </p>
 
 --------------------------------------------------------------------------------
