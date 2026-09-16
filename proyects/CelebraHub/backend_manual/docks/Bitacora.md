@@ -2380,25 +2380,25 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 51. common/utils/string.util.ts
+## 57. features/business/suppliers/domain/exceptions/provider-not-found.exception.ts
 
 
 
 ``` bash
-mkdir -p src/common/utils
-cat > src/common/utils/string.util.ts <<'EOF_BACKEND_IA'
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
+mkdir -p src/features/business/suppliers/domain/exceptions
+cat > src/features/business/suppliers/domain/exceptions/provider-not-found.exception.ts <<'EOF_BACKEND_IA'
+import { EntityNotFoundException } from '../../../../../common/exceptions/entity-not-found.exception';
 
-export function isBlank(value?: string | null): boolean {
-  return !value || value.trim().length === 0;
+export class ProviderNotFoundException extends EntityNotFoundException {
+  constructor(id: number) {
+    super('Proveedor', id);
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 233124.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144124.png">
 </p>
 
 --------------------------------------------------------------------------------
