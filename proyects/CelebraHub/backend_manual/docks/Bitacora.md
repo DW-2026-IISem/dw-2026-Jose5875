@@ -1969,3 +1969,55 @@ EOF_BACKEND_IA
 
 
 ------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+## 50. common/utils/date.util.ts
+
+
+
+``` bash
+mkdir -p src/common/utils
+cat > src/common/utils/date.util.ts <<'EOF_BACKEND_IA'
+export function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+export function parseDurationToMs(duration: string): number {
+  const match = /^(\d+)([smhd])$/.exec(duration);
+  if (!match) {
+    return 24 * 60 * 60 * 1000;
+  }
+
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+
+  switch (unit) {
+    case 's':
+      return value * 1000;
+    case 'm':
+      return value * 60 * 1000;
+    case 'h':
+      return value * 60 * 60 * 1000;
+    case 'd':
+      return value * 24 * 60 * 60 * 1000;
+    default:
+      return 24 * 60 * 60 * 1000;
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 232842.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
