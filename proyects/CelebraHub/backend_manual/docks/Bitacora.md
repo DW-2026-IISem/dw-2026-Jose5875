@@ -1855,4 +1855,29 @@ EOF_BACKEND_IA
 
 
 ------------------------------------------------------------------------
-v
+
+## 46. common/interfaces/api-response.interface.ts
+
+
+
+``` bash
+mkdir -p src/common/interfaces
+cat > src/common/interfaces/api-response.interface.ts <<'EOF_BACKEND_IA'
+export interface ApiResponseBody<T> {
+  statusCode: number;
+  message: string;
+  data: T;
+  timestamp: string;
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 231944.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
