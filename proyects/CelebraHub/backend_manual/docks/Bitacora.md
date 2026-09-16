@@ -3245,20 +3245,25 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 75. features/business/suppliers/presentation/http/serializers/provider.serializer.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+mkdir -p src/features/business/suppliers/presentation/http/serializers
+cat > src/features/business/suppliers/presentation/http/serializers/provider.serializer.ts <<'EOF_BACKEND_IA'
+import { Provider } from '../../../domain/entities/provider.entity';
+import { ProviderResponseDto } from '../../../application/dto/provider-response.dto';
+import { ProviderMapper } from '../../../application/mappers/provider.mapper';
+
+export class ProviderSerializer {
+  static serialize(entity: Provider): ProviderResponseDto {
+    return ProviderMapper.toResponse(entity);
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 153859.png">
 </p>
 
 --------------------------------------------------------------------------------
