@@ -2570,20 +2570,92 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 62. features/business/suppliers/infrastructure/persistence/repositories/provider.repository.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+mkdir -p src/features/business/suppliers/infrastructure/persistence/repositories
+cat > src/features/business/suppliers/infrastructure/persistence/repositories/provider.repository.ts <<'EOF_BACKEND_IA'
+import { Injectable } from '@nestjs/common';
+import { Op } from 'sequelize';
+import {
+  buildPaginatedResult,
+  normalizePagination,
+} from '../../../../../../common/utils/pagination.util';
+import { Provider } from '../../../domain/entities/provider.entity';
+import {
+  ProviderFindAllParams,
+  IProviderRepository,
+} from '../../../domain/interfaces/provider-repository.interface';
+import { ProviderMapper } from '../../../application/mappers/provider.mapper';
+import { ProviderModel } from '../models/provider.model';
+
+@Injectable()
+export class ProviderRepository implements IProviderRepository {
+  async create(provider: Provider): Promise<Provider> {
+    const model = await ProviderModel.create(
+      ProviderMapper.toPersistence(provider),
+    );
+    return ProviderMapper.toDomain(model);
+  }
+
+  async update(provider: Provider): Promise<Provider> {
+    await ProviderModel.update(ProviderMapper.toPersistence(provider), {
+      where: { id: provider.id },
+    });
+    const updated = await ProviderModel.findByPk(provider.id!);
+    return ProviderMapper.toDomain(updated!);
+  }
+
+  async delete(id: number): Promise<void> {
+    await ProviderModel.destroy({ where: { id } });
+  }
+
+  async findById(id: number): Promise<Provider | null> {
+    const model = await ProviderModel.findByPk(id);
+    return model ? ProviderMapper.toDomain(model) : null;
+  }
+
+  async findByNit(nit: string): Promise<Provider | null> {
+    const model = await ProviderModel.findOne({ where: { nit } });
+    return model ? ProviderMapper.toDomain(model) : null;
+  }
+
+  async findAll(params: ProviderFindAllParams) {
+    const { page, limit, offset } = normalizePagination(
+      params.page,
+      params.limit,
+    );
+
+    const where = params.search
+      ? {
+          [Op.or]: [
+            { razonSocial: { [Op.like]: `%${params.search}%` } },
+            { nit: { [Op.like]: `%${params.search}%` } },
+            { contacto: { [Op.like]: `%${params.search}%` } },
+          ],
+        }
+      : {};
+
+    const { rows, count } = await ProviderModel.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    return buildPaginatedResult(
+      rows.map((row) => ProviderMapper.toDomain(row)),
+      count,
+      page,
+      limit,
+    );
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 145611.png">
 </p>
 
 --------------------------------------------------------------------------------
