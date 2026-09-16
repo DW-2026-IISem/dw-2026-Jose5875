@@ -1073,19 +1073,27 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 24. config/app/app.constants.ts
 
 
 
 ``` bash
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+mkdir -p src/config/app
+cat > src/config/app/app.config.ts <<'EOF_BACKEND_IA'
+import { registerAs } from '@nestjs/config';
+import { APP_CONFIG_NAME, APP_DEFAULTS } from './app.constants';
+import { Environment } from '../environment/env.interface';
+
+export const appConfig = registerAs(APP_CONFIG_NAME, () => ({
+  port: parseInt(process.env.PORT || String(APP_DEFAULTS.PORT), 10),
+  nodeEnv: (process.env.NODE_ENV as Environment) || APP_DEFAULTS.NODE_ENV,
+}));
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212733.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -1096,19 +1104,666 @@ curl -s http://localhost:3002 || true
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 25. config/logger/logger.config.ts
 
 
 
 ``` bash
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 26. config/logger/logger.module.ts
+
+
+
+``` bash
+mkdir -p src/config/logger
+cat > src/config/logger/logger.module.ts <<'EOF_BACKEND_IA'
+import { Module, Global, Logger } from '@nestjs/common';
+
+@Global()
+@Module({
+  providers: [Logger],
+  exports: [Logger],
+})
+export class LoggerModule {}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 213131.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 25. config/logger/logger.config.ts
+
+
+
+``` bash
+
+mkdir -p src/config/logger
+cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
+import { LogLevel } from '@nestjs/common';
+
+export function getLoggerConfig(): { logLevels: LogLevel[] } {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  return {
+    logLevels: isDev
+      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
+      : ['log', 'error', 'warn'],
+  };
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
 </p>
 
 --------------------------------------------------------------------------------
