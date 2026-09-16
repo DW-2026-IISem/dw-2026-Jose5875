@@ -2909,20 +2909,20 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 68. features/business/suppliers/application/dto/update-provider.dto.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
-}
+mkdir -p src/features/business/suppliers/application/dto
+cat > src/features/business/suppliers/application/dto/update-provider.dto.ts <<'EOF_BACKEND_IA'
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateProviderDto } from './create-provider.dto';
+
+export class UpdateProviderDto extends PartialType(CreateProviderDto) {}
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 151531.png">
 </p>
 
 --------------------------------------------------------------------------------
