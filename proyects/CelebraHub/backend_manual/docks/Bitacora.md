@@ -2934,20 +2934,61 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 69. features/business/suppliers/application/mappers/provider.mapper.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+mkdir -p src/features/business/suppliers/application/mappers
+cat > src/features/business/suppliers/application/mappers/provider.mapper.ts <<'EOF_BACKEND_IA'
+import { Provider } from '../../domain/entities/provider.entity';
+import { ProviderResponseDto } from '../dto/provider-response.dto';
+import { ProviderModel } from '../../infrastructure/persistence/models/provider.model';
+
+export class ProviderMapper {
+  static toDomain(model: ProviderModel): Provider {
+    return Provider.reconstitute({
+      id: model.id,
+      nit: model.nit,
+      razonSocial: model.razonSocial,
+      contacto: model.contacto,
+      telefono: model.telefono,
+      email: model.email,
+      isActive: model.isActive,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
+    });
+  }
+
+  static toResponse(entity: Provider): ProviderResponseDto {
+    return {
+      id: entity.id!,
+      nit: entity.nit,
+      razonSocial: entity.razonSocial,
+      contacto: entity.contacto,
+      telefono: entity.telefono,
+      email: entity.email,
+      isActive: entity.isActive,
+      createdAt: entity.createdAt!,
+      updatedAt: entity.updatedAt!,
+    };
+  }
+
+  static toPersistence(entity: Provider): Partial<ProviderModel> {
+    return {
+      id: entity.id,
+      nit: entity.nit,
+      razonSocial: entity.razonSocial,
+      contacto: entity.contacto,
+      telefono: entity.telefono,
+      email: entity.email,
+      isActive: entity.isActive ?? true,
+    };
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 151716.png">
 </p>
 
 --------------------------------------------------------------------------------
