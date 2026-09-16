@@ -2346,35 +2346,29 @@ EOF_BACKEND_IA
 <p align="center">
   <img src="imagenes/Captura de pantalla 2026-09-16 143651.png">
 </p>
-
---------------------------------------------------------------------------------
-
-
 ------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-
-
 ------------------------------------------------------------------------
 
-## 51. common/utils/string.util.ts
+## 56. features/business/suppliers/domain/exceptions/provider-nit-already-exists.exception.ts
 
 
 
 ``` bash
-mkdir -p src/common/utils
-cat > src/common/utils/string.util.ts <<'EOF_BACKEND_IA'
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
+mkdir -p src/features/business/suppliers/domain/exceptions
+cat > src/features/business/suppliers/domain/exceptions/provider-nit-already-exists.exception.ts <<'EOF_BACKEND_IA'
+import { DomainException } from '../../../../../common/exceptions/domain.exception';
 
-export function isBlank(value?: string | null): boolean {
-  return !value || value.trim().length === 0;
+export class ProviderNitAlreadyExistsException extends DomainException {
+  constructor(nit: string) {
+    super(`El NIT '${nit}' ya está registrado`);
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 233124.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 143853.png">
 </p>
 
 --------------------------------------------------------------------------------
