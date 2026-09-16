@@ -2667,20 +2667,26 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 63. features/business/suppliers/infrastructure/persistence/migrations/create-providers-table.migration.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
-}
+mkdir -p src/features/business/suppliers/infrastructure/persistence/migrations
+cat > src/features/business/suppliers/infrastructure/persistence/migrations/create-providers-table.migration.ts <<'EOF_BACKEND_IA'
+export const createProvidersTableMigration = {
+  name: 'create-providers-table',
+  async up(): Promise<void> {
+    // Sequelize sync handles table creation in development.
+    // Production: CREATE TABLE providers (id, nit, razonSocial, contacto, telefono, email, isActive, createdAt, updatedAt)
+  },
+  async down(): Promise<void> {
+    // Production: DROP TABLE providers
+  },
+};
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 145941.png">
 </p>
 
 --------------------------------------------------------------------------------
