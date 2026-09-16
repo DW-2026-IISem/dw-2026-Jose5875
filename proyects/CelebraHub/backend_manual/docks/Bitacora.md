@@ -1164,30 +1164,23 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 25. config/logger/logger.config.ts
+## 27.  config/swagger/swagger.constants.ts
 
 
 
 ``` bash
-
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
-
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
-
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
-}
+mkdir -p src/config/swagger
+cat > src/config/swagger/swagger.constants.ts <<'EOF_BACKEND_IA'
+export const SWAGGER_TITLE = 'EnlaceExpress API';
+export const SWAGGER_DESCRIPTION =
+  'API de mensajería corporativa EnlaceExpress: envíos, tracking, tarifas y facturación (Clean Architecture / DDD sobre NestJS + Sequelize, multi-motor)';
+export const SWAGGER_VERSION = '1.0';
+export const SWAGGER_PATH = 'api/docs';
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 213410.png">
 </p>
 
 --------------------------------------------------------------------------------
