@@ -2410,25 +2410,37 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 51. common/utils/string.util.ts
+## 58. features/business/suppliers/domain/interfaces/provider-repository.interface.ts
 
 
 
 ``` bash
-mkdir -p src/common/utils
-cat > src/common/utils/string.util.ts <<'EOF_BACKEND_IA'
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
+mkdir -p src/features/business/suppliers/domain/interfaces
+cat > src/features/business/suppliers/domain/interfaces/provider-repository.interface.ts <<'EOF_BACKEND_IA'
+import { PaginatedResult } from '../../../../../common/interfaces/pagination.interface';
+import { Provider } from '../entities/provider.entity';
+
+export const PROVIDER_REPOSITORY = 'PROVIDER_REPOSITORY';
+
+export interface ProviderFindAllParams {
+  page?: number;
+  limit?: number;
+  search?: string;
 }
 
-export function isBlank(value?: string | null): boolean {
-  return !value || value.trim().length === 0;
+export interface IProviderRepository {
+  create(provider: Provider): Promise<Provider>;
+  update(provider: Provider): Promise<Provider>;
+  delete(id: number): Promise<void>;
+  findById(id: number): Promise<Provider | null>;
+  findByNit(nit: string): Promise<Provider | null>;
+  findAll(params: ProviderFindAllParams): Promise<PaginatedResult<Provider>>;
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 233124.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144257.png">
 </p>
 
 --------------------------------------------------------------------------------
