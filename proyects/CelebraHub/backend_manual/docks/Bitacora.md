@@ -3145,20 +3145,39 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 73. features/business/suppliers/application/use-cases/list-providers.use-case.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+mkdir -p src/features/business/suppliers/application/use-cases
+cat > src/features/business/suppliers/application/use-cases/list-providers.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  PROVIDER_REPOSITORY,
+  type IProviderRepository,
+} from '../../domain/interfaces/provider-repository.interface';
+import { ProviderFilterDto } from '../dto/provider-filter.dto';
+import { ProviderMapper } from '../mappers/provider.mapper';
+
+@Injectable()
+export class ListProvidersUseCase {
+  constructor(
+    @Inject(PROVIDER_REPOSITORY)
+    private readonly providerRepository: IProviderRepository,
+  ) {}
+
+  async execute(filter: ProviderFilterDto) {
+    const result = await this.providerRepository.findAll(filter);
+    return {
+      items: result.items.map((provider) => ProviderMapper.toResponse(provider)),
+      meta: result.meta,
+    };
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 153122.png">
 </p>
 
 --------------------------------------------------------------------------------
