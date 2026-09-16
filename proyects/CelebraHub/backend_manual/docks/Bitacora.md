@@ -1044,19 +1044,25 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 7. Verificar arranque base
+## 23. config/app/app.constants.ts
 
 
 
 ``` bash
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+mkdir -p src/config/app
+cat > src/config/app/app.constants.ts <<'EOF_BACKEND_IA'
+export const APP_CONFIG_NAME = 'app';
+
+export const APP_DEFAULTS = {
+  PORT: 3000,
+  NODE_ENV: 'development',
+};
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/dependencias de desarollo.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 212349.png">
 </p>
 
 --------------------------------------------------------------------------------
