@@ -1347,37 +1347,36 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 25. config/logger/logger.config.ts
-
+## 34. common/exceptions/application.exception.ts
 
 
 ``` bash
+mkdir -p src/common/exceptions
+cat > src/common/exceptions/application.exception.ts <<'EOF_BACKEND_IA'
+export class ApplicationException extends Error {
+  public readonly timestamp: string;
 
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
-
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
-
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
+  constructor(
+    public readonly message: string,
+    public readonly statusCode: number = 500,
+  ) {
+    super(message);
+    this.timestamp = new Date().toISOString();
+    Error.captureStackTrace(this, this.constructor);
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 224211.png">
 </p>
 
 --------------------------------------------------------------------------------
 
 
 ------------------------------------------------------------------------
-v------------------------------------------------------------------------
+------------------------------------------------------------------------
 
 ## 25. config/logger/logger.config.ts
 
