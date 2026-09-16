@@ -1254,8 +1254,6 @@ v------------------------------------------------------------------------
 
 ## 30. common/enums/http-method.enum.ts
 
-
-
 ``` bash
 mkdir -p src/common/enums
 cat > src/common/enums/http-method.enum.ts <<'EOF_BACKEND_IA'
@@ -1279,30 +1277,21 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 25. config/logger/logger.config.ts
-
+## 31. common/enums/sort-order.enum.ts
 
 
 ``` bash
-
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
-
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
-
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
+mkdir -p src/common/enums
+cat > src/common/enums/sort-order.enum.ts <<'EOF_BACKEND_IA'
+export enum SortOrder {
+  ASC = 'ASC',
+  DESC = 'DESC',
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 214748.png">
 </p>
 
 --------------------------------------------------------------------------------
