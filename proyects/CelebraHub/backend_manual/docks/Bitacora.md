@@ -2129,25 +2129,43 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 51. common/utils/string.util.ts
+## 53. Actualizar app.module.ts (base sin features ni security)
 
 
 
 ``` bash
-mkdir -p src/common/utils
-cat > src/common/utils/string.util.ts <<'EOF_BACKEND_IA'
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
+mkdir -p src
+cat > src/app.module.ts <<'EOF_BACKEND_IA'
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { envConfig } from './config/environment/env.config';
+import { appConfig } from './config/app/app.config';
+import { LoggerModule } from './config/logger/logger.module';
+import { SequelizeDatabaseModule } from './infrastructure/database/sequelize/sequelize.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
-export function isBlank(value?: string | null): boolean {
-  return !value || value.trim().length === 0;
-}
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [envConfig, appConfig],
+      envFilePath: '.env',
+    }),
+    SequelizeDatabaseModule,
+    LoggerModule,
+  ],
+  controllers: [AppController],
+  providers: [
+    AppService,
+  ],
+})
+export class AppModule {}
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 233124.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 233635.png">
 </p>
 
 --------------------------------------------------------------------------------
