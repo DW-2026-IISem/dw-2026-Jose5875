@@ -3056,20 +3056,39 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 71. features/business/suppliers/application/use-cases/delete-provider.use-case.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+mkdir -p src/features/business/suppliers/application/use-cases
+cat > src/features/business/suppliers/application/use-cases/delete-provider.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { ProviderNotFoundException } from '../../domain/exceptions/provider-not-found.exception';
+import {
+  PROVIDER_REPOSITORY,
+  type IProviderRepository,
+} from '../../domain/interfaces/provider-repository.interface';
+
+@Injectable()
+export class DeleteProviderUseCase {
+  constructor(
+    @Inject(PROVIDER_REPOSITORY)
+    private readonly providerRepository: IProviderRepository,
+  ) {}
+
+  async execute(id: number): Promise<void> {
+    const provider = await this.providerRepository.findById(id);
+    if (!provider) {
+      throw new ProviderNotFoundException(id);
+    }
+
+    await this.providerRepository.delete(id);
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 152303.png">
 </p>
 
 --------------------------------------------------------------------------------
