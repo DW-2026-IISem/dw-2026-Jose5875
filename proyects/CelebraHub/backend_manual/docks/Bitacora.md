@@ -1581,24 +1581,49 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 25. config/logger/logger.config.ts
+## 40. common/interceptors/response.interceptor.ts
 
 
 
 ``` bash
+mkdir -p src/common/interceptors
+cat > src/common/interceptors/response.interceptor.ts <<'EOF_BACKEND_IA'
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
+export interface ApiResponse<T> {
+  statusCode: number;
+  message: string;
+  data: T;
+  timestamp: string;
+}
 
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
+@Injectable()
+export class ResponseInterceptor<T>
+  implements NestInterceptor<T, ApiResponse<T>>
+{
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<ApiResponse<T>> {
+    const response = context.switchToHttp().getResponse();
+    const statusCode = response.statusCode;
 
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
+    return next.handle().pipe(
+      map((data) => ({
+        statusCode,
+        message: 'Operación exitosa',
+        data,
+        timestamp: new Date().toISOString(),
+      })),
+    );
+  }
 }
 EOF_BACKEND_IA
 ```
