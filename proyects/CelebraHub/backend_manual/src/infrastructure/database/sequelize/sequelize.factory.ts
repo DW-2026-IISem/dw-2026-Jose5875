@@ -14,23 +14,22 @@ export async function createSequelizeInstance(
 
   let dialectModule: any;
 
-  switch (dialect) {
+   switch (dialect) {
     case DatabaseDialect.MySQL:
-      dialectModule = require('mysql2');
+      dialectModule = await import('mysql2');
       break;
     case DatabaseDialect.Postgres:
-      dialectModule = require('pg');
+      dialectModule = await import('pg');
       break;
     case DatabaseDialect.MSSQL:
-      dialectModule = require('tedious');
+      dialectModule = await import('tedious');
       break;
     case DatabaseDialect.Oracle:
-      dialectModule = require('oracledb');
+      dialectModule = await import('oracledb');
       break;
     default:
       throw new Error(`Dialecto no soportado: ${dialect}`);
   }
-
   const sequelize = new Sequelize({
     ...options,
     dialectModule,
