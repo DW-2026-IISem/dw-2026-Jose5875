@@ -3529,20 +3529,24 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 80. Crear business.module.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
-}
+mkdir -p src/features/business
+cat > src/features/business/business.module.ts <<'EOF_BACKEND_IA'
+import { Module } from '@nestjs/common';
+import { SuppliersModule } from './suppliers/suppliers.module';
+
+@Module({
+  imports: [SuppliersModule],
+  exports: [SuppliersModule],
+})
+export class BusinessModule {}
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 160249.png">
 </p>
 
 --------------------------------------------------------------------------------
