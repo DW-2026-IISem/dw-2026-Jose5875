@@ -2189,6 +2189,10 @@ npm run start:dev
   <img src="imagenes/Captura de pantalla 2026-09-16 124645.png">
 </p>
 
+**http://localhost:3002/api/docs**
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-16 140858.png">
+</p>
 --------------------------------------------------------------------------------
 
 
@@ -2198,25 +2202,149 @@ npm run start:dev
 
 ------------------------------------------------------------------------
 
-## 51. common/utils/string.util.ts
+## 55. fase 7 features/business/suppliers/domain/entities/provider.entity.ts
 
 
 
 ``` bash
-mkdir -p src/common/utils
-cat > src/common/utils/string.util.ts <<'EOF_BACKEND_IA'
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
+mkdir -p src/features/business/suppliers/domain/entities
+cat > src/features/business/suppliers/domain/entities/provider.entity.ts <<'EOF_BACKEND_IA'
+import { isValidNit } from '../validators/provider-nit.validator';
+import { isValidEmail } from '../validators/provider-email.validator';
+
+export interface ProviderProps {
+  id?: number;
+  nit: string;
+  razonSocial: string;
+  contacto: string;
+  telefono: string;
+  email: string;
+  isActive?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export function isBlank(value?: string | null): boolean {
-  return !value || value.trim().length === 0;
+export class Provider {
+  id?: number;
+  nit: string;
+  razonSocial: string;
+  contacto: string;
+  telefono: string;
+  email: string;
+  isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+
+  private constructor(props: ProviderProps) {
+    this.id = props.id;
+    this.nit = props.nit;
+    this.razonSocial = props.razonSocial;
+    this.contacto = props.contacto;
+    this.telefono = props.telefono;
+    this.email = props.email;
+    this.isActive = props.isActive ?? true;
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
+  }
+
+  static create(
+    props: Omit<ProviderProps, 'id' | 'isActive' | 'createdAt' | 'updatedAt'>,
+  ): Provider {
+    if (!props.nit?.trim()) {
+      throw new Error('El NIT del proveedor es requerido');
+    }
+
+    if (!isValidNit(props.nit)) {
+      throw new Error('El NIT del proveedor no es válido');
+    }
+
+    if (!props.razonSocial?.trim()) {
+      throw new Error('La razón social del proveedor es requerida');
+    }
+
+    if (!props.contacto?.trim()) {
+      throw new Error('El contacto del proveedor es requerido');
+    }
+
+    if (!props.telefono?.trim()) {
+      throw new Error('El teléfono del proveedor es requerido');
+    }
+
+    if (!props.email?.trim()) {
+      throw new Error('El email del proveedor es requerido');
+    }
+
+    if (!isValidEmail(props.email)) {
+      throw new Error('El email del proveedor no es válido');
+    }
+
+    return new Provider(props);
+  }
+
+  static reconstitute(props: ProviderProps): Provider {
+    return new Provider(props);
+  }
+
+  update(
+    props: Partial<
+      Omit<ProviderProps, 'id' | 'isActive' | 'createdAt' | 'updatedAt'>
+    >,
+  ): void {
+    if (props.nit !== undefined) {
+      if (!props.nit.trim()) {
+        throw new Error('El NIT del proveedor es requerido');
+      }
+      if (!isValidNit(props.nit)) {
+        throw new Error('El NIT del proveedor no es válido');
+      }
+      this.nit = props.nit;
+    }
+
+    if (props.razonSocial !== undefined) {
+      if (!props.razonSocial.trim()) {
+        throw new Error('La razón social del proveedor es requerida');
+      }
+      this.razonSocial = props.razonSocial;
+    }
+
+    if (props.contacto !== undefined) {
+      if (!props.contacto.trim()) {
+        throw new Error('El contacto del proveedor es requerido');
+      }
+      this.contacto = props.contacto;
+    }
+
+    if (props.telefono !== undefined) {
+      if (!props.telefono.trim()) {
+        throw new Error('El teléfono del proveedor es requerido');
+      }
+      this.telefono = props.telefono;
+    }
+
+    if (props.email !== undefined) {
+      if (!props.email.trim()) {
+        throw new Error('El email del proveedor es requerido');
+      }
+      if (!isValidEmail(props.email)) {
+        throw new Error('El email del proveedor no es válido');
+      }
+      this.email = props.email;
+    }
+  }
+
+  deactivate(): void {
+    this.isActive = false;
+  }
+
+  activate(): void {
+    this.isActive = true;
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 233124.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 143651.png">
 </p>
 
 --------------------------------------------------------------------------------
