@@ -1189,30 +1189,37 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 25. config/logger/logger.config.ts
+## 28. config/swagger/swagger.config.ts
 
 
 
 ``` bash
+mkdir -p src/config/swagger
+cat > src/config/swagger/swagger.config.ts <<'EOF_BACKEND_IA'
+import { INestApplication } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import {
+  SWAGGER_DESCRIPTION,
+  SWAGGER_PATH,
+  SWAGGER_TITLE,
+  SWAGGER_VERSION,
+} from './swagger.constants';
 
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
+export function setupSwagger(app: INestApplication): void {
+  const config = new DocumentBuilder()
+    .setTitle(SWAGGER_TITLE)
+    .setDescription(SWAGGER_DESCRIPTION)
+    .setVersion(SWAGGER_VERSION)
+    .build();
 
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
-
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup(SWAGGER_PATH, app, document);
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 213629.png">
 </p>
 
 --------------------------------------------------------------------------------
