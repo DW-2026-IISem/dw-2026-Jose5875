@@ -1900,3 +1900,23 @@ EOF_BACKEND_IA
 
 
 ------------------------------------------------------------------------
+
+## 48. common/types/optional.type.ts
+
+
+
+``` bash
+mkdir -p src/common/types
+cat > src/common/types/optional.type.ts <<'EOF_BACKEND_IA'
+export type Optional<T> = T | undefined;
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-15 232327.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
