@@ -2452,25 +2452,21 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 51. common/utils/string.util.ts
-
-
+## 59. features/business/suppliers/domain/validators/provider-nit.validator.ts
 
 ``` bash
-mkdir -p src/common/utils
-cat > src/common/utils/string.util.ts <<'EOF_BACKEND_IA'
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-export function isBlank(value?: string | null): boolean {
-  return !value || value.trim().length === 0;
+mkdir -p src/features/business/suppliers/domain/validators
+cat > src/features/business/suppliers/domain/validators/provider-nit.validator.ts <<'EOF_BACKEND_IA'
+export function isValidNit(nit: string): boolean {
+  // Dígitos, con guion y dígito de verificación opcional (ej. 900123456-7)
+  const nitRegex = /^\d{5,15}(-\d)?$/;
+  return nitRegex.test(nit.trim());
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 233124.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 144435.png">
 </p>
 
 --------------------------------------------------------------------------------
