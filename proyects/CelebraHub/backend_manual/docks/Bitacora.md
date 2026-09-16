@@ -1786,30 +1786,38 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 25. config/logger/logger.config.ts
+## 44. common/pipes/parse-positive-int.pipe.ts
 
 
 
 ``` bash
+mkdir -p src/common/pipes
+cat > src/common/pipes/parse-positive-int.pipe.ts <<'EOF_BACKEND_IA'
+import {
+  PipeTransform,
+  Injectable,
+  BadRequestException,
+} from '@nestjs/common';
 
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
+@Injectable()
+export class ParsePositiveIntPipe implements PipeTransform<string, number> {
+  transform(value: string): number {
+    const parsed = parseInt(value, 10);
 
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
+    if (isNaN(parsed) || parsed <= 0) {
+      throw new BadRequestException(
+        `El valor '${value}' no es un entero positivo`,
+      );
+    }
 
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
+    return parsed;
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 231226.png">
 </p>
 
 --------------------------------------------------------------------------------
