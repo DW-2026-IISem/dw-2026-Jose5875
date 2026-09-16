@@ -3000,20 +3000,51 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 70. features/business/suppliers/application/use-cases/create-provider.use-case.ts
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+mkdir -p src/features/business/suppliers/application/use-cases
+cat > src/features/business/suppliers/application/use-cases/create-provider.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { ProviderNitAlreadyExistsException } from '../../domain/exceptions/provider-nit-already-exists.exception';
+import { Provider } from '../../domain/entities/provider.entity';
+import {
+  PROVIDER_REPOSITORY,
+  type IProviderRepository,
+} from '../../domain/interfaces/provider-repository.interface';
+import { CreateProviderDto } from '../dto/create-provider.dto';
+import { ProviderMapper } from '../mappers/provider.mapper';
+
+@Injectable()
+export class CreateProviderUseCase {
+  constructor(
+    @Inject(PROVIDER_REPOSITORY)
+    private readonly providerRepository: IProviderRepository,
+  ) {}
+
+  async execute(dto: CreateProviderDto) {
+    const existing = await this.providerRepository.findByNit(dto.nit);
+    if (existing) {
+      throw new ProviderNitAlreadyExistsException(dto.nit);
+    }
+
+    const provider = Provider.create({
+      nit: dto.nit,
+      razonSocial: dto.razonSocial,
+      contacto: dto.contacto,
+      telefono: dto.telefono,
+      email: dto.email,
+    });
+
+    const created = await this.providerRepository.create(provider);
+    return ProviderMapper.toResponse(created);
+  }
 }
 EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 151943.png">
 </p>
 
 --------------------------------------------------------------------------------
