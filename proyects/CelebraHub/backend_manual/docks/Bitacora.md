@@ -1338,7 +1338,7 @@ EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="imagenes/Captura de pantalla 2026-09-15 223936.png">
 </p>
 
 --------------------------------------------------------------------------------
