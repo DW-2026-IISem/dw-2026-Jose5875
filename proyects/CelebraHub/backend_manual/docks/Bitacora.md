@@ -4008,14 +4008,91 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 91. features/business/clients/infrastructure/persistence/repositories/client.repository.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/infrastructure/persistence/repositories
+cat > src/features/business/clients/infrastructure/persistence/repositories/client.repository.ts <<'EOF_BACKEND_IA'
+import { Injectable } from '@nestjs/common';
+import { Op } from 'sequelize';
+import {
+  buildPaginatedResult,
+  normalizePagination,
+} from '../../../../../../common/utils/pagination.util.js';
+import { Client } from '../../../domain/entities/client.entity.js';
+import {
+  ClientFindAllParams,
+  IClientRepository,
+} from '../../../domain/interfaces/client-repository.interface.js';
+import { ClientMapper } from '../../../application/mappers/client.mapper.js';
+import { ClientModel } from '../models/client.model.js';
+
+@Injectable()
+export class ClientRepository implements IClientRepository {
+  async create(client: Client): Promise<Client> {
+    const model = await ClientModel.create(
+      ClientMapper.toPersistence(client),
+    );
+    return ClientMapper.toDomain(model);
+  }
+
+  async update(client: Client): Promise<Client> {
+    await ClientModel.update(ClientMapper.toPersistence(client), {
+      where: { id: client.id },
+    });
+    const updated = await ClientModel.findByPk(client.id!);
+    return ClientMapper.toDomain(updated!);
+  }
+
+  async delete(id: number): Promise<void> {
+    await ClientModel.destroy({ where: { id } });
+  }
+
+  async findById(id: number): Promise<Client | null> {
+    const model = await ClientModel.findByPk(id);
+    return model ? ClientMapper.toDomain(model) : null;
+  }
+
+  async findByDocumento(numeroDocumento: string): Promise<Client | null> {
+    const model = await ClientModel.findOne({ where: { numeroDocumento } });
+    return model ? ClientMapper.toDomain(model) : null;
+  }
+
+  async findAll(params: ClientFindAllParams) {
+    const { page, limit, offset } = normalizePagination(
+      params.page,
+      params.limit,
+    );
+
+    const where = params.search
+      ? {
+          [Op.or]: [
+            { nombre: { [Op.like]: `%${params.search}%` } },
+            { numeroDocumento: { [Op.like]: `%${params.search}%` } },
+          ],
+        }
+      : {};
+
+    const { rows, count } = await ClientModel.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    return buildPaginatedResult(
+      rows.map((row) => ClientMapper.toDomain(row)),
+      count,
+      page,
+      limit,
+    );
+  }
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 110035.png">
 </p>
 
 --------------------------------------------------------------------------------
