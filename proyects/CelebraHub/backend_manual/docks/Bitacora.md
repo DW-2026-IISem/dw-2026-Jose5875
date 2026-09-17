@@ -4944,14 +4944,34 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 110. features/business/venues/domain/interfaces/venue-repository.interface.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/venues/domain/interfaces
+cat > src/features/business/venues/domain/interfaces/venue-repository.interface.ts <<'EOF_BACKEND_IA'
+import { PaginatedResult } from '../../../../../common/interfaces/pagination.interface.js';
+import { Venue } from '../entities/venue.entity.js';
+
+export const VENUE_REPOSITORY = 'VENUE_REPOSITORY';
+
+export interface VenueFindAllParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export interface IVenueRepository {
+  create(venue: Venue): Promise<Venue>;
+  update(venue: Venue): Promise<Venue>;
+  delete(id: number): Promise<void>;
+  findById(id: number): Promise<Venue | null>;
+  findAll(params: VenueFindAllParams): Promise<PaginatedResult<Venue>>;
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 160401.png">
 </p>
 
 --------------------------------------------------------------------------------
