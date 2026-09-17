@@ -4919,14 +4919,23 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 109. features/business/venues/domain/exceptions/venue-not-found.exception.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/venues/domain/exceptions
+cat > src/features/business/venues/domain/exceptions/venue-not-found.exception.ts <<'EOF_BACKEND_IA'
+import { EntityNotFoundException } from '../../../../../common/exceptions/entity-not-found.exception.js';
+
+export class VenueNotFoundException extends EntityNotFoundException {
+  constructor(id: number) {
+    super('Salon', id);
+  }
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 160207.png">
 </p>
 
 --------------------------------------------------------------------------------
