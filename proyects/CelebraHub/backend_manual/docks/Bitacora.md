@@ -4130,14 +4130,43 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 93. features/business/clients/infrastructure/persistence/seeders/clients.seeder.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/infrastructure/persistence/seeders
+cat > src/features/business/clients/infrastructure/persistence/seeders/clients.seeder.ts <<'EOF_BACKEND_IA'
+import { ClientModel } from '../models/client.model.js';
+
+export async function seedClients(): Promise<void> {
+  const count = await ClientModel.count();
+  if (count > 0) {
+    return;
+  }
+
+  await ClientModel.bulkCreate([
+    {
+      tipoDocumento: 'CC',
+      numeroDocumento: '1121oi876543',
+      nombre: 'María Fernanda Pérez',
+      telefono: '3011234567',
+      email: 'maria.perez@example.com',
+      isActive: true,
+    },
+    {
+      tipoDocumento: 'CC',
+      numeroDocumento: '1121876544',
+      nombre: 'Andrés Ipuana',
+      telefono: '3007654321',
+      email: 'andres.ipuana@example.com',
+      isActive: true,
+    },
+  ]);
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 110403.png">
 </p>
 
 --------------------------------------------------------------------------------
