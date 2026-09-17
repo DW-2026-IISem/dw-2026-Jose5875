@@ -4101,14 +4101,27 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 92. features/business/clients/infrastructure/persistence/migrations/create-clients-table.
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/infrastructure/persistence/migrations
+cat > src/features/business/clients/infrastructure/persistence/migrations/create-clients-table.migration.ts <<'EOF_BACKEND_IA'
+export const createClientsTableMigration = {
+  name: 'create-clients-table',
+  async up(): Promise<void> {
+    // Sequelize sync handles table creation in development.
+    // Production: CREATE TABLE clients (id, tipoDocumento, numeroDocumento UQ, nombre,
+    //   telefono, email, isActive, createdAt, updatedAt)
+  },
+  async down(): Promise<void> {
+    // Production: DROP TABLE clients
+  },
+};
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 110244.png">
 </p>
 
 --------------------------------------------------------------------------------
