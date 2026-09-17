@@ -4331,14 +4331,20 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 97.features/business/clients/application/dto/update-client.dto.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/application/dto
+cat > src/features/business/clients/application/dto/update-client.dto.ts <<'EOF_BACKEND_IA'
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateClientDto } from './create-client.dto.js';
+
+export class UpdateClientDto extends PartialType(CreateClientDto) {}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 111300.png">
 </p>
 
 --------------------------------------------------------------------------------
