@@ -5234,14 +5234,31 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 116. features/business/venues/application/dto/create-venue.dto.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/venues/application/dto
+cat > src/features/business/venues/application/dto/create-venue.dto.ts <<'EOF_BACKEND_IA'
+import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+
+export class CreateVenueDto {
+  @ApiProperty({ example: 'Salón Caribe Grand' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(150)
+  nombre: string;
+
+  @ApiPropertyOptional({ example: 'Salón principal, capacidad 300 personas.' })
+  @IsOptional()
+  @IsString()
+  descripcion?: string;
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 162612.png">
 </p>
 
 --------------------------------------------------------------------------------
