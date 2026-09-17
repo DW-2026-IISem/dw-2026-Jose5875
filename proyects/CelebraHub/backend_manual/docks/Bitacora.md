@@ -5153,14 +5153,40 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 114. features/business/venues/application/dto/venue-filter.dto.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/venues/application/dto
+cat > src/features/business/venues/application/dto/venue-filter.dto.ts <<'EOF_BACKEND_IA'
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsInt, IsOptional, IsPositive, IsString, Min } from 'class-validator';
+
+export class VenueFilterDto {
+  @ApiPropertyOptional({ example: 1, default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiPropertyOptional({ example: 10, default: 10 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  limit?: number;
+
+  @ApiPropertyOptional({ example: 'caribe' })
+  @IsOptional()
+  @IsString()
+  search?: string;
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 162159.png">
 </p>
 
 --------------------------------------------------------------------------------
