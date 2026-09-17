@@ -3945,14 +3945,61 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 90. features/business/clients/infrastructure/persistence/models/client.model.ts
+
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/infrastructure/persistence/models
+cat > src/features/business/clients/infrastructure/persistence/models/client.model.ts <<'EOF_BACKEND_IA'
+import {
+  AutoIncrement,
+  Column,
+  CreatedAt,
+  DataType,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
+
+@Table({ tableName: 'clients' })
+export class ClientModel extends Model {
+  @PrimaryKey
+  @AutoIncrement
+  @Column(DataType.INTEGER)
+  declare id: number;
+
+  @Column({ type: DataType.STRING(15), allowNull: false })
+  declare tipoDocumento: string;
+
+  @Column({ type: DataType.STRING(20), allowNull: false, unique: true })
+  declare numeroDocumento: string;
+
+  @Column({ type: DataType.STRING(200), allowNull: false })
+  declare nombre: string;
+
+  @Column({ type: DataType.STRING(20), allowNull: false })
+  declare telefono: string;
+
+  @Column({ type: DataType.STRING(150), allowNull: false })
+  declare email: string;
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  declare isActive: boolean;
+
+  @CreatedAt
+  declare createdAt: Date;
+
+  @UpdatedAt
+  declare updatedAt: Date;
+
+  // bookings se agrega en la fase de Reserva (sección 4.24).
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 105800.png">
 </p>
 
 --------------------------------------------------------------------------------
