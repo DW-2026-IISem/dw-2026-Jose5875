@@ -4836,14 +4836,81 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 108. features/business/venues/domain/entities/venue.entity.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/venues/domain/entities
+cat > src/features/business/venues/domain/entities/venue.entity.ts <<'EOF_BACKEND_IA'
+export interface VenueProps {
+  id?: number;
+  nombre: string;
+  descripcion?: string;
+  isActive?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export class Venue {
+  id?: number;
+  nombre: string;
+  descripcion?: string;
+  isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+
+  private constructor(props: VenueProps) {
+    this.id = props.id;
+    this.nombre = props.nombre;
+    this.descripcion = props.descripcion;
+    this.isActive = props.isActive ?? true;
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
+  }
+
+  static create(
+    props: Omit<VenueProps, 'id' | 'isActive' | 'createdAt' | 'updatedAt'>,
+  ): Venue {
+    if (!props.nombre?.trim()) {
+      throw new Error('El nombre del salón es requerido');
+    }
+
+    return new Venue(props);
+  }
+
+  static reconstitute(props: VenueProps): Venue {
+    return new Venue(props);
+  }
+
+  update(
+    props: Partial<
+      Omit<VenueProps, 'id' | 'isActive' | 'createdAt' | 'updatedAt'>
+    >,
+  ): void {
+    if (props.nombre !== undefined) {
+      if (!props.nombre.trim()) {
+        throw new Error('El nombre del salón es requerido');
+      }
+      this.nombre = props.nombre;
+    }
+
+    if (props.descripcion !== undefined) {
+      this.descripcion = props.descripcion;
+    }
+  }
+
+  deactivate(): void {
+    this.isActive = false;
+  }
+
+  activate(): void {
+    this.isActive = true;
+  }
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 160024.png">
 </p>
 
 --------------------------------------------------------------------------------
