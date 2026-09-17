@@ -3894,14 +3894,26 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 88. features/business/clients/domain/validators/client-document.validator.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/domain/validators
+cat > src/features/business/clients/domain/validators/client-document.validator.ts <<'EOF_BACKEND_IA'
+export const VALID_DOCUMENT_TYPES = ['CC', 'CE', 'TI', 'NIT', 'PASAPORTE'] as const;
+
+export function isValidDocumentType(tipoDocumento: string): boolean {
+  return (VALID_DOCUMENT_TYPES as readonly string[]).includes(tipoDocumento);
+}
+
+export function isValidDocumentNumber(numeroDocumento: string): boolean {
+  const documentRegex = /^[A-Za-z0-9-]{5,20}$/;
+  return documentRegex.test(numeroDocumento?.trim() ?? '');
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 104811.png"> 
 </p>
 
 --------------------------------------------------------------------------------
