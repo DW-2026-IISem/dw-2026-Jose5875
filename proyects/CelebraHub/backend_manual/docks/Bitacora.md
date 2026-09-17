@@ -1171,9 +1171,9 @@ v------------------------------------------------------------------------
 ``` bash
 mkdir -p src/config/swagger
 cat > src/config/swagger/swagger.constants.ts <<'EOF_BACKEND_IA'
-export const SWAGGER_TITLE = 'EnlaceExpress API';
+export const SWAGGER_TITLE = 'CelebraHub API';
 export const SWAGGER_DESCRIPTION =
-  'API de mensajería corporativa EnlaceExpress: envíos, tracking, tarifas y facturación (Clean Architecture / DDD sobre NestJS + Sequelize, multi-motor)';
+  'API: envíos, tracking, tarifas y facturación (Clean Architecture / DDD sobre NestJS + Sequelize, multi-motor)';
 export const SWAGGER_VERSION = '1.0';
 export const SWAGGER_PATH = 'api/docs';
 EOF_BACKEND_IA
@@ -3651,20 +3651,14 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 60. features/business/suppliers/domain/validators/provider-email.validator.ts
+## 83. Verificar tabla física `companies` y API
 
 ``` bash
-mkdir -p src/features/business/suppliers/domain/validators
-cat > src/features/business/suppliers/domain/validators/provider-email.validator.ts <<'EOF_BACKEND_IA'
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
-}
-EOF_BACKEND_IA
+npm run start:dev
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 144631.png">
+  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
 </p>
 
 --------------------------------------------------------------------------------

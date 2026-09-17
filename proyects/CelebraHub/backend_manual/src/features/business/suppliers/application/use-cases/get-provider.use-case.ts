@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ProviderNotFoundException } from '../../domain/exceptions/provider-not-found.exception';
+import { ProviderNotFoundException } from '../../domain/exceptions/provider-not-found.exception.js';
 import {
   PROVIDER_REPOSITORY,
   type IProviderRepository,
-} from '../../domain/interfaces/provider-repository.interface';
-import { ProviderMapper } from '../mappers/provider.mapper';
+} from '../../domain/interfaces/provider-repository.interface.js';
+import { ProviderMapper } from '../mappers/provider.mapper.js';
 
 @Injectable()
 export class GetProviderUseCase {

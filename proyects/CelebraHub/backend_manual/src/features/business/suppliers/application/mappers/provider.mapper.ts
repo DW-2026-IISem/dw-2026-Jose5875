@@ -1,6 +1,6 @@
-import { Provider } from '../../domain/entities/provider.entity';
-import { ProviderResponseDto } from '../dto/provider-response.dto';
-import { ProviderModel } from '../../infrastructure/persistence/models/provider.model';
+import { Provider } from '../../domain/entities/provider.entity.js';
+import { ProviderResponseDto } from '../dto/provider-response.dto.js';
+import { ProviderModel } from '../../infrastructure/persistence/models/provider.model.js';
 
 export class ProviderMapper {
   static toDomain(model: ProviderModel): Provider {

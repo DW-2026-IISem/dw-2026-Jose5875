@@ -17,16 +17,16 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { ParsePositiveIntPipe } from '../../../../../../common/pipes/parse-positive-int.pipe';
-import { CreateProviderDto } from '../../../application/dto/create-provider.dto';
-import { UpdateProviderDto } from '../../../application/dto/update-provider.dto';
-import { ProviderFilterDto } from '../../../application/dto/provider-filter.dto';
-import { ProviderResponseDto } from '../../../application/dto/provider-response.dto';
-import { CreateProviderUseCase } from '../../../application/use-cases/create-provider.use-case';
-import { UpdateProviderUseCase } from '../../../application/use-cases/update-provider.use-case';
-import { DeleteProviderUseCase } from '../../../application/use-cases/delete-provider.use-case';
-import { GetProviderUseCase } from '../../../application/use-cases/get-provider.use-case';
-import { ListProvidersUseCase } from '../../../application/use-cases/list-providers.use-case';
+import { ParsePositiveIntPipe } from '../../../../../../common/pipes/parse-positive-int.pipe.js';
+import { CreateProviderDto } from '../../../application/dto/create-provider.dto.js';
+import { UpdateProviderDto } from '../../../application/dto/update-provider.dto.js';
+import { ProviderFilterDto } from '../../../application/dto/provider-filter.dto.js';
+import { ProviderResponseDto } from '../../../application/dto/provider-response.dto.js';
+import { CreateProviderUseCase } from '../../../application/use-cases/create-provider.use-case.js';
+import { UpdateProviderUseCase } from '../../../application/use-cases/update-provider.use-case.js';
+import { DeleteProviderUseCase } from '../../../application/use-cases/delete-provider.use-case.js';
+import { GetProviderUseCase } from '../../../application/use-cases/get-provider.use-case.js';
+import { ListProvidersUseCase } from '../../../application/use-cases/list-providers.use-case.js';
 
 @ApiTags('Providers')
 @Controller('providers')

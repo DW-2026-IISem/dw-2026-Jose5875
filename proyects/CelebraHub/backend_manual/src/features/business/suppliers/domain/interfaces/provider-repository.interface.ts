@@ -1,5 +1,5 @@
-import { PaginatedResult } from '../../../../../common/interfaces/pagination.interface';
-import { Provider } from '../entities/provider.entity';
+import { PaginatedResult } from '../../../../../common/interfaces/pagination.interface.js';
+import { Provider } from '../entities/provider.entity.js';
 
 export const PROVIDER_REPOSITORY = 'PROVIDER_REPOSITORY';
 

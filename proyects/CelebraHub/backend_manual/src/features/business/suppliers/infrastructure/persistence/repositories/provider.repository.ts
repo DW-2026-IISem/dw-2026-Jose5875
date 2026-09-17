@@ -3,14 +3,14 @@ import { Op } from 'sequelize';
 import {
   buildPaginatedResult,
   normalizePagination,
-} from '../../../../../../common/utils/pagination.util';
-import { Provider } from '../../../domain/entities/provider.entity';
+} from '../../../../../../common/utils/pagination.util.js';
+import { Provider } from '../../../domain/entities/provider.entity.js';
 import {
   ProviderFindAllParams,
   IProviderRepository,
-} from '../../../domain/interfaces/provider-repository.interface';
-import { ProviderMapper } from '../../../application/mappers/provider.mapper';
-import { ProviderModel } from '../models/provider.model';
+} from '../../../domain/interfaces/provider-repository.interface.js';
+import { ProviderMapper } from '../../../application/mappers/provider.mapper.js';
+import { ProviderModel } from '../models/provider.model.js';
 
 @Injectable()
 export class ProviderRepository implements IProviderRepository {

@@ -1,5 +1,5 @@
-import { isValidNit } from '../validators/provider-nit.validator';
-import { isValidEmail } from '../validators/provider-email.validator';
+import { isValidNit } from '../validators/provider-nit.validator.js';
+import { isValidEmail } from '../validators/provider-email.validator.js';
 
 export interface ProviderProps {
   id?: number;

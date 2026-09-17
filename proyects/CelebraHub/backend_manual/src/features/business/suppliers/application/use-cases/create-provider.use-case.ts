@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ProviderNitAlreadyExistsException } from '../../domain/exceptions/provider-nit-already-exists.exception';
-import { Provider } from '../../domain/entities/provider.entity';
+import { ProviderNitAlreadyExistsException } from '../../domain/exceptions/provider-nit-already-exists.exception.js';
+import { Provider } from '../../domain/entities/provider.entity.js';
 import {
   PROVIDER_REPOSITORY,
   type IProviderRepository,
-} from '../../domain/interfaces/provider-repository.interface';
-import { CreateProviderDto } from '../dto/create-provider.dto';
-import { ProviderMapper } from '../mappers/provider.mapper';
+} from '../../domain/interfaces/provider-repository.interface.js';
+import { CreateProviderDto } from '../dto/create-provider.dto.js';
+import { ProviderMapper } from '../mappers/provider.mapper.js';
 
 @Injectable()
 export class CreateProviderUseCase {

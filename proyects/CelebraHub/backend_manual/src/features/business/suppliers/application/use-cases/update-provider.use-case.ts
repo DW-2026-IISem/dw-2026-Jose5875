@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ProviderNitAlreadyExistsException } from '../../domain/exceptions/provider-nit-already-exists.exception';
-import { ProviderNotFoundException } from '../../domain/exceptions/provider-not-found.exception';
+import { ProviderNitAlreadyExistsException } from '../../domain/exceptions/provider-nit-already-exists.exception.js';
+import { ProviderNotFoundException } from '../../domain/exceptions/provider-not-found.exception.js';
 import {
   PROVIDER_REPOSITORY,
   type IProviderRepository,
-} from '../../domain/interfaces/provider-repository.interface';
-import { UpdateProviderDto } from '../dto/update-provider.dto';
-import { ProviderMapper } from '../mappers/provider.mapper';
+} from '../../domain/interfaces/provider-repository.interface.js';
+import { UpdateProviderDto } from '../dto/update-provider.dto.js';
+import { ProviderMapper } from '../mappers/provider.mapper.js';
 
 @Injectable()
 export class UpdateProviderUseCase {

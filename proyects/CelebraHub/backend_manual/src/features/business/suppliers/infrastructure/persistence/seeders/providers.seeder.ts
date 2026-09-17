@@ -1,4 +1,4 @@
-import { ProviderModel } from '../models/provider.model';
+import { ProviderModel } from '../models/provider.model.js';
 
 export async function seedProviders(): Promise<void> {
   const count = await ProviderModel.count();

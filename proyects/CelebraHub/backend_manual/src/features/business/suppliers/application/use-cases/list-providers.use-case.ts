@@ -2,9 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   PROVIDER_REPOSITORY,
   type IProviderRepository,
-} from '../../domain/interfaces/provider-repository.interface';
-import { ProviderFilterDto } from '../dto/provider-filter.dto';
-import { ProviderMapper } from '../mappers/provider.mapper';
+} from '../../domain/interfaces/provider-repository.interface.js';
+import { ProviderFilterDto } from '../dto/provider-filter.dto.js';
+import { ProviderMapper } from '../mappers/provider.mapper.js';
 
 @Injectable()
 export class ListProvidersUseCase {

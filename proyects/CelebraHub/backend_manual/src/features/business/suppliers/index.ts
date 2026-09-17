@@ -1,1 +1,1 @@
-export { SuppliersModule } from './suppliers.module';
+export { SuppliersModule } from './suppliers.module.js';
