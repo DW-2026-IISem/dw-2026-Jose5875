@@ -3913,7 +3913,7 @@ EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-17 104811.png"> 
+  <img src="imagenes/Captura de pantalla 2026-09-17 104811.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -3922,14 +3922,21 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 89. features/business/clients/domain/validators/client-email.validator.ts
+
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/domain/validators
+cat > src/features/business/clients/domain/validators/client-email.validator.ts <<'EOF_BACKEND_IA'
+export function isValidClientEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 105628.png">
 </p>
 
 --------------------------------------------------------------------------------
