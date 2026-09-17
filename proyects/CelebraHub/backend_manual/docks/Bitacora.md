@@ -3857,14 +3857,35 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 87. features/business/clients/domain/interfaces/client-repository.interface.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/domain/interfaces
+cat > src/features/business/clients/domain/interfaces/client-repository.interface.ts <<'EOF_BACKEND_IA'
+import { PaginatedResult } from '../../../../../common/interfaces/pagination.interface.js';
+import { Client } from '../entities/client.entity.js';
+
+export const CLIENT_REPOSITORY = 'CLIENT_REPOSITORY';
+
+export interface ClientFindAllParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export interface IClientRepository {
+  create(client: Client): Promise<Client>;
+  update(client: Client): Promise<Client>;
+  delete(id: number): Promise<void>;
+  findById(id: number): Promise<Client | null>;
+  findByDocumento(numeroDocumento: string): Promise<Client | null>;
+  findAll(params: ClientFindAllParams): Promise<PaginatedResult<Client>>;
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 104622.png">
 </p>
 
 --------------------------------------------------------------------------------
