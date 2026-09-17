@@ -4526,10 +4526,35 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 101. features/business/clients/application/use-cases/delete-client.use-case.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/application/use-cases
+cat > src/features/business/clients/application/use-cases/delete-client.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientNotFoundException } from '../../domain/exceptions/client-not-found.exception.js';
+import {
+  CLIENT_REPOSITORY,
+  type IClientRepository,
+} from '../../domain/interfaces/client-repository.interface.js';
+
+@Injectable()
+export class DeleteClientUseCase {
+  constructor(
+    @Inject(CLIENT_REPOSITORY)
+    private readonly clientRepository: IClientRepository,
+  ) {}
+
+  async execute(id: number): Promise<void> {
+    const client = await this.clientRepository.findById(id);
+    if (!client) {
+      throw new ClientNotFoundException(id);
+    }
+
+    await this.clientRepository.delete(id);
+  }
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
