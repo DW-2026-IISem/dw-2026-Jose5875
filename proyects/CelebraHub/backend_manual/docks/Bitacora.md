@@ -4609,10 +4609,35 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 103.  features/business/clients/application/use-cases/list-clients.use-case.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/application/use-cases
+cat > src/features/business/clients/application/use-cases/list-clients.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  CLIENT_REPOSITORY,
+  type IClientRepository,
+} from '../../domain/interfaces/client-repository.interface.js';
+import { ClientFilterDto } from '../dto/client-filter.dto.js';
+import { ClientMapper } from '../mappers/client.mapper.js';
+
+@Injectable()
+export class ListClientsUseCase {
+  constructor(
+    @Inject(CLIENT_REPOSITORY)
+    private readonly clientRepository: IClientRepository,
+  ) {}
+
+  async execute(filter: ClientFilterDto) {
+    const result = await this.clientRepository.findAll(filter);
+    return {
+      items: result.items.map((client) => ClientMapper.toResponse(client)),
+      meta: result.meta,
+    };
+  }
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
@@ -4625,14 +4650,25 @@ npm run start:dev
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 104. features/business/clients/presentation/http/serializers/client.serializer.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/presentation/http/serializers
+cat > src/features/business/clients/presentation/http/serializers/client.serializer.ts <<'EOF_BACKEND_IA'
+import { Client } from '../../../domain/entities/client.entity.js';
+import { ClientResponseDto } from '../../../application/dto/client-response.dto.js';
+import { ClientMapper } from '../../../application/mappers/client.mapper.js';
+
+export class ClientSerializer {
+  static serialize(entity: Client): ClientResponseDto {
+    return ClientMapper.toResponse(entity);
+  }
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 155057.png">
 </p>
 
 --------------------------------------------------------------------------------
