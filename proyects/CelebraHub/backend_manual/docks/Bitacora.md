@@ -4217,14 +4217,46 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 95. features/business/clients/application/dto/client-response.dto.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/application/dto
+cat > src/features/business/clients/application/dto/client-response.dto.ts <<'EOF_BACKEND_IA'
+import { ApiProperty } from '@nestjs/swagger';
+
+export class ClientResponseDto {
+  @ApiProperty({ example: 1 })
+  id: number;
+
+  @ApiProperty({ example: 'CC' })
+  tipoDocumento: string;
+
+  @ApiProperty({ example: '1121876543' })
+  numeroDocumento: string;
+
+  @ApiProperty({ example: 'María Fernanda Pérez' })
+  nombre: string;
+
+  @ApiProperty({ example: '3011234567' })
+  telefono: string;
+
+  @ApiProperty({ example: 'maria.perez@example.com' })
+  email: string;
+
+  @ApiProperty({ example: true })
+  isActive: boolean;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 111012.png">
 </p>
 
 --------------------------------------------------------------------------------
