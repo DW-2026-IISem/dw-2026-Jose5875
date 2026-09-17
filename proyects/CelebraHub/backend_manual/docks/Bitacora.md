@@ -5267,14 +5267,20 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 117. features/business/venues/application/dto/update-venue.dto.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/venues/application/dto
+cat > src/features/business/venues/application/dto/update-venue.dto.ts <<'EOF_BACKEND_IA'
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateVenueDto } from './create-venue.dto.js';
+
+export class UpdateVenueDto extends PartialType(CreateVenueDto) {}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 162734.png">
 </p>
 
 --------------------------------------------------------------------------------
