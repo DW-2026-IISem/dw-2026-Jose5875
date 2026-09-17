@@ -5033,14 +5033,79 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 112.  features/business/venues/infrastructure/persistence/repositories/venue.repository.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/venues/infrastructure/persistence/repositories
+cat > src/features/business/venues/infrastructure/persistence/repositories/venue.repository.ts <<'EOF_BACKEND_IA'
+import { Injectable } from '@nestjs/common';
+import { Op } from 'sequelize';
+import {
+  buildPaginatedResult,
+  normalizePagination,
+} from '../../../../../../common/utils/pagination.util.js';
+import { Venue } from '../../../domain/entities/venue.entity.js';
+import {
+  VenueFindAllParams,
+  IVenueRepository,
+} from '../../../domain/interfaces/venue-repository.interface.js';
+import { VenueMapper } from '../../../application/mappers/venue.mapper.js';
+import { VenueModel } from '../models/venue.model.js';
+
+@Injectable()
+export class VenueRepository implements IVenueRepository {
+  async create(venue: Venue): Promise<Venue> {
+    const model = await VenueModel.create(VenueMapper.toPersistence(venue));
+    return VenueMapper.toDomain(model);
+  }
+
+  async update(venue: Venue): Promise<Venue> {
+    await VenueModel.update(VenueMapper.toPersistence(venue), {
+      where: { id: venue.id },
+    });
+    const updated = await VenueModel.findByPk(venue.id!);
+    return VenueMapper.toDomain(updated!);
+  }
+
+  async delete(id: number): Promise<void> {
+    await VenueModel.destroy({ where: { id } });
+  }
+
+  async findById(id: number): Promise<Venue | null> {
+    const model = await VenueModel.findByPk(id);
+    return model ? VenueMapper.toDomain(model) : null;
+  }
+
+  async findAll(params: VenueFindAllParams) {
+    const { page, limit, offset } = normalizePagination(
+      params.page,
+      params.limit,
+    );
+
+    const where = params.search
+      ? { nombre: { [Op.like]: `%${params.search}%` } }
+      : {};
+
+    const { rows, count } = await VenueModel.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    return buildPaginatedResult(
+      rows.map((row) => VenueMapper.toDomain(row)),
+      count,
+      page,
+      limit,
+    );
+  }
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 161829.png">
 </p>
 
 --------------------------------------------------------------------------------
