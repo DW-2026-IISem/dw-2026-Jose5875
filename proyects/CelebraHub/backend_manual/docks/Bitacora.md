@@ -3807,14 +3807,23 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 85. features/business/clients/domain/exceptions/client-document-already-exists.exception.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients/domain/exceptions
+cat > src/features/business/clients/domain/exceptions/client-document-already-exists.exception.ts <<'EOF_BACKEND_IA'
+import { DomainException } from '../../../../../common/exceptions/domain.exception.js';
+
+export class ClientDocumentAlreadyExistsException extends DomainException {
+  constructor(numeroDocumento: string) {
+    super(`El documento '${numeroDocumento}' ya está registrado`);
+  }
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 104010.png">
 </p>
 
 --------------------------------------------------------------------------------
