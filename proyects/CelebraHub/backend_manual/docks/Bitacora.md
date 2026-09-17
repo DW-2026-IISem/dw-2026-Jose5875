@@ -5114,14 +5114,37 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 113. features/business/venues/infrastructure/persistence/migrations/create-venues-table.migration.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/venues/infrastructure/persistence/seeders
+cat > src/features/business/venues/infrastructure/persistence/seeders/venues.seeder.ts <<'EOF_BACKEND_IA'
+import { VenueModel } from '../models/venue.model.js';
+
+export async function seedVenues(): Promise<void> {
+  const count = await VenueModel.count();
+  if (count > 0) {
+    return;
+  }
+
+  await VenueModel.bulkCreate([
+    {
+      nombre: 'Salón Caribe Grand',
+      descripcion: 'Salón principal, capacidad 300 personas, con terraza al mar.',
+      isActive: true,
+    },
+    {
+      nombre: 'Salón Wayuu',
+      descripcion: 'Salón mediano, capacidad 120 personas, ideal para eventos íntimos.',
+      isActive: true,
+    },
+  ]);
+}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 162029.png">
 </p>
 
 --------------------------------------------------------------------------------
