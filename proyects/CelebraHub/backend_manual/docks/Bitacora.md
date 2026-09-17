@@ -4785,7 +4785,7 @@ EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 155416.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -4794,14 +4794,40 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 83. Verificar tabla física `companies` y API
+## 107. features/business/clients/clients.module.ts
 
 ``` bash
-npm run start:dev
+mkdir -p src/features/business/clients
+cat > src/features/business/clients/clients.module.ts <<'EOF_BACKEND_IA'
+import { Module } from '@nestjs/common';
+import { CLIENT_REPOSITORY } from './domain/interfaces/client-repository.interface.js';
+import { ClientRepository } from './infrastructure/persistence/repositories/client.repository.js';
+import { CreateClientUseCase } from './application/use-cases/create-client.use-case.js';
+import { UpdateClientUseCase } from './application/use-cases/update-client.use-case.js';
+import { DeleteClientUseCase } from './application/use-cases/delete-client.use-case.js';
+import { GetClientUseCase } from './application/use-cases/get-client.use-case.js';
+import { ListClientsUseCase } from './application/use-cases/list-clients.use-case.js';
+import { ClientsController } from './presentation/http/controllers/clients.controller.js';
+
+@Module({
+  controllers: [ClientsController],
+  providers: [
+    ClientRepository,
+    { provide: CLIENT_REPOSITORY, useExisting: ClientRepository },
+    CreateClientUseCase,
+    UpdateClientUseCase,
+    DeleteClientUseCase,
+    GetClientUseCase,
+    ListClientsUseCase,
+  ],
+  exports: [CLIENT_REPOSITORY],
+})
+export class ClientsModule {}
+EOF_BACKEND_IA
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-16 190141.png">
+  <img src="imagenes/Captura de pantalla 2026-09-17 155844.png">
 </p>
 
 --------------------------------------------------------------------------------
