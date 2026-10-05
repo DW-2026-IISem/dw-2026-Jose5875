@@ -1627,37 +1627,78 @@ EOF
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 28. config/swagger/swagger.config.ts
+## 28. Fase I: Business — ISS-04 — Seeders con Faker (feature + runner)
+## Seeder dentro del feature Client
 
 
 
 ``` bash
-mkdir -p src/config/swagger
-cat > src/config/swagger/swagger.config.ts <<'EOF_BACKEND_IA'
-import { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import {
-  SWAGGER_DESCRIPTION,
-  SWAGGER_PATH,
-  SWAGGER_TITLE,
-  SWAGGER_VERSION,
-} from './swagger.constants';
+cat > src/database/seeders/clientes.seeder.ts << 'EOF'
+import { faker } from "@faker-js/faker";
 
-export function setupSwagger(app: INestApplication): void {
-  const config = new DocumentBuilder()
-    .setTitle(SWAGGER_TITLE)
-    .setDescription(SWAGGER_DESCRIPTION)
-    .setVersion(SWAGGER_VERSION)
-    .build();
+import { Cliente } from "../../features/business/clientes/cliente.model";
+import { sequelize } from "../../database/db";
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup(SWAGGER_PATH, app, document);
+async function seedClientes(): Promise<void> {
+  try {
+    await sequelize.authenticate();
+
+    console.log("🌱 Iniciando seeder de clientes...");
+
+    const clientes = [];
+
+    for (let i = 0; i < 10; i++) {
+      clientes.push({
+        tipo_documento: faker.helpers.arrayElement([
+          "CC",
+          "CE",
+          "TI",
+          "NIT"
+        ]),
+
+        numero_documento:
+          faker.string.numeric(10),
+
+        nombre:
+          faker.person.fullName(),
+
+        telefono:
+          faker.phone.number(),
+
+        email:
+          faker.internet.email(),
+
+        is_active: true
+      });
+    }
+
+    await Cliente.bulkCreate(clientes);
+
+    console.log(
+      `✅ Se crearon ${clientes.length} clientes correctamente`
+    );
+
+  } catch (error) {
+
+    console.error(
+      "❌ Error ejecutando seeder de clientes:",
+      error
+    );
+
+    process.exit(1);
+
+  } finally {
+
+    await sequelize.close();
+  }
 }
-EOF_BACKEND_IA
+
+seedClientes();
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 213629.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 130030.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -1666,22 +1707,77 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 29. common/enums/status.enum.ts
+## 29. SeedersRunner + conteos por entidad (database/seeders)
+## Conteos
 
 
 
 ``` bash
-mkdir -p src/common/enums
-cat > src/common/enums/status.enum.ts <<'EOF_BACKEND_IA'
-export enum Status {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
+cat >> src/database/seeders/counts.ts << 'EOF'
+/**
+ * Cantidad de registros por feature/entidad.
+ * Prioridad: CLI (--clientes=N) > env (SEED_CLIENTES) > default.
+ *
+ * Cuando agreguemos nuevas entidades de CelebraHub,
+ * las incorporaremos aquí.
+ */
+export type SeedCounts = {
+  clientes: number;
+  // usuarios?: number;
+  // roles?: number;
+  // salones?: number;
+  // servicios?: number;
+  // proveedores?: number;
+  // reservas?: number;
+  // eventos?: number;
+  // contratos?: number;
+  // pagos?: number;
+};
+
+export const DEFAULT_SEED_COUNTS: SeedCounts = {
+  clientes: 10,
+};
+
+export function resolveSeedCounts(
+  argv: string[] = process.argv.slice(2)
+): SeedCounts {
+  const counts: SeedCounts = {
+    ...DEFAULT_SEED_COUNTS
+  };
+
+  const envClientes = process.env.SEED_CLIENTES;
+
+  if (
+    envClientes !== undefined &&
+    envClientes !== ""
+  ) {
+    counts.clientes = Number(envClientes);
+  }
+
+  for (const arg of argv) {
+    const m = arg.match(
+      /^--([a-zA-Z_]+)=(\d+)$/
+    );
+
+    if (!m) continue;
+
+    const key =
+      m[1] as keyof SeedCounts;
+
+    const value = Number(m[2]);
+
+    if (key in counts) {
+      counts[key] = value;
+    }
+  }
+
+  return counts;
 }
-EOF_BACKEND_IA
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 213909.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 130526.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -1690,23 +1786,64 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 30. common/enums/http-method.enum.ts
+## 30. 9.2.2 Runner
 
 ``` bash
-mkdir -p src/common/enums
-cat > src/common/enums/http-method.enum.ts <<'EOF_BACKEND_IA'
-export enum HttpMethod {
-  GET = 'GET',
-  POST = 'POST',
-  PUT = 'PUT',
-  PATCH = 'PATCH',
-  DELETE = 'DELETE',
+cat >> src/database/seeders/index.ts << 'EOF'
+import dotenv from "dotenv";
+import { sequelize, testConnection } from "../db";
+import "../../features/business/clients/client.model";
+import { seedClients } from "../../features/business/clients/client.seeder";
+import { resolveSeedCounts } from "./counts";
+
+dotenv.config();
+
+/**
+ * SeedersRunner — ejecuta TODOS los seeders de features.
+ *
+ * Ubicación: `src/database/seeders/` (orquestación fuera de cada feature).
+ * Cada feature exporta su seeder (ej. `features/business/clients/clients.seeder.ts`).
+ *
+ * Uso:
+ *   npm run db:seed
+ *   npm run db:seed -- --clients=20
+ *   SEED_CLIENTS=5 npm run db:seed
+ */
+export async function runAllSeeders(): Promise<void> {
+  const counts = resolveSeedCounts();
+  console.log("🌱 Iniciando SeedersRunner...");
+  console.log("📊 Conteos:", counts);
+
+  const ok = await testConnection();
+  if (!ok) {
+    throw new Error("No hay conexión a la base de datos");
+  }
+
+  await sequelize.sync({ force: false, alter: true });
+
+  // Orden: business (padres → hijos)
+  await seedClients(counts.clients);
+
+  console.log("🌱 SeedersRunner finalizado");
 }
-EOF_BACKEND_IA
+
+if (require.main === module) {
+  runAllSeeders()
+    .then(async () => {
+      await sequelize.close();
+      process.exit(0);
+    })
+    .catch(async (err) => {
+      console.error("❌ Error en seeders:", err);
+      await sequelize.close();
+      process.exit(1);
+    });
+}
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 214520.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 132605.png">
 </p>
 
 --------------------------------------------------------------------------------
