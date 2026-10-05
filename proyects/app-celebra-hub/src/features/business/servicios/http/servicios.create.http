@@ -1,0 +1,12 @@
+### CelebraHub - Servicios - CREATE
+
+@baseUrl = http://localhost:4000
+
+### Crear un servicio
+POST {{baseUrl}}/api/servicios
+Content-Type: application/json
+
+{
+  "nombre": "Decoración para eventos",
+  "descripcion": "Decoración temática para celebraciones"
+}

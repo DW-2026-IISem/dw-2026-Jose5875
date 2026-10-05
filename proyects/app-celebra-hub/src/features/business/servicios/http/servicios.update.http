@@ -1,0 +1,23 @@
+### CelebraHub - Servicios - UPDATE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Actualización completa con PUT
+PUT {{baseUrl}}/api/servicios/{{id}}
+Content-Type: application/json
+
+{
+  "nombre": "Decoración integral para eventos",
+  "descripcion": "Servicio completo de decoración para celebraciones"
+}
+
+###
+
+### Actualización parcial con PATCH
+PATCH {{baseUrl}}/api/servicios/{{id}}
+Content-Type: application/json
+
+{
+  "descripcion": "Decoración personalizada para eventos"
+}

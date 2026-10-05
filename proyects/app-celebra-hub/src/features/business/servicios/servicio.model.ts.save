@@ -1,0 +1,45 @@
+import { DataTypes, Model } from "sequelize";
+import { sequelize } from "../../../database/db";
+
+export interface ServicioI {
+  id?: number;
+  nombre: string;
+  descripcion?: string | null;
+  is_active: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export class Servicio extends Model {
+  public id!: number;
+  public nombre!: string;
+  public descripcion!: string | null;
+  public is_active!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Servicio.init(
+  {
+    nombre: {
+      type: DataTypes.STRING(150),
+      allowNull: false,
+    },
+
+    descripcion: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+  },
+  {
+    sequelize,
+    modelName: "Servicio",
+    tableName: "servicios",
+   
+

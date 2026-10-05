@@ -1,0 +1,12 @@
+### CelebraHub - Servicios - GET
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Obtener todos los servicios activos
+GET {{baseUrl}}/api/servicios
+
+###
+
+### Obtener un servicio por ID
+GET {{baseUrl}}/api/servicios/{{id}}

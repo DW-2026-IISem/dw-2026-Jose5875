@@ -2403,232 +2403,479 @@ v------------------------------------------------------------------------
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 34. common/exceptions/application.exception.ts
+## 34. Fase I: Business — ISS-06 — Feature ProductType (tipos de producto)
+
 
 
 ``` bash
-mkdir -p src/common/exceptions
-cat > src/common/exceptions/application.exception.ts <<'EOF_BACKEND_IA'
-export class ApplicationException extends Error {
-  public readonly timestamp: string;
 
-  constructor(
-    public readonly message: string,
-    public readonly statusCode: number = 500,
+cat > src/features/business/servicios/dto/create-servicio.dto.ts <<'EOF'
+export interface CreateServicioDto {
+  nombre: string;
+  descripcion?: string | null;
+}
+EOF
+
+cat > src/features/business/servicios/dto/update-servicio.dto.ts <<'EOF'
+export interface UpdateServicioDto {
+  nombre: string;
+  descripcion?: string | null;
+}
+EOF
+
+cat > src/features/business/servicios/dto/patch-servicio.dto.ts <<'EOF'
+import { UpdateServicioDto } from "./update-servicio.dto";
+
+export type PatchServicioDto = Partial<UpdateServicioDto>;
+EOF
+
+cat > src/features/business/servicios/dto/servicio-response.dto.ts <<'EOF'
+import { Servicio, ServicioI } from "../servicio.model";
+
+export type ServicioResponseDto = ServicioI;
+
+export function toServicioResponse(
+  servicio: Servicio
+): ServicioResponseDto {
+  return servicio.toJSON() as ServicioResponseDto;
+}
+EOF
+
+cat > src/features/business/servicios/dto/index.ts <<'EOF'
+export * from "./create-servicio.dto";
+export * from "./update-servicio.dto";
+export * from "./patch-servicio.dto";
+export * from "./servicio-response.dto";
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 143132.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 35. Repository
+
+
+
+``` bash
+cat > src/features/business/servicios/servicios.repository.ts <<'EOF'
+import { CreationAttributes } from "sequelize";
+import { Servicio, ServicioI } from "./servicio.model";
+
+export class ServiciosRepository {
+
+  public async findAllActive(): Promise<Servicio[]> {
+    return Servicio.findAll({
+      where: {
+        is_active: true
+      }
+    });
+  }
+
+  public async findById(
+    id: number
+  ): Promise<Servicio | null> {
+    return Servicio.findByPk(id);
+  }
+
+  public async create(
+    data: CreationAttributes<Servicio>
+  ): Promise<Servicio> {
+    return Servicio.create(data);
+  }
+
+  public async update(
+    servicio: Servicio,
+    data: Partial<ServicioI>
+  ): Promise<Servicio> {
+    return servicio.update(data);
+  }
+
+  public async delete(
+    servicio: Servicio
+  ): Promise<void> {
+    await servicio.destroy();
+  }
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 143320.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 36. Service
+
+
+
+``` bash
+cat > src/features/business/servicios/servicios.service.ts <<'EOF'
+import {
+  CreateServicioDto,
+  PatchServicioDto,
+  ServicioResponseDto,
+  UpdateServicioDto,
+  toServicioResponse
+} from "./dto";
+
+import { ServiciosRepository } from "./servicios.repository";
+import { Servicio } from "./servicio.model";
+
+import { AppError } from "../../../shared/errors/app-error";
+
+export class ServiciosService {
+
+  public constructor(
+    private readonly repository: ServiciosRepository =
+      new ServiciosRepository()
+  ) {}
+
+  // ================== READ ==================
+
+  public async getAll(): Promise<ServicioResponseDto[]> {
+
+    const servicios =
+      await this.repository.findAllActive();
+
+    return servicios.map(
+      (servicio) =>
+        toServicioResponse(servicio)
+    );
+  }
+
+  public async getOne(
+    id: number
+  ): Promise<ServicioResponseDto> {
+
+    return toServicioResponse(
+      await this.findOrFail(id)
+    );
+  }
+
+  // ================== CREATE ==================
+
+  public async create(
+    body: CreateServicioDto
+  ): Promise<ServicioResponseDto> {
+
+    const servicio =
+      await this.repository.create({
+        nombre: body.nombre,
+        descripcion:
+          body.descripcion ?? null,
+        is_active: true
+      });
+
+    return toServicioResponse(servicio);
+  }
+
+  // ================== UPDATE ==================
+
+  public async updatePut(
+    id: number,
+    body: UpdateServicioDto
+  ): Promise<ServicioResponseDto> {
+
+    const servicio =
+      await this.findOrFail(id);
+
+    await this.repository.update(
+      servicio,
+      {
+        nombre: body.nombre,
+        descripcion:
+          body.descripcion ?? null
+      }
+    );
+
+    return toServicioResponse(servicio);
+  }
+
+  public async updatePatch(
+    id: number,
+    body: PatchServicioDto
+  ): Promise<ServicioResponseDto> {
+
+    const servicio =
+      await this.findOrFail(id);
+
+    await this.repository.update(
+      servicio,
+      body
+    );
+
+    return toServicioResponse(servicio);
+  }
+
+  // ================== DELETE ==================
+
+  public async deletePhysical(
+    id: number
+  ): Promise<void> {
+
+    const servicio =
+      await this.findOrFail(id, false);
+
+    await this.repository.delete(servicio);
+  }
+
+  public async deleteLogical(
+    id: number
+  ): Promise<ServicioResponseDto> {
+
+    const servicio =
+      await this.findOrFail(id);
+
+    await this.repository.update(
+      servicio,
+      {
+        is_active: false
+      }
+    );
+
+    return toServicioResponse(servicio);
+  }
+
+  // ================== HELPERS ==================
+
+  private async findOrFail(
+    id: number,
+    onlyActive = true
+  ): Promise<Servicio> {
+
+    const servicio =
+      await this.repository.findById(id);
+
+    if (
+      !servicio ||
+      (onlyActive && !servicio.is_active)
+    ) {
+      throw new AppError(
+        404,
+        "Servicio no encontrado"
+      );
+    }
+
+    return servicio;
+  }
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 143430.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 37. Controller
+
+
+
+``` bash
+cat > src/features/business/servicios/servicios.controller.ts <<'EOF'
+import { Request, Response } from "express";
+
+import { BaseController } from "../../../shared/http/base-controller";
+
+import {
+  CreateServicioDto,
+  PatchServicioDto,
+  UpdateServicioDto
+} from "./dto";
+
+import { ServiciosService } from "./servicios.service";
+
+export class ServiciosController
+  extends BaseController {
+
+  public constructor(
+    private readonly service: ServiciosService =
+      new ServiciosService()
   ) {
-    super(message);
-    this.timestamp = new Date().toISOString();
-    Error.captureStackTrace(this, this.constructor);
+    super();
+  }
+
+  // ================== READ ==================
+
+  public async getAll(
+    _req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const servicios =
+          await this.service.getAll();
+
+        res.status(200).json({
+          servicios
+        });
+      }
+    );
+  }
+
+  public async getOne(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const servicio =
+          await this.service.getOne(
+            this.paramId(req)
+          );
+
+        res.status(200).json({
+          servicio
+        });
+      }
+    );
+  }
+
+  // ================== CREATE ==================
+
+  public async create(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const servicio =
+          await this.service.create(
+            req.body as CreateServicioDto
+          );
+
+        res.status(201).json({
+          servicio
+        });
+      }
+    );
+  }
+
+  // ================== UPDATE ==================
+
+  public async updatePut(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const servicio =
+          await this.service.updatePut(
+            this.paramId(req),
+            req.body as UpdateServicioDto
+          );
+
+        res.status(200).json({
+          servicio
+        });
+      }
+    );
+  }
+
+  public async updatePatch(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const servicio =
+          await this.service.updatePatch(
+            this.paramId(req),
+            req.body as PatchServicioDto
+          );
+
+        res.status(200).json({
+          servicio
+        });
+      }
+    );
+  }
+
+  // ================== DELETE ==================
+
+  public async deletePhysical(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const id =
+          this.paramId(req);
+
+        await this.service.deletePhysical(id);
+
+        res.status(200).json({
+          message:
+            "Servicio eliminado permanentemente",
+          id
+        });
+      }
+    );
+  }
+
+  public async deleteLogical(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const servicio =
+          await this.service.deleteLogical(
+            this.paramId(req)
+          );
+
+        res.status(200).json({
+          message:
+            "Servicio desactivado correctamente",
+          servicio
+        });
+      }
+    );
   }
 }
-EOF_BACKEND_IA
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 224211.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
-------------------------------------------------------------------------
-
-## 35. common/exceptions/domain.exception.ts
-
-
-
-``` bash
-mkdir -p src/common/exceptions
-cat > src/common/exceptions/domain.exception.ts <<'EOF_BACKEND_IA'
-import { ApplicationException } from './application.exception';
-
-export class DomainException extends ApplicationException {
-  constructor(message: string) {
-    super(message, 400);
-  }
-}
-EOF_BACKEND_IA
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 224539.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
-v------------------------------------------------------------------------
-
-## 36. common/exceptions/entity-not-found.exception.ts
-
-
-
-``` bash
-mkdir -p src/common/exceptions
-cat > src/common/exceptions/entity-not-found.exception.ts <<'EOF_BACKEND_IA'
-import { ApplicationException } from './application.exception';
-
-export class EntityNotFoundException extends ApplicationException {
-  constructor(entityName: string, identifier: string | number) {
-    super(`${entityName} con ID ${identifier} no encontrado`, 404);
-  }
-}
-EOF_BACKEND_IA
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 224916.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
-v------------------------------------------------------------------------
-
-## 37. common/exceptions/validation.exception.ts
-
-
-
-``` bash
-mkdir -p src/common/exceptions
-cat > src/common/exceptions/validation.exception.ts <<'EOF_BACKEND_IA'
-import { ApplicationException } from './application.exception';
-
-export class ValidationException extends ApplicationException {
-  constructor(message: string = 'Error de validación') {
-    super(message, 422);
-  }
-}
-EOF_BACKEND_IA
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 225250.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
-v------------------------------------------------------------------------
-
-## 38. common/filters/global-exception.filter.ts
-
-
-
-``` bash
-mkdir -p src/common/filters
-cat > src/common/filters/global-exception.filter.ts <<'EOF_BACKEND_IA'
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
-import { ApplicationException } from '../exceptions/application.exception';
-
-@Catch()
-export class GlobalExceptionFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost): void {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
-
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: string | string[] = 'Error interno del servidor';
-
-    if (exception instanceof ApplicationException) {
-      status = exception.statusCode;
-      message = exception.message;
-    } else if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      const res = exception.getResponse();
-      message = typeof res === 'string' ? res : (res as any).message;
-    }
-
-    response.status(status).json({
-      statusCode: status,
-      message,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-    });
-  }
-}
-EOF_BACKEND_IA
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 225519.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
-v------------------------------------------------------------------------
-
-## 39. common/filters/sequelize-exception.filter.ts
-
-
-
-``` bash
-mkdir -p src/common/filters
-cat > src/common/filters/sequelize-exception.filter.ts <<'EOF_BACKEND_IA'
-import { ExceptionFilter, Catch, ArgumentsHost } from '@nestjs/common';
-import { Response } from 'express';
-
-@Catch()
-export class SequelizeExceptionFilter implements ExceptionFilter {
-  catch(exception: any, host: ArgumentsHost): void {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-
-    const sequelizeErrors = [
-      'SequelizeUniqueConstraintError',
-      'SequelizeForeignKeyConstraintError',
-      'SequelizeConnectionError',
-      'SequelizeValidationError',
-      'SequelizeDatabaseError',
-    ];
-
-    if (!exception?.name || !sequelizeErrors.includes(exception.name)) {
-      throw exception;
-    }
-
-    let status = 500;
-    let message = 'Error de base de datos';
-
-    if (exception.name === 'SequelizeUniqueConstraintError') {
-      status = 409;
-      message = 'El recurso ya existe (violación de unicidad)';
-    } else if (exception.name === 'SequelizeForeignKeyConstraintError') {
-      status = 400;
-      message = 'Violación de clave foránea';
-    } else if (exception.name === 'SequelizeConnectionError') {
-      status = 503;
-      message = 'No se pudo conectar a la base de datos';
-    } else if (exception.name === 'SequelizeValidationError') {
-      status = 422;
-      message = exception.message || 'Error de validación en base de datos';
-    }
-
-    response.status(status).json({
-      statusCode: status,
-      message,
-      timestamp: new Date().toISOString(),
-    });
-  }
-}
-EOF_BACKEND_IA
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 225757.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 143620.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -2637,55 +2884,186 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 40. common/interceptors/response.interceptor.ts
+## 38. Routers
 
 
 
 ``` bash
-mkdir -p src/common/interceptors
-cat > src/common/interceptors/response.interceptor.ts <<'EOF_BACKEND_IA'
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+cat > src/features/business/servicios/servicios.routes.ts <<'EOF'
+import { Application } from "express";
 
-export interface ApiResponse<T> {
-  statusCode: number;
-  message: string;
-  data: T;
-  timestamp: string;
+import { ServiciosController } from "./servicios.controller";
+
+export class ServiciosRoutes {
+
+  public serviciosController:
+    ServiciosController =
+      new ServiciosController();
+
+  public routes(
+    app: Application
+  ): void {
+
+    // ================== GET ALL ==================
+
+    app
+      .route("/api/servicios")
+      .get(
+        this.serviciosController.getAll.bind(
+          this.serviciosController
+        )
+      );
+
+    // ================== GET ONE ==================
+
+    app
+      .route("/api/servicios/:id")
+      .get(
+        this.serviciosController.getOne.bind(
+          this.serviciosController
+        )
+      );
+
+    // ================== CREATE ==================
+
+    app
+      .route("/api/servicios")
+      .post(
+        this.serviciosController.create.bind(
+          this.serviciosController
+        )
+      );
+
+    // ================== UPDATE ==================
+
+    app
+      .route("/api/servicios/:id")
+      .put(
+        this.serviciosController.updatePut.bind(
+          this.serviciosController
+        )
+      )
+      .patch(
+        this.serviciosController.updatePatch.bind(
+          this.serviciosController
+        )
+      );
+
+    // ================== DELETE FÍSICO ==================
+
+    app
+      .route("/api/servicios/:id")
+      .delete(
+        this.serviciosController.deletePhysical.bind(
+          this.serviciosController
+        )
+      );
+
+    // ================== DELETE LÓGICO ==================
+
+    app
+      .route("/api/servicios/:id/deactivate")
+      .patch(
+        this.serviciosController.deleteLogical.bind(
+          this.serviciosController
+        )
+      );
+  }
 }
+EOF
+```
 
-@Injectable()
-export class ResponseInterceptor<T>
-  implements NestInterceptor<T, ApiResponse<T>>
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 144137.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 39. 11.3 HTTP (REST Client)
+
+
+``` bash
+cat > src/features/business/servicios/http/servicios.get.http <<'EOF'
+### CelebraHub - Servicios - GET
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Obtener todos los servicios activos
+GET {{baseUrl}}/api/servicios
+
+###
+
+### Obtener un servicio por ID
+GET {{baseUrl}}/api/servicios/{{id}}
+EOF
+
+
+cat > src/features/business/servicios/http/servicios.create.http <<'EOF'
+### CelebraHub - Servicios - CREATE
+
+@baseUrl = http://localhost:4000
+
+### Crear un servicio
+POST {{baseUrl}}/api/servicios
+Content-Type: application/json
+
 {
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<ApiResponse<T>> {
-    const response = context.switchToHttp().getResponse();
-    const statusCode = response.statusCode;
-
-    return next.handle().pipe(
-      map((data) => ({
-        statusCode,
-        message: 'Operación exitosa',
-        data,
-        timestamp: new Date().toISOString(),
-      })),
-    );
-  }
+  "nombre": "Decoración para eventos",
+  "descripcion": "Decoración temática para celebraciones"
 }
-EOF_BACKEND_IA
+EOF
+
+
+cat > src/features/business/servicios/http/servicios.update.http <<'EOF'
+### CelebraHub - Servicios - UPDATE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Actualización completa con PUT
+PUT {{baseUrl}}/api/servicios/{{id}}
+Content-Type: application/json
+
+{
+  "nombre": "Decoración integral para eventos",
+  "descripcion": "Servicio completo de decoración para celebraciones"
+}
+
+###
+
+### Actualización parcial con PATCH
+PATCH {{baseUrl}}/api/servicios/{{id}}
+Content-Type: application/json
+
+{
+  "descripcion": "Decoración personalizada para eventos"
+}
+EOF
+
+
+cat > src/features/business/servicios/http/servicios.delete.http <<'EOF'
+### CelebraHub - Servicios - DELETE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Eliminación física
+DELETE {{baseUrl}}/api/servicios/{{id}}
+
+###
+
+### Eliminación lógica
+PATCH {{baseUrl}}/api/servicios/{{id}}/deactivate
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 230108.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 145338.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -2694,46 +3072,77 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 41. common/interceptors/logging.interceptor.ts
-
-
+## 40. Seeder ProductType
 
 ``` bash
-mkdir -p src/common/interceptors
-cat > src/common/interceptors/logging.interceptor.ts <<'EOF_BACKEND_IA'
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+cat > src/features/business/servicios/servicios.seeder.ts <<'EOF'
+import { faker } from "@faker-js/faker";
+import { Servicio } from "./servicio.model";
 
-@Injectable()
-export class LoggingInterceptor implements NestInterceptor {
-  private readonly logger = new Logger('HTTP');
+/**
+ * Seeder del feature Servicio de CelebraHub.
+ * Genera servicios de prueba para el centro de eventos.
+ *
+ * Es idempotente: si ya existen servicios,
+ * no vuelve a insertar registros.
+ */
+export async function seedServicios(
+  count: number
+): Promise<number> {
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const req = context.switchToHttp().getRequest();
-    const { method, url } = req;
-    const now = Date.now();
-
-    return next.handle().pipe(
-      tap(() => {
-        const res = context.switchToHttp().getResponse();
-        const delay = Date.now() - now;
-        this.logger.log(`${method} ${url} ${res.statusCode} - ${delay}ms`);
-      }),
-    );
+  if (count <= 0) {
+    console.log("⏭️ servicios: count=0, se omite");
+    return 0;
   }
+
+  const existing =
+    await Servicio.count();
+
+  if (existing > 0) {
+    console.log(
+      `⏭️ servicios: ya hay ${existing} registro(s), se omite seeder`
+    );
+
+    return 0;
+  }
+
+  const tiposServicio = [
+    "Decoración",
+    "Catering",
+    "Mobiliario",
+    "Sonido",
+    "Iluminación",
+    "Fotografía",
+    "Animación",
+    "Organización de eventos"
+  ];
+
+  const rows = Array.from(
+    { length: count },
+    (_, index) => ({
+      nombre:
+        tiposServicio[index % tiposServicio.length],
+
+      descripcion:
+        faker.commerce.productDescription(),
+
+      is_active: true
+    })
+  );
+
+  await Servicio.bulkCreate(rows);
+
+  console.log(
+    `✅ servicios: insertados ${count} registro(s) de prueba`
+  );
+
+  return count;
 }
-EOF_BACKEND_IA
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 230600.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 151022.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -2742,42 +3151,503 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 42. common/interceptors/timeout.interceptor.ts
+## 41. 
 
 
 
 ``` bash
-mkdir -p src/common/interceptors
-cat > src/common/interceptors/timeout.interceptor.ts <<'EOF_BACKEND_IA'
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  RequestTimeoutException,
-} from '@nestjs/common';
-import { Observable, throwError, TimeoutError } from 'rxjs';
-import { catchError, timeout } from 'rxjs/operators';
+cat > src/database/seeders/counts.ts <<'EOF'
+/**
+ * Cantidad de registros por feature/entidad.
+ *
+ * Prioridad:
+ * CLI (--clientes=N, --servicios=N)
+ * > env (SEED_CLIENTES, SEED_SERVICIOS)
+ * > default
+ */
+export type SeedCounts = {
+  clientes: number;
+  servicios: number;
+};
 
-@Injectable()
-export class TimeoutInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    return next.handle().pipe(
-      timeout(30000),
-      catchError((err) => {
-        if (err instanceof TimeoutError) {
-          return throwError(() => new RequestTimeoutException());
+export const DEFAULT_SEED_COUNTS: SeedCounts = {
+  clientes: 10,
+  servicios: 10,
+};
+
+export function resolveSeedCounts(
+  argv: string[] = process.argv.slice(2)
+): SeedCounts {
+
+  const counts: SeedCounts = {
+    ...DEFAULT_SEED_COUNTS
+  };
+
+  const envClientes =
+    process.env.SEED_CLIENTES;
+
+  const envServicios =
+    process.env.SEED_SERVICIOS;
+
+  if (
+    envClientes !== undefined &&
+    envClientes !== ""
+  ) {
+    counts.clientes =
+      Number(envClientes);
+  }
+
+  if (
+    envServicios !== undefined &&
+    envServicios !== ""
+  ) {
+    counts.servicios =
+      Number(envServicios);
+  }
+
+  for (const arg of argv) {
+
+    const m = arg.match(
+      /^--([a-zA-Z_]+)=(\d+)$/
+    );
+
+    if (!m) continue;
+
+    const key =
+      m[1] as keyof SeedCounts;
+
+    const value =
+      Number(m[2]);
+
+    if (key in counts) {
+      counts[key] = value;
+    }
+  }
+
+  return counts;
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 151415.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+v------------------------------------------------------------------------
+
+## 42. Swagger ProductType
+
+
+
+``` bash
+cat > src/features/business/servicios/servicios.swagger.ts <<'EOF'
+export const serviciosSwagger = {
+
+  tags: [
+    {
+      name: "Servicios",
+      description:
+        "CRUD de servicios disponibles para eventos en CelebraHub"
+    }
+  ],
+
+  paths: {
+
+    "/api/servicios": {
+
+      get: {
+        tags: ["Servicios"],
+        summary: "Listar servicios activos",
+        responses: {
+          "200": {
+            description:
+              "Lista de servicios activos",
+
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+
+                  properties: {
+                    servicios: {
+                      type: "array",
+
+                      items: {
+                        $ref:
+                          "#/components/schemas/Servicio"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
-        return throwError(() => err);
-      }),
-    );
+      },
+
+      post: {
+        tags: ["Servicios"],
+        summary: "Crear un servicio",
+
+        requestBody: {
+          required: true,
+
+          content: {
+            "application/json": {
+              schema: {
+                $ref:
+                  "#/components/schemas/ServicioCreate"
+              }
+            }
+          }
+        },
+
+        responses: {
+          "201": {
+            description:
+              "Servicio creado correctamente",
+
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+
+                  properties: {
+                    servicio: {
+                      $ref:
+                        "#/components/schemas/Servicio"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/servicios/{id}": {
+
+      get: {
+        tags: ["Servicios"],
+        summary: "Obtener un servicio por ID",
+
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+
+            schema: {
+              type: "integer",
+              minimum: 1
+            }
+          }
+        ],
+
+        responses: {
+          "200": {
+            description:
+              "Servicio encontrado",
+
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+
+                  properties: {
+                    servicio: {
+                      $ref:
+                        "#/components/schemas/Servicio"
+                    }
+                  }
+                }
+              }
+            }
+          },
+
+          "404": {
+            description:
+              "Servicio no encontrado"
+          }
+        }
+      },
+
+      put: {
+        tags: ["Servicios"],
+        summary:
+          "Actualizar completamente un servicio",
+
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+
+            schema: {
+              type: "integer",
+              minimum: 1
+            }
+          }
+        ],
+
+        requestBody: {
+          required: true,
+
+          content: {
+            "application/json": {
+              schema: {
+                $ref:
+                  "#/components/schemas/ServicioUpdate"
+              }
+            }
+          }
+        },
+
+        responses: {
+          "200": {
+            description:
+              "Servicio actualizado"
+          },
+
+          "404": {
+            description:
+              "Servicio no encontrado"
+          }
+        }
+      },
+
+      patch: {
+        tags: ["Servicios"],
+        summary:
+          "Actualizar parcialmente un servicio",
+
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+
+            schema: {
+              type: "integer",
+              minimum: 1
+            }
+          }
+        ],
+
+        requestBody: {
+          required: true,
+
+          content: {
+            "application/json": {
+              schema: {
+                $ref:
+                  "#/components/schemas/ServicioPatch"
+              }
+            }
+          }
+        },
+
+        responses: {
+          "200": {
+            description:
+              "Servicio actualizado"
+          },
+
+          "404": {
+            description:
+              "Servicio no encontrado"
+          }
+        }
+      },
+
+      delete: {
+        tags: ["Servicios"],
+        summary:
+          "Eliminar físicamente un servicio",
+
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+
+            schema: {
+              type: "integer",
+              minimum: 1
+            }
+          }
+        ],
+
+        responses: {
+          "200": {
+            description:
+              "Servicio eliminado"
+          },
+
+          "404": {
+            description:
+              "Servicio no encontrado"
+          }
+        }
+      }
+    },
+
+    "/api/servicios/{id}/deactivate": {
+
+      patch: {
+        tags: ["Servicios"],
+        summary:
+          "Desactivar un servicio",
+
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+
+            schema: {
+              type: "integer",
+              minimum: 1
+            }
+          }
+        ],
+
+        responses: {
+          "200": {
+            description:
+              "Servicio desactivado correctamente"
+          },
+
+          "404": {
+            description:
+              "Servicio no encontrado"
+          }
+        }
+      }
+    }
+  },
+
+  components: {
+
+    schemas: {
+
+      Servicio: {
+
+        type: "object",
+
+        properties: {
+
+          id: {
+            type: "integer",
+            example: 1
+          },
+
+          nombre: {
+            type: "string",
+            example:
+              "Decoración para eventos"
+          },
+
+          descripcion: {
+            type: "string",
+            nullable: true,
+
+            example:
+              "Decoración temática para celebraciones"
+          },
+
+          is_active: {
+            type: "boolean",
+            example: true
+          },
+
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+
+      ServicioCreate: {
+
+        type: "object",
+
+        required: [
+          "nombre"
+        ],
+
+        properties: {
+
+          nombre: {
+            type: "string",
+            example:
+              "Catering"
+          },
+
+          descripcion: {
+            type: "string",
+
+            example:
+              "Servicio de alimentación para eventos"
+          }
+        }
+      },
+
+      ServicioUpdate: {
+
+        type: "object",
+
+        required: [
+          "nombre"
+        ],
+
+        properties: {
+
+          nombre: {
+            type: "string"
+          },
+
+          descripcion: {
+            type: "string",
+            nullable: true
+          }
+        }
+      },
+
+      ServicioPatch: {
+
+        type: "object",
+
+        properties: {
+
+          nombre: {
+            type: "string"
+          },
+
+          descripcion: {
+            type: "string",
+            nullable: true
+          }
+        }
+      }
+    }
   }
-}
-EOF_BACKEND_IA
+};
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 230809.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 151904.png">
 </p>
 
 --------------------------------------------------------------------------------

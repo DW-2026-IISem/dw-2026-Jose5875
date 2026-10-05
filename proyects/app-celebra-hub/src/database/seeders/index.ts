@@ -11,6 +11,12 @@ import {
   seedClientes
 } from "../../features/business/clientes/clientes.seeder";
 
+import "../../features/business/servicios/servicio.model";
+
+import {
+  seedServicios
+} from "../../features/business/servicios/servicios.seeder";
+
 import {
   resolveSeedCounts
 } from "./counts";
@@ -43,6 +49,8 @@ export async function runAllSeeders(): Promise<void> {
 
   // Orden: business (padres → hijos)
   await seedClientes(counts.clientes);
+
+  await seedServicios(counts.servicios);
 
   console.log("🌱 SeedersRunner finalizado");
 }

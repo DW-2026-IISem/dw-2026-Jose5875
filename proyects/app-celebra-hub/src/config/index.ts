@@ -14,6 +14,7 @@ import {
 
 
 import "../features/business/clientes/cliente.model";
+import "../features/business/servicios/servicio.model";
 
 import { Routes } from "../routes/index";
 import { setupSwagger } from "../swagger/index";
@@ -72,30 +73,34 @@ export class App {
       morgan("dev")
     );
   }
+private routes(): void {
 
-  private routes(): void {
+  this.app.get(
+    "/",
+    (_req, res) => {
 
-    this.app.get(
-      "/",
-      (_req, res) => {
+      res.json({
+        message:
+          "CelebraHub API funcionando",
 
-        res.json({
-          message:
-            "CelebraHub API funcionando",
+        project:
+          "CelebraHub - Centro de eventos",
 
-          project:
-            "CelebraHub - Centro de eventos",
+        status: "OK"
+      });
+    }
+  );
 
-          status: "OK"
-        });
-      }
-    );
+  this.routePrv
+    .clientesRoutes
+    .routes(this.app);
 
-    this.routePrv
-      .clientesRoutes
-      .routes(this.app);
-  }
+  this.routePrv
+    .serviciosRoutes
+    .routes(this.app);
+}
   
+
   private docs(): void {
 
   setupSwagger(this.app);

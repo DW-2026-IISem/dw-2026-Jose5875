@@ -1,0 +1,12 @@
+### CelebraHub - Servicios - DELETE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Eliminación física
+DELETE {{baseUrl}}/api/servicios/{{id}}
+
+###
+
+### Eliminación lógica
+PATCH {{baseUrl}}/api/servicios/{{id}}/deactivate

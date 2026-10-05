@@ -5,6 +5,10 @@ import {
   clientesSwagger
 } from "../features/business/clientes/clientes.swagger";
 
+import {
+  serviciosSwagger
+} from "../features/business/servicios/servicios.swagger";
+
 export type FeatureSwaggerModule = {
   tags: unknown[];
   paths: Record<string, unknown>;
@@ -20,13 +24,10 @@ export type FeatureSwaggerModule = {
  */
 const featureSwaggerModules:
   FeatureSwaggerModule[] = [
-    clientesSwagger
+    clientesSwagger,
+    serviciosSwagger
 
     // futuros módulos:
-    // salonesSwagger,
-    // reservasSwagger,
-    // eventosSwagger,
-    // serviciosSwagger,
   ];
 
 export function buildOpenApiDocument() {
