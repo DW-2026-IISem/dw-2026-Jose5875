@@ -1,5 +1,5 @@
 ## Bitacora manual de creación del Backend usando express Jose Pinto  
-
+## iss 1
 ## 1. Inicializar npm y scripts
 ``` bash
 mkdir app-storelab-express
@@ -276,16 +276,19 @@ EOF
 -------------------------------------------------------------------------------------------------------------------------------------
 
 ------------------------------------------------------------------------
+## fase 2 
 
-## 7. 
+
+
+## 7. Drivers Sequelize y .env
 
 
 
 ``` bash
 
-npm run start:dev
-# Ctrl+C cuando veas el log de arranque
-curl -s http://localhost:3002 || true
+npm install sequelize@^6.37.8 mysql2@^3.24.4 pg@^8.23.0 pg-hstore@^2.3.4 \
+  tedious@^20.0.0 oracledb@^7.0.1
+npm install -D @types/sequelize@^6.12.0
 ```
 
 <p align="center">

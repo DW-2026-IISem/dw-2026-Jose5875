@@ -5385,3 +5385,925 @@ EOF_BACKEND_IA
 
 
 ------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 120. features/business/venues/application/use-cases/update-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/update-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { VenueNotFoundException } from '../../domain/exceptions/venue-not-found.exception.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { UpdateVenueDto } from '../dto/update-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class UpdateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(id: number, dto: UpdateVenueDto) {
+    const venue = await this.venueRepository.findById(id);
+    if (!venue) {
+      throw new VenueNotFoundException(id);
+    }
+
+    venue.update(dto);
+    const updated = await this.venueRepository.update(venue);
+    return VenueMapper.toResponse(updated);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+## 119. features/business/venues/application/use-cases/create-venue.use-case.ts
+
+``` bash
+mkdir -p src/features/business/venues/application/use-cases
+cat > src/features/business/venues/application/use-cases/create-venue.use-case.ts <<'EOF_BACKEND_IA'
+import { Inject, Injectable } from '@nestjs/common';
+import { Venue } from '../../domain/entities/venue.entity.js';
+import {
+  VENUE_REPOSITORY,
+  type IVenueRepository,
+} from '../../domain/interfaces/venue-repository.interface.js';
+import { CreateVenueDto } from '../dto/create-venue.dto.js';
+import { VenueMapper } from '../mappers/venue.mapper.js';
+
+@Injectable()
+export class CreateVenueUseCase {
+  constructor(
+    @Inject(VENUE_REPOSITORY)
+    private readonly venueRepository: IVenueRepository,
+  ) {}
+
+  async execute(dto: CreateVenueDto) {
+    const venue = Venue.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+    });
+
+    const created = await this.venueRepository.create(venue);
+    return VenueMapper.toResponse(created);
+  }
+}
+EOF_BACKEND_IA
+```
+
+<p align="center">
+  <img src="imagenes/Captura de pantalla 2026-09-17 163248.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
