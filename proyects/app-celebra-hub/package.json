@@ -3,12 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-"scripts": {
-  "test": "echo \"Error: no test specified\" && exit 1",
-  "build": "tsc",
-  "dev": "nodemon --watch src --ext ts --exec ts-node -- src/server.ts",
-  "db:seed": "ts-node src/database/seeders/index.ts"
-
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "dev": "nodemon --watch src --ext ts --exec ts-node -- src/server.ts",
+    "db:seed": "ts-node src/database/seeders/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +25,7 @@
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.8",
     "sequelize-typescript": "^2.1.6",
+    "swagger-ui-express": "^5.0.1",
     "tedious": "^20.3.3",
     "umzug": "^3.8.3"
   },
@@ -37,9 +37,9 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^22.20.5",
     "@types/sequelize": "^6.12.0",
+    "@types/swagger-ui-express": "^4.1.8",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   }
-
 }

@@ -12,9 +12,11 @@ import {
   testConnection
 } from "../database/db";
 
+
 import "../features/business/clientes/cliente.model";
 
 import { Routes } from "../routes/index";
+import { setupSwagger } from "../swagger/index";
 
 dotenv.config();
 
@@ -39,6 +41,8 @@ export class App {
     this.middlewares();
 
     this.routes();
+
+    this.docs();
 
     this.errorHandling();
   }
@@ -91,6 +95,12 @@ export class App {
       .clientesRoutes
       .routes(this.app);
   }
+  
+  private docs(): void {
+
+  setupSwagger(this.app);
+
+}
 
   private async dbConnection(): Promise<void> {
 

@@ -1852,8 +1852,8 @@ EOF
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 31. common/enums/sort-order.enum.ts
-
+## 31. Fase I: Business — ISS-05 — Swagger / OpenAPI (feature + registry)
+##  OpenAPI dentro del feature Client
 
 ``` bash
 mkdir -p src/common/enums
@@ -1865,8 +1865,385 @@ export enum SortOrder {
 EOF_BACKEND_IA
 ```
 
+
+``` bash
+cat > src/features/business/clientes/clientes.swagger.ts << 'EOF'
+/**
+ * Documentación OpenAPI del feature Clientes.
+ *
+ * La documentación se agrega desde
+ * src/swagger/index.ts.
+ *
+ * Este archivo solamente describe
+ * el contrato de la API.
+ */
+
+export const clientesSwagger = {
+  tags: [
+    {
+      name: "Clientes",
+      description:
+        "CRUD de clientes de CelebraHub"
+    }
+  ],
+
+  paths: {
+
+    "/api/clientes": {
+
+      get: {
+        tags: ["Clientes"],
+        summary: "Listar clientes activos",
+        description:
+          "Obtiene todos los clientes activos de CelebraHub.",
+        responses: {
+          "200": {
+            description:
+              "Lista de clientes activos"
+          }
+        }
+      },
+
+      post: {
+        tags: ["Clientes"],
+        summary: "Crear cliente",
+        description:
+          "Registra un nuevo cliente en CelebraHub.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref:
+                  "#/components/schemas/ClienteCreate"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description:
+              "Cliente creado correctamente"
+          },
+          "400": {
+            description:
+              "Datos inválidos"
+          }
+        }
+      }
+    },
+
+    "/api/clientes/{id}": {
+
+      get: {
+        tags: ["Clientes"],
+        summary: "Obtener cliente por ID",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+              minimum: 1
+            }
+          }
+        ],
+        responses: {
+          "200": {
+            description:
+              "Cliente encontrado"
+          },
+          "400": {
+            description:
+              "ID inválido"
+          },
+          "404": {
+            description:
+              "Cliente no encontrado"
+          }
+        }
+      },
+
+      put: {
+        tags: ["Clientes"],
+        summary: "Actualizar cliente",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+              minimum: 1
+            }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref:
+                  "#/components/schemas/ClienteUpdate"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description:
+              "Cliente actualizado correctamente"
+          },
+          "400": {
+            description:
+              "Datos inválidos"
+          },
+          "404": {
+            description:
+              "Cliente no encontrado"
+          }
+        }
+      },
+
+      patch: {
+        tags: ["Clientes"],
+        summary:
+          "Actualizar parcialmente un cliente",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+              minimum: 1
+            }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref:
+                  "#/components/schemas/ClientePatch"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description:
+              "Cliente actualizado correctamente"
+          },
+          "404": {
+            description:
+              "Cliente no encontrado"
+          }
+        }
+      },
+
+      delete: {
+        tags: ["Clientes"],
+        summary:
+          "Eliminar cliente físicamente",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+              minimum: 1
+            }
+          }
+        ],
+        responses: {
+          "200": {
+            description:
+              "Cliente eliminado correctamente"
+          },
+          "404": {
+            description:
+              "Cliente no encontrado"
+          }
+        }
+      }
+    },
+
+    "/api/clientes/{id}/deactivate": {
+
+      patch: {
+        tags: ["Clientes"],
+        summary:
+          "Desactivar cliente",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+              minimum: 1
+            }
+          }
+        ],
+        responses: {
+          "200": {
+            description:
+              "Cliente desactivado correctamente"
+          },
+          "404": {
+            description:
+              "Cliente no encontrado"
+          }
+        }
+      }
+    }
+  },
+
+  components: {
+
+    schemas: {
+
+      Cliente: {
+        type: "object",
+        properties: {
+          id: {
+            type: "integer",
+            example: 1
+          },
+          tipo_documento: {
+            type: "string",
+            example: "CC"
+          },
+          numero_documento: {
+            type: "string",
+            example: "1234567890"
+          },
+          nombre: {
+            type: "string",
+            example: "Ana Perez"
+          },
+          telefono: {
+            type: "string",
+            example: "3001234567"
+          },
+          email: {
+            type: "string",
+            format: "email",
+            example:
+              "ana.perez@gmail.com"
+          },
+          is_active: {
+            type: "boolean",
+            example: true
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+
+      ClienteCreate: {
+        type: "object",
+        required: [
+          "tipo_documento",
+          "numero_documento",
+          "nombre",
+          "telefono",
+          "email"
+        ],
+        properties: {
+          tipo_documento: {
+            type: "string",
+            example: "CC"
+          },
+          numero_documento: {
+            type: "string",
+            example: "1234567890"
+          },
+          nombre: {
+            type: "string",
+            example: "Ana Perez"
+          },
+          telefono: {
+            type: "string",
+            example: "3001234567"
+          },
+          email: {
+            type: "string",
+            format: "email",
+            example:
+              "ana.perez@gmail.com"
+          }
+        }
+      },
+
+      ClienteUpdate: {
+        type: "object",
+        required: [
+          "tipo_documento",
+          "numero_documento",
+          "nombre",
+          "telefono",
+          "email"
+        ],
+        properties: {
+          tipo_documento: {
+            type: "string"
+          },
+          numero_documento: {
+            type: "string"
+          },
+          nombre: {
+            type: "string"
+          },
+          telefono: {
+            type: "string"
+          },
+          email: {
+            type: "string",
+            format: "email"
+          }
+        }
+      },
+
+      ClientePatch: {
+        type: "object",
+        properties: {
+          tipo_documento: {
+            type: "string"
+          },
+          numero_documento: {
+            type: "string"
+          },
+          nombre: {
+            type: "string"
+          },
+          telefono: {
+            type: "string"
+          },
+          email: {
+            type: "string",
+            format: "email"
+          }
+        }
+      }
+    }
+  }
+};
+EOF
+```
+
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 214748.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 134203.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -1875,21 +2252,134 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 32. common/constants/app.constants.ts
+## 32. Registry externo + montaje en Config
 
 
 
 ``` bash
+cat > src/swagger/index.ts << 'EOF'
+import { Application } from "express";
+import swaggerUi from "swagger-ui-express";
 
-mkdir -p src/common/constants
-cat > src/common/constants/app.constants.ts <<'EOF_BACKEND_IA'
-export const APP_NAME = 'CelebraHub_api';
-export const GLOBAL_PREFIX = 'api';
-EOF_BACKEND_IA
+import {
+  clientesSwagger
+} from "../features/business/clientes/clientes.swagger";
+
+export type FeatureSwaggerModule = {
+  tags: unknown[];
+  paths: Record<string, unknown>;
+  components?: {
+    schemas?: Record<string, unknown>;
+  };
+};
+
+/**
+ * Registry externo:
+ * reúne la documentación OpenAPI
+ * de cada feature.
+ */
+const featureSwaggerModules:
+  FeatureSwaggerModule[] = [
+    clientesSwagger
+
+    // futuros módulos:
+    // salonesSwagger,
+    // reservasSwagger,
+    // eventosSwagger,
+    // serviciosSwagger,
+  ];
+
+export function buildOpenApiDocument() {
+
+  const tags: unknown[] = [];
+
+  const paths: Record<string, unknown> = {};
+
+  const schemas: Record<string, unknown> = {};
+
+  for (
+    const mod of featureSwaggerModules
+  ) {
+
+    tags.push(...mod.tags);
+
+    Object.assign(
+      paths,
+      mod.paths
+    );
+
+    if (
+      mod.components?.schemas
+    ) {
+
+      Object.assign(
+        schemas,
+        mod.components.schemas
+      );
+    }
+  }
+
+  return {
+
+    openapi: "3.0.3",
+
+    info: {
+      title: "CelebraHub API",
+      version: "1.0.0",
+      description:
+        "API CelebraHub - Centro de eventos."
+    },
+
+    servers: [
+      {
+        url:
+          `http://localhost:${process.env.PORT || 4000}`,
+        description: "Local"
+      }
+    ],
+
+    tags,
+
+    paths,
+
+    components: {
+      schemas
+    }
+  };
+}
+
+/**
+ * Monta Swagger UI y el JSON OpenAPI.
+ */
+export function setupSwagger(
+  app: Application
+): void {
+
+  const document =
+    buildOpenApiDocument();
+
+  app.use(
+    "/api/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(document)
+  );
+
+  app.get(
+    "/api/docs.json",
+    (_req, res) => {
+      res.json(document);
+    }
+  );
+
+  console.log(
+    "📘 Swagger UI: /api/docs | OpenAPI JSON: /api/docs.json"
+  );
+}
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 223643.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 134420.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -1898,22 +2388,13 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 33. common/constants/pagination.constants.ts
+## 33. comprobamos
 
 
 
-``` bash
-
-mkdir -p src/common/constants
-cat > src/common/constants/pagination.constants.ts <<'EOF_BACKEND_IA'
-export const DEFAULT_PAGE = 1;
-export const DEFAULT_LIMIT = 10;
-export const MAX_LIMIT = 100;
-EOF_BACKEND_IA
-```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 223936.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 135919.png">
 </p>
 
 --------------------------------------------------------------------------------
