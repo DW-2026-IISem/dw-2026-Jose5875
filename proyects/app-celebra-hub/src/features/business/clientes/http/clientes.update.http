@@ -1,0 +1,26 @@
+### CELEBRAHUB - CLIENTES
+### ISS-03 - UPDATE
+
+@baseUrl = http://localhost:4000
+
+### PUT
+PUT {{baseUrl}}/api/clientes/1
+Content-Type: application/json
+
+{
+  "tipo_documento": "CC",
+  "numero_documento": "1234567890",
+  "nombre": "Ana Pérez Actualizada",
+  "telefono": "3009876543",
+  "email": "ana.actualizada@example.com"
+}
+
+###
+
+### PATCH
+PATCH {{baseUrl}}/api/clientes/1
+Content-Type: application/json
+
+{
+  "telefono": "3011112233"
+}

@@ -291,10 +291,48 @@ npm install sequelize@^6.37.8 mysql2@^3.24.4 pg@^8.23.0 pg-hstore@^2.3.4 \
 npm install -D @types/sequelize@^6.12.0
 ```
 
-<p align="center">
-  <img src="imagenes/compilando base.png">
-</p>
 
+``` bash
+cat >> .env << 'EOF'
+PORT=4000
+
+# Variable para seleccionar el motor de base de datos
+DB_ENGINE=mysql
+
+# Configuración para MySQL
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=jose123456
+MYSQL_NAME=josepinto
+MYSQL_PORT=3307
+
+# Configuración para PostgreSQL
+POSTGRES_HOST=localhost
+POSTGRES_USER=josepinto
+POSTGRES_PASSWORD=jose123456
+POSTGRES_NAME=josepintol
+POSTGRES_PORT=5432
+
+# Configuración para SQL Server
+MSSQL_HOST=localhost
+MSSQL_USER=sa
+MSSQL_PASSWORD=Jose123456!
+MSSQL_NAME=master
+MSSQL_PORT=1433
+
+# Configuración para Oracle
+ORACLE_HOST=localhost
+ORACLE_USER=system
+ORACLE_PASSWORD=Oracles123456
+ORACLE_NAME=XE
+ORACLE_PORT=1521
+
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 103432.png">
+</p>
 --------------------------------------------------------------------------------
 
 
@@ -303,29 +341,95 @@ npm install -D @types/sequelize@^6.12.0
 
 ------------------------------------------------------------------------
 
-## 8. Crear árbol base de carpetas
+## 8. Configuración Sequelize (database/db.ts)
 
 
 
 ``` bash
-mkdir -p src/config/{app,database,environment,logger,swagger}
-mkdir -p src/common/{constants,decorators,enums,exceptions,filters,guards,interceptors,interfaces,pipes,types,utils,validators}
-mkdir -p src/infrastructure/database/{sequelize,migrations,seeders}
-mkdir -p src/infrastructure/logging
-mkdir -p src/features/shipping/{companies,contacts,addresses,shipments,packages,tracking-events,couriers,routes,rates,delivery-proofs,invoices}/{application/{dto,mappers,use-cases},domain/{entities,enums,exceptions,interfaces,services,validators},infrastructure/persistence/{models,repositories,migrations,seeders},presentation/http/{controllers,decorators,serializers,swagger},tests}
-cat > src/features/shipping/shipping.module.ts <<'EOF_BACKEND'
-import { Module } from '@nestjs/common';
+cat >> src/database/db.ts << 'EOF'
+import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
 
-@Module({
-  imports: [],
-  exports: [],
-})
-export class ShippingModule {}
-EOF_BACKEND_MANUAL
+dotenv.config();
+
+interface DatabaseConfig {
+  dialect: string;
+  host: string;
+  username: string;
+  password: string;
+  database: string;
+  port: number;
+}
+
+const dbConfigurations: Record<string, DatabaseConfig> = {
+  mysql: {
+    dialect: "mysql",
+    host: process.env.MYSQL_HOST || "localhost",
+    username: process.env.MYSQL_USER || "root",
+    password: process.env.MYSQL_PASSWORD || "",
+    database: process.env.MYSQL_NAME || "test",
+    port: parseInt(process.env.MYSQL_PORT || "3306")
+  },
+  postgres: {
+    dialect: "postgres",
+    host: process.env.POSTGRES_HOST || "localhost",
+    username: process.env.POSTGRES_USER || "postgres",
+    password: process.env.POSTGRES_PASSWORD || "",
+    database: process.env.POSTGRES_NAME || "test",
+    port: parseInt(process.env.POSTGRES_PORT || "5432")
+  }
+};
+
+const selectedEngine = process.env.DB_ENGINE || "mysql";
+const selectedConfig = dbConfigurations[selectedEngine];
+
+if (!selectedConfig) {
+  throw new Error(`Motor de base de datos no soportado: ${selectedEngine}`);
+}
+
+console.log(`🔌 Conectando a base de datos: ${selectedEngine.toUpperCase()}`);
+
+export const sequelize = new Sequelize(
+  selectedConfig.database,
+  selectedConfig.username,
+  selectedConfig.password,
+  {
+    host: selectedConfig.host,
+    port: selectedConfig.port,
+    dialect: selectedConfig.dialect as any,
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  }
+);
+
+export const getDatabaseInfo = () => {
+  return {
+    engine: selectedEngine,
+    config: selectedConfig,
+    connectionString: `${selectedConfig.dialect}://${selectedConfig.username}@${selectedConfig.host}:${selectedConfig.port}/${selectedConfig.database}`
+  };
+};
+
+export const testConnection = async (): Promise<boolean> => {
+  try {
+    await sequelize.authenticate();
+    console.log(`✅ Conexión exitosa a ${selectedEngine.toUpperCase()}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Error de conexión a ${selectedEngine.toUpperCase()}:`, error);
+    return false;
+  }
+};
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/crear arbol.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 104550.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -335,295 +439,41 @@ EOF_BACKEND_MANUAL
 -----------------------------------------------------
 
 ------------------------------------------------------------------------
+## Business — ISS-03 — Feature Client (CRUD por capas: A…E)
 
-## 9. Crear `.env.example` y actualizar `.env` completo
+## 9. 
 
 
 
 El `.env` real NO se sube a Git. Usa BD dedicada `enlace_express`.
 
-**Contrato multi-base**
-
-- `DB_DIALECT` = `mysql` | `postgres` | `mssql` | `oracle` (elige qué motor corre).
-- MySQL: `DB_MYSQL_HOST`, `DB_MYSQL_PORT`, `DB_MYSQL_USERNAME`, `DB_MYSQL_PASSWORD`, `DB_MYSQL_NAME`.
-- PostgreSQL: `DB_POSTGRES_*` (puerto lab 5432).
-- SQL Server: `DB_MSSQL_*` (puerto lab 1433, usuario `sa`).
-- Oracle: `DB_ORACLE_*` + `DB_ORACLE_CONNECT_STRING` (puerto lab 1521).
-- Para cambiar de motor, cambia **solo** `DB_DIALECT`. No uses `DB_HOST` / `DB_USERNAME` genéricos.
 
 ```bash
-cat > .env.example <<'EOF_BACKEND_MANUAL'
-# ==========================================
-# APP
-# ==========================================
-PORT=3002
-NODE_ENV=development
-
-# ==========================================
-# DATABASE
-# ==========================================
-# Selector del motor en ejecución (un solo valor):
-# mysql | postgres | mssql | oracle
-DB_DIALECT=mysql
-
-# --- MYSQL ---
-DB_MYSQL_HOST=localhost
-DB_MYSQL_PORT=3306
-DB_MYSQL_USERNAME=root
-DB_MYSQL_PASSWORD=root
-DB_MYSQL_NAME=tecnogua_ia
-
-# --- POSTGRES ---
-DB_POSTGRES_HOST=localhost
-DB_POSTGRES_PORT=5432
-DB_POSTGRES_USERNAME=postgres
-DB_POSTGRES_PASSWORD=postgres
-DB_POSTGRES_NAME=tecnogua_ia
-
-# --- MSSQL (SQL Server) ---
-DB_MSSQL_HOST=localhost
-DB_MSSQL_PORT=1433
-DB_MSSQL_USERNAME=sa
-DB_MSSQL_PASSWORD=YourStrong@Passw0rd
-DB_MSSQL_NAME=tecnogua_ia
-
-# --- ORACLE ---
-DB_ORACLE_HOST=localhost
-DB_ORACLE_PORT=1521
-DB_ORACLE_USERNAME=system
-DB_ORACLE_PASSWORD=oracle
-DB_ORACLE_NAME=tecnogua_ia
-DB_ORACLE_CONNECT_STRING=localhost:1521/XEPDB1
-
-EOF_BACKEND_MANUAL
+mkdir -p src/shared/errors src/shared/http src/shared/database
 ```
+```bash
+cat >> src/shared/errors/app-error.ts << 'EOF'
+/**
+ * Error de aplicación con código HTTP asociado.
+ *
+ * Lo lanzan los **services** (capa de negocio) cuando una regla no se cumple
+ * (no encontrado, estado inválido, stock insuficiente, etc.).
+ * Los **controllers** lo traducen a una respuesta HTTP.
+ */
+export class AppError extends Error {
+  public readonly statusCode: number;
 
-<p align="center">
-  <img src="imagenes/9..png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 10. Interface de entorno
-
-``` bash
-
-mkdir -p src/config/environment
-cat > src/config/environment/env.interface.ts <<'EOF_BACKEND_MANUAL'
-export enum Environment {
-  Development = 'development',
-  Production = 'production',
-  Test = 'test',
-}
-
-export enum DatabaseDialect {
-  MySQL = 'mysql',
-  Postgres = 'postgres',
-  MSSQL = 'mssql',
-  Oracle = 'oracle',
-}
-
-export interface AppConfig {
-  port: number;
-  nodeEnv: Environment;
-}
-
-export interface DatabaseConfig {
-  dialect: DatabaseDialect;
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  database: string;
-  connectString?: string;
-}
-
-export interface EnvironmentConfig {
-  app: AppConfig;
-  database: DatabaseConfig;
-}
-EOF_BACKEND_MANUAL
-```
-
-<p align="center">
-  <img src="imagenes/10 Interface de entorno.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 11. Validación de entorno con class-validator
-
-
-
-``` bash
-
-mkdir -p src/config/environment
-cat > src/config/environment/env.validation.ts <<'EOF_BACKEND_MANUAL'
-import { plainToInstance } from 'class-transformer';
-import {
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-  validateSync,
-} from 'class-validator';
-import {
-  assertActiveDialectCredentials,
-  resolveDialectCredentials,
-} from './db-env';
-import { DatabaseDialect, Environment } from './env.interface';
-
-export class EnvironmentVariables {
-  @IsEnum(Environment)
-  @IsOptional()
-  NODE_ENV: Environment = Environment.Development;
-
-  @IsNumber()
-  @Min(0)
-  @Max(65535)
-  @IsOptional()
-  PORT: number = 3002;
-
-  @IsEnum(DatabaseDialect)
-  DB_DIALECT: DatabaseDialect;
-
-  @IsString()
-  @IsOptional()
-  DB_MYSQL_HOST?: string;
-
-  @IsNumber()
-  @IsOptional()
-  DB_MYSQL_PORT?: number;
-
-  @IsString()
-  @IsOptional()
-  DB_MYSQL_USERNAME?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_MYSQL_PASSWORD?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_MYSQL_NAME?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_POSTGRES_HOST?: string;
-
-  @IsNumber()
-  @IsOptional()
-  DB_POSTGRES_PORT?: number;
-
-  @IsString()
-  @IsOptional()
-  DB_POSTGRES_USERNAME?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_POSTGRES_PASSWORD?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_POSTGRES_NAME?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_MSSQL_HOST?: string;
-
-  @IsNumber()
-  @IsOptional()
-  DB_MSSQL_PORT?: number;
-
-  @IsString()
-  @IsOptional()
-  DB_MSSQL_USERNAME?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_MSSQL_PASSWORD?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_MSSQL_NAME?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_ORACLE_HOST?: string;
-
-  @IsNumber()
-  @IsOptional()
-  DB_ORACLE_PORT?: number;
-
-  @IsString()
-  @IsOptional()
-  DB_ORACLE_USERNAME?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_ORACLE_PASSWORD?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_ORACLE_NAME?: string;
-
-  @IsString()
-  @IsOptional()
-  DB_ORACLE_CONNECT_STRING?: string;
-}
-
-function formatValidationErrors(
-  errors: ReturnType<typeof validateSync>,
-): string {
-  return errors
-    .map((error) => {
-      const constraints = error.constraints
-        ? Object.values(error.constraints).join(', ')
-        : 'valor inválido';
-      return `${error.property}: ${constraints}`;
-    })
-    .join('; ');
-}
-
-export function validate(config: Record<string, unknown>): EnvironmentVariables {
-  const validatedConfig = plainToInstance(EnvironmentVariables, config, {
-    enableImplicitConversion: true,
-    exposeDefaultValues: true,
-  });
-
-  const errors = validateSync(validatedConfig, {
-    skipMissingProperties: false,
-  });
-
-  if (errors.length > 0) {
-    throw new Error(
-      `Error de configuración: variable(s) crítica(s) inválida(s) o ausente(s). ${formatValidationErrors(errors)}. Copia .env.example a .env y completa el bloque del motor elegido (DB_DIALECT).`,
-    );
+  public constructor(statusCode: number, message: string) {
+    super(message);
+    this.name = "AppError";
+    this.statusCode = statusCode;
   }
-
-  assertActiveDialectCredentials(resolveDialectCredentials(validatedConfig));
-
-  return validatedConfig;
 }
-EOF_BACKEND_MANUAL
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 173633.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 113238.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -634,539 +484,67 @@ EOF_BACKEND_MANUAL
 
 ------------------------------------------------------------------------
 
-## 12. Resolver de credenciales por motor
-
-
+## 10. src/shared/http/base-controller.ts
 
 ``` bash
+cat > src/shared/http/base-controller.ts << 'EOF'
+import { Request, Response } from "express";
+import { AppError } from "../errors/app-error";
 
-mkdir -p src/config/environment
-cat > src/config/environment/db-env.ts <<'EOF_BACKEND_MANUAL'
-import { DatabaseConfig, DatabaseDialect } from './env.interface';
+export abstract class BaseController {
 
-export const DEFAULT_DB_PORTS: Record<DatabaseDialect, number> = {
-  [DatabaseDialect.MySQL]: 3307,
-  [DatabaseDialect.Postgres]: 5433,
-  [DatabaseDialect.MSSQL]: 1433,
-  [DatabaseDialect.Oracle]: 1521,
-};
-
-export type DialectEnvSource = {
-  DB_DIALECT: DatabaseDialect;
-  DB_MYSQL_HOST?: string;
-  DB_MYSQL_PORT?: string | number;
-  DB_MYSQL_USERNAME?: string;
-  DB_MYSQL_PASSWORD?: string;
-  DB_MYSQL_NAME?: string;
-  DB_POSTGRES_HOST?: string;
-  DB_POSTGRES_PORT?: string | number;
-  DB_POSTGRES_USERNAME?: string;
-  DB_POSTGRES_PASSWORD?: string;
-  DB_POSTGRES_NAME?: string;
-  DB_MSSQL_HOST?: string;
-  DB_MSSQL_PORT?: string | number;
-  DB_MSSQL_USERNAME?: string;
-  DB_MSSQL_PASSWORD?: string;
-  DB_MSSQL_NAME?: string;
-  DB_ORACLE_HOST?: string;
-  DB_ORACLE_PORT?: string | number;
-  DB_ORACLE_USERNAME?: string;
-  DB_ORACLE_PASSWORD?: string;
-  DB_ORACLE_NAME?: string;
-  DB_ORACLE_CONNECT_STRING?: string;
-};
-
-function toPort(value: string | number | undefined, fallback: number): number {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = parseInt(value, 10);
-    if (Number.isFinite(parsed)) {
-      return parsed;
+  protected async run(
+    res: Response,
+    work: () => Promise<void>
+  ): Promise<void> {
+    try {
+      await work();
+    } catch (error) {
+      this.handleError(res, error);
     }
   }
-  return fallback;
-}
 
-function text(value: string | undefined): string {
-  return value?.trim() ?? '';
-}
+  protected paramId(req: Request): number {
+    const raw = req.params.id;
+    const value = Array.isArray(raw) ? raw[0] : raw;
 
-export function resolveDialectCredentials(
-  env: DialectEnvSource,
-): DatabaseConfig {
-  const dialect = env.DB_DIALECT;
-  const port = DEFAULT_DB_PORTS[dialect];
-
-  switch (dialect) {
-    case DatabaseDialect.MySQL:
-      return {
-        dialect,
-        host: text(env.DB_MYSQL_HOST),
-        port: toPort(env.DB_MYSQL_PORT, port),
-        username: text(env.DB_MYSQL_USERNAME),
-        password: text(env.DB_MYSQL_PASSWORD),
-        database: text(env.DB_MYSQL_NAME),
-      };
-    case DatabaseDialect.Postgres:
-      return {
-        dialect,
-        host: text(env.DB_POSTGRES_HOST),
-        port: toPort(env.DB_POSTGRES_PORT, port),
-        username: text(env.DB_POSTGRES_USERNAME),
-        password: text(env.DB_POSTGRES_PASSWORD),
-        database: text(env.DB_POSTGRES_NAME),
-      };
-    case DatabaseDialect.MSSQL:
-      return {
-        dialect,
-        host: text(env.DB_MSSQL_HOST),
-        port: toPort(env.DB_MSSQL_PORT, port),
-        username: text(env.DB_MSSQL_USERNAME),
-        password: text(env.DB_MSSQL_PASSWORD),
-        database: text(env.DB_MSSQL_NAME),
-      };
-    case DatabaseDialect.Oracle:
-      return {
-        dialect,
-        host: text(env.DB_ORACLE_HOST),
-        port: toPort(env.DB_ORACLE_PORT, port),
-        username: text(env.DB_ORACLE_USERNAME),
-        password: text(env.DB_ORACLE_PASSWORD),
-        database: text(env.DB_ORACLE_NAME),
-        connectString: text(env.DB_ORACLE_CONNECT_STRING) || undefined,
-      };
-    default:
-      throw new Error(
-        `Error de configuración: DB_DIALECT inválido. Use mysql, postgres, mssql u oracle.`,
+    if (!value || !/^\d+$/.test(value) || Number(value) < 1) {
+      throw new AppError(
+        400,
+        "Invalid id: must be a positive integer"
       );
-  }
-}
+    }
 
-export function assertActiveDialectCredentials(config: DatabaseConfig): void {
-  const prefix: Record<DatabaseDialect, string> = {
-    [DatabaseDialect.MySQL]: 'DB_MYSQL',
-    [DatabaseDialect.Postgres]: 'DB_POSTGRES',
-    [DatabaseDialect.MSSQL]: 'DB_MSSQL',
-    [DatabaseDialect.Oracle]: 'DB_ORACLE',
-  };
-  const tag = prefix[config.dialect];
-  const missing: string[] = [];
-
-  if (!config.host) missing.push(`${tag}_HOST`);
-  if (!config.username) missing.push(`${tag}_USERNAME`);
-  if (!config.database) missing.push(`${tag}_NAME`);
-  if (config.dialect === DatabaseDialect.Oracle && !config.connectString) {
-    missing.push('DB_ORACLE_CONNECT_STRING');
+    return Number(value);
   }
 
-  if (missing.length > 0) {
-    throw new Error(
-      `Error de configuración: variable(s) crítica(s) inválida(s) o ausente(s) para ${config.dialect}: ${missing.join(', ')}. Completa el bloque de ese motor en .env (no commitees secretos).`,
-    );
-  }
-}
-EOF_BACKEND_MANUAL
-```
+  protected handleError(
+    res: Response,
+    error: unknown
+  ): void {
+    if (error instanceof AppError) {
+      res
+        .status(error.statusCode)
+        .json({ error: error.message });
 
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 174341.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 13. Factory registerAs de entorno
-
-
-
-``` bash
-
-mkdir -p src/config/environment
-cat > src/config/environment/env.config.ts <<'EOF_BACKEND_MANUAL'
-import { registerAs } from '@nestjs/config';
-import { resolveDialectCredentials } from './db-env';
-import { Environment } from './env.interface';
-import { validate } from './env.validation';
-
-export const ENV_CONFIG_NAME = 'environment';
-
-export const envConfig = registerAs(ENV_CONFIG_NAME, () => {
-  const validated = validate(process.env);
-
-  return {
-    app: {
-      port: validated.PORT,
-      nodeEnv: validated.NODE_ENV ?? Environment.Development,
-    },
-    database: resolveDialectCredentials(validated),
-  };
-});
-EOF_BACKEND_MANUAL
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 175118.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 14. Constante SEQUELIZE_TOKEN
-
-
-
-``` bash
-
-mkdir -p src/common/constants
-cat > src/common/constants/database.constants.ts <<'EOF_BACKEND_MANUAL'
-export const SEQUELIZE_TOKEN = 'SEQUELIZE';
-EOF_BACKEND_MANUAL
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 175903.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 15.  Tipos auxiliares de database config
-
-
-
-``` bash
-
-mkdir -p src/config/database
-cat > src/config/database/database.types.ts <<'EOF_BACKEND_MANUAL'
-import { Options as SequelizeOptions } from 'sequelize';
-
-export type DialectOptions =
-  | { dialect: 'mysql'; options?: SequelizeOptions }
-  | { dialect: 'postgres'; options?: SequelizeOptions }
-  | { dialect: 'mssql'; options?: SequelizeOptions }
-  | { dialect: 'oracle'; options?: SequelizeOptions };
-EOF_BACKEND_MANUAL
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 180141.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 16. database.config.ts
-
-
-
-``` bash
-
-mkdir -p src/config/database
-cat > src/config/database/database.config.ts <<'EOF_BACKEND_MANUAL'
-import { registerAs } from '@nestjs/config';
-import { resolveDialectCredentials } from '../environment/db-env';
-import { DatabaseDialect } from '../environment/env.interface';
-
-export const DATABASE_CONFIG_NAME = 'database';
-
-const dialectModuleMap: Record<DatabaseDialect, string> = {
-  [DatabaseDialect.MySQL]: 'mysql2',
-  [DatabaseDialect.Postgres]: 'pg',
-  [DatabaseDialect.MSSQL]: 'tedious',
-  [DatabaseDialect.Oracle]: 'oracledb',
-};
-
-export const databaseConfig = registerAs(DATABASE_CONFIG_NAME, () => {
-  const dialect =
-    (process.env.DB_DIALECT as DatabaseDialect) || DatabaseDialect.MySQL;
-  const credentials = resolveDialectCredentials({
-    DB_DIALECT: dialect,
-    ...process.env,
-  });
-
-  return {
-    ...credentials,
-    dialectModulePath: dialectModuleMap[dialect],
-    autoLoadModels: true,
-    synchronize: process.env.NODE_ENV !== 'production',
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
-  };
-});
-EOF_BACKEND_MANUAL
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 180602.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 17. database.module.ts / providerss
-
-``` bash
-mkdir -p src/config/database
-cat > src/config/database/database.module.ts <<'EOF_BACKEND_MANUAL'
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { databaseConfig } from './database.config';
-
-@Module({
-  imports: [ConfigModule.forFeature(databaseConfig)],
-  exports: [ConfigModule],
-})
-export class DatabaseConfigModule {}
-EOF_BACKEND_MANUAL
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 181541.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 18. database.providers.ts
-
-
-
-``` bash
-mkdir -p src/config/database
-cat > src/config/database/database.providers.ts <<'EOF_BACKEND'
-export const DATABASE_PROVIDERS = [];
-EOF_BACKEND
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 182021.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 19. Opciones Sequelize por dialecto
-
-
-
-``` bash
-
-mkdir -p src/infrastructure/database/sequelize
-cat > src/infrastructure/database/sequelize/sequelize.options.ts <<'EOF_BACKEND_IA'
-import { SequelizeOptions } from 'sequelize-typescript';
-import { resolveDialectCredentials } from '../../../config/environment/db-env';
-import { DatabaseDialect } from '../../../config/environment/env.interface';
-
-export function getSequelizeOptions(
-  dialect: DatabaseDialect,
-): Partial<SequelizeOptions> {
-  const credentials = resolveDialectCredentials({
-    DB_DIALECT: dialect,
-    ...process.env,
-  });
-
-  const base: SequelizeOptions = {
-    dialect: dialect as SequelizeOptions['dialect'],
-    host: credentials.host,
-    port: credentials.port,
-    username: credentials.username,
-    password: credentials.password,
-    database: credentials.database,
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    define: {
-      underscored: false,
-      freezeTableName: true,
-    },
-  };
-
-  switch (dialect) {
-    case DatabaseDialect.MSSQL:
-      return {
-        ...base,
-        dialectOptions: {
-          options: {
-            encrypt: true,
-            trustServerCertificate: true,
-          },
-        },
-      };
-    case DatabaseDialect.Oracle:
-      return {
-        ...base,
-        dialectOptions: {
-          connectString: credentials.connectString,
-        },
-      };
-    default:
-      return base;
-  }
-}
-EOF_BACKEND_IA
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 182651.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 20.  Factory Sequelize (sin modelos aún)
-
-
-``` bash
-mkdir -p src/infrastructure/database/sequelize
-cat > src/infrastructure/database/sequelize/sequelize.factory.ts <<'EOF_BACKEND_IA'
-import { Sequelize } from 'sequelize-typescript';
-import { DatabaseDialect } from '../../../config/environment/env.interface';
-import { getSequelizeOptions } from './sequelize.options';
-
-
-export const ALL_MODELS = [
-  // (aún sin modelos — se agregan por feature)
-];
-
-export async function createSequelizeInstance(
-  dialect: DatabaseDialect,
-): Promise<Sequelize> {
-  const options = getSequelizeOptions(dialect);
-
-  let dialectModule: any;
-
-  switch (dialect) {
-    case DatabaseDialect.MySQL:
-      dialectModule = require('mysql2');
-      break;
-    case DatabaseDialect.Postgres:
-      dialectModule = require('pg');
-      break;
-    case DatabaseDialect.MSSQL:
-      dialectModule = require('tedious');
-      break;
-    case DatabaseDialect.Oracle:
-      dialectModule = require('oracledb');
-      break;
-    default:
-      throw new Error(`Dialecto no soportado: ${dialect}`);
-  }
-
-  const sequelize = new Sequelize({
-    ...options,
-    dialectModule,
-    models: ALL_MODELS,
-  } as any);
-
-  try {
-    await sequelize.authenticate();
-    console.log(`✅ Conexión exitosa a ${dialect.toUpperCase()}`);
-  } catch (error: any) {
-    console.error(
-      `❌ Error conectando a ${dialect.toUpperCase()}:`,
-      error.message,
-    );
-    throw error;
-  }
-
-  if (process.env.NODE_ENV !== 'production') {
-    await sequelize.sync({ alter: false });
-    console.log('✅ Tablas sincronizadas');
-  }
-
-  return sequelize;
-}
-EOF_BACKEND_IA
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 183447.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 21. DatabaseSeederService (sin seeders aún)
-
-
-
-``` bash
-mkdir -p src/infrastructure/database/seeders
-cat > src/infrastructure/database/seeders/database-seeder.service.ts <<'EOF_BACKEND_IA'
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-
-
-/**
- * Ejecuta seeders en orden de dependencias.
- * Solo en entornos no productivos.
- */
-@Injectable()
-export class DatabaseSeederService implements OnModuleInit {
-  private readonly logger = new Logger(DatabaseSeederService.name);
-
-  async onModuleInit(): Promise<void> {
-    if (process.env.NODE_ENV === 'production') {
       return;
     }
 
-    try {
-      // sin seeders aún
-      this.logger.log('✅ Seeders ejecutados');
-    } catch (error: any) {
-      this.logger.error(`❌ Error en seeders: ${error.message}`, error.stack);
-      throw error;
-    }
+    console.error(error);
+
+    res
+      .status(500)
+      .json({
+        error: "Internal server error",
+        detail: String(error)
+      });
   }
 }
-EOF_BACKEND_IA
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 183822.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 113439.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -1177,137 +555,994 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 22. Módulo global Sequelize
-
-``` bash
-mkdir -p src/infrastructure/database/sequelize
-cat > src/infrastructure/database/sequelize/sequelize.module.ts <<'EOF_BACKEND_IA'
-import { Module, Global } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Sequelize } from 'sequelize-typescript';
-import { DatabaseDialect } from '../../../config/environment/env.interface';
-import { SEQUELIZE_TOKEN } from '../../../common/constants/database.constants';
-import { createSequelizeInstance } from './sequelize.factory';
-import { DatabaseSeederService } from '../seeders/database-seeder.service';
-
-@Global()
-@Module({
-  providers: [
-    {
-      provide: SEQUELIZE_TOKEN,
-      useFactory: async (configService: ConfigService): Promise<Sequelize> => {
-        const dialect = configService.get<DatabaseDialect>(
-          'environment.database.dialect',
-          DatabaseDialect.MySQL,
-        );
-        return createSequelizeInstance(dialect);
-      },
-      inject: [ConfigService],
-    },
-    DatabaseSeederService,
-  ],
-  exports: [SEQUELIZE_TOKEN],
-})
-export class SequelizeDatabaseModule {}
-EOF_BACKEND_IA
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 184124.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 23. config/app/app.constants.ts
+## 11. src/shared/database/with-transaction.ts
 
 
 
 ``` bash
+cat > src/shared/database/with-transaction.ts << 'EOF'
+import { Transaction } from "sequelize";
+import { sequelize } from "../../database/db";
 
-mkdir -p src/config/app
-cat > src/config/app/app.constants.ts <<'EOF_BACKEND_IA'
-export const APP_CONFIG_NAME = 'app';
+export async function withTransaction<T>(
+  work: (transaction: Transaction) => Promise<T>
+): Promise<T> {
+  const transaction = await sequelize.transaction();
+  let committed = false;
 
-export const APP_DEFAULTS = {
-  PORT: 3000,
-  NODE_ENV: 'development',
-};
-EOF_BACKEND_IA
-```
+  try {
+    const result = await work(transaction);
 
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212349.png">
-</p>
+    await transaction.commit();
+    committed = true;
 
---------------------------------------------------------------------------------
+    return result;
+  } catch (error) {
+    if (!committed) {
+      await transaction.rollback().catch(() => undefined);
+    }
 
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 24. config/app/app.constants.ts
-
-
-
-``` bash
-
-mkdir -p src/config/app
-cat > src/config/app/app.config.ts <<'EOF_BACKEND_IA'
-import { registerAs } from '@nestjs/config';
-import { APP_CONFIG_NAME, APP_DEFAULTS } from './app.constants';
-import { Environment } from '../environment/env.interface';
-
-export const appConfig = registerAs(APP_CONFIG_NAME, () => ({
-  port: parseInt(process.env.PORT || String(APP_DEFAULTS.PORT), 10),
-  nodeEnv: (process.env.NODE_ENV as Environment) || APP_DEFAULTS.NODE_ENV,
-}));
-EOF_BACKEND_IA
-```
-
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212733.png">
-</p>
-
---------------------------------------------------------------------------------
-
-
-------------------------------------------------------------------------
------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 25. config/logger/logger.config.ts
-
-
-
-``` bash
-
-mkdir -p src/config/logger
-cat > src/config/logger/logger.config.ts <<'EOF_BACKEND_IA'
-import { LogLevel } from '@nestjs/common';
-
-export function getLoggerConfig(): { logLevels: LogLevel[] } {
-  const isDev = process.env.NODE_ENV === 'development';
-
-  return {
-    logLevels: isDev
-      ? ['log', 'error', 'warn', 'debug', 'verbose', 'fatal']
-      : ['log', 'error', 'warn'],
-  };
+    throw error;
+  }
 }
-EOF_BACKEND_IA
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 212853.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 113551.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 12. Modelo Client
+
+
+
+``` bash
+
+cat >> src/features/business/clients/client.model.ts << 'EOF'
+import { DataTypes, Model } from "sequelize";
+import { sequelize } from "../../../database/db";
+import bcrypt from "bcryptjs";
+
+export interface ClientI {
+  id?: number;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  password: string;
+  status: "active" | "inactive";
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export class Client extends Model {
+  public id!: number;
+  public name!: string;
+  public address!: string;
+  public phone!: string;
+  public email!: string;
+  public password!: string;
+  public status!: "active" | "inactive";
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Client.init(
+  {
+    name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    address: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        notEmpty: { msg: "Phone cannot be empty" },
+      },
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+      validate: {
+        isEmail: { msg: "Email must be a valid email address" },
+      },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    status: {
+      type: DataTypes.ENUM("active", "inactive"),
+      // Fail-safe: una fila insertada sin estado explícito NO queda visible en la API.
+      // La vía de creación de la API siempre envía "active".
+      defaultValue: "inactive",
+      allowNull: false,
+    },
+  },
+  {
+    sequelize,
+    modelName: "Client",
+    tableName: "clients",
+    timestamps: true,
+    hooks: {
+      beforeCreate: async (client: Client) => {
+        if (client.password) {
+          const salt = await bcrypt.genSalt(10);
+          client.password = await bcrypt.hash(client.password, salt);
+        }
+      },
+      beforeUpdate: async (client: Client) => {
+        if (client.changed("password") && client.password) {
+          const salt = await bcrypt.genSalt(10);
+          client.password = await bcrypt.hash(client.password, salt);
+        }
+      },
+      beforeBulkCreate: async (clients: Client[]) => {
+        for (const client of clients) {
+          if (client.password) {
+            const salt = await bcrypt.genSalt(10);
+            client.password = await bcrypt.hash(client.password, salt);
+          }
+        }
+      },
+    },
+  }
+);
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 113900.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 13. DTO + esqueletos repository / service / controller / routes + carpeta HTTP
+
+
+## dto/create-client.dto.ts
+
+
+``` bash
+cat >> src/features/business/clients/dto/create-client.dto.ts << 'EOF'
+/** Datos de entrada de `POST /api/clientes`. */
+export interface CreateClientDto {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  password: string;
+  /** Opcional: por defecto `active`. Tras crearlo, el estado sólo cambia con el borrado lógico. */
+  status?: "active" | "inactive";
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 114110.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 14. dto/update-client.dto.ts
+
+
+
+``` bash
+
+cat > src/features/business/clientes/dto/update-cliente.dto.ts << 'EOF'
+export interface UpdateClienteDto {
+  tipo_documento: string;
+  numero_documento: string;
+  nombre: string;
+  telefono: string;
+  email: string;
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 114435.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 15. dto/patch-client.dto.ts
+
+
+
+``` bash
+cat > src/features/business/clientes/dto/patch-cliente.dto.ts << 'EOF'
+import { UpdateClienteDto } from "./update-cliente.dto";
+
+export type PatchClienteDto = Partial<UpdateClienteDto>;
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 114555.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 16. dto/client-response.dto.ts
+
+
+
+``` bash
+cat > src/features/business/clientes/dto/cliente-response.dto.ts << 'EOF'
+import {
+  Cliente,
+  ClienteI
+} from "../cliente.model";
+
+export type ClienteResponseDto = ClienteI;
+
+export function toClienteResponse(
+  cliente: Cliente
+): ClienteResponseDto {
+  return cliente.toJSON() as ClienteI;
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 114734.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 17. dto/index.ts
+
+``` bash
+cat > src/features/business/clientes/dto/index.ts << 'EOF'
+export * from "./create-cliente.dto";
+export * from "./update-cliente.dto";
+export * from "./patch-cliente.dto";
+export * from "./cliente-response.dto";
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 115138.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 18. Repository (esqueleto)
+
+
+
+``` bash
+cat > src/features/business/clientes/clientes.repository.ts << 'EOF'
+import {
+  CreationAttributes,
+  Transaction
+} from "sequelize";
+
+import {
+  Cliente,
+  ClienteI
+} from "./cliente.model";
+
+export class ClientesRepository {
+
+  // ================== READ ==================
+
+  public async findAllActive(): Promise<Cliente[]> {
+    return Cliente.findAll({
+      where: {
+        is_active: true
+      }
+    });
+  }
+
+  public async findById(
+    id: number,
+    transaction?: Transaction
+  ): Promise<Cliente | null> {
+    return Cliente.findByPk(id, {
+      transaction
+    });
+  }
+
+  // ================== CREATE ==================
+
+  public async create(
+    data: CreationAttributes<Cliente>
+  ): Promise<Cliente> {
+    return Cliente.create(data);
+  }
+
+  // ================== UPDATE ==================
+
+  public async update(
+    cliente: Cliente,
+    data: Partial<ClienteI>
+  ): Promise<Cliente> {
+    return cliente.update(data);
+  }
+
+  // ================== DELETE ==================
+
+  public async delete(
+    cliente: Cliente
+  ): Promise<void> {
+    await cliente.destroy();
+  }
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 115531.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 19. Service (esqueleto)
+
+
+
+``` bash
+cat > src/features/business/clientes/clientes.service.ts << 'EOF'
+import {
+  ClienteResponseDto,
+  CreateClienteDto,
+  PatchClienteDto,
+  UpdateClienteDto,
+  toClienteResponse
+} from "./dto";
+
+import {
+  ClientesRepository
+} from "./clientes.repository";
+
+import {
+  Cliente
+} from "./cliente.model";
+
+import {
+  AppError
+} from "../../../shared/errors/app-error";
+
+export class ClientesService {
+
+  public constructor(
+    private readonly repository: ClientesRepository =
+      new ClientesRepository()
+  ) {}
+
+  // ================== READ ==================
+
+  public async getAll(): Promise<ClienteResponseDto[]> {
+    const clientes =
+      await this.repository.findAllActive();
+
+    return clientes.map(
+      (cliente) => toClienteResponse(cliente)
+    );
+  }
+
+  public async getOne(
+    id: number
+  ): Promise<ClienteResponseDto> {
+    return toClienteResponse(
+      await this.findOrFail(id)
+    );
+  }
+
+  // ================== CREATE ==================
+
+  public async create(
+    body: CreateClienteDto
+  ): Promise<ClienteResponseDto> {
+
+    const cliente =
+      await this.repository.create({
+        tipo_documento: body.tipo_documento,
+        numero_documento: body.numero_documento,
+        nombre: body.nombre,
+        telefono: body.telefono,
+        email: body.email,
+        is_active: true
+      });
+
+    return toClienteResponse(cliente);
+  }
+
+  // ================== UPDATE ==================
+
+  public async updatePut(
+    id: number,
+    body: UpdateClienteDto
+  ): Promise<ClienteResponseDto> {
+
+    const cliente =
+      await this.findOrFail(id);
+
+    await this.repository.update(
+      cliente,
+      {
+        tipo_documento: body.tipo_documento,
+        numero_documento: body.numero_documento,
+        nombre: body.nombre,
+        telefono: body.telefono,
+        email: body.email
+      }
+    );
+
+    return toClienteResponse(cliente);
+  }
+
+  public async updatePatch(
+    id: number,
+    body: PatchClienteDto
+  ): Promise<ClienteResponseDto> {
+
+    const cliente =
+      await this.findOrFail(id);
+
+    await this.repository.update(
+      cliente,
+      body
+    );
+
+    return toClienteResponse(cliente);
+  }
+
+  // ================== DELETE ==================
+
+  public async deletePhysical(
+    id: number
+  ): Promise<void> {
+
+    const cliente =
+      await this.findOrFail(id, false);
+
+    await this.repository.delete(cliente);
+  }
+
+  public async deleteLogical(
+    id: number
+  ): Promise<ClienteResponseDto> {
+
+    const cliente =
+      await this.findOrFail(id);
+
+    await this.repository.update(
+      cliente,
+      {
+        is_active: false
+      }
+    );
+
+    return toClienteResponse(cliente);
+  }
+
+  // ================== HELPERS ==================
+
+  private async findOrFail(
+    id: number,
+    onlyActive = true
+  ): Promise<Cliente> {
+
+    const cliente =
+      await this.repository.findById(id);
+
+    if (
+      !cliente ||
+      (onlyActive && !cliente.is_active)
+    ) {
+      throw new AppError(
+        404,
+        "Cliente no encontrado"
+      );
+    }
+
+    return cliente;
+  }
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 115803.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 20. Controller
+
+
+``` bash
+cat > src/features/business/clientes/clientes.controller.ts << 'EOF'
+import {
+  Request,
+  Response
+} from "express";
+
+import {
+  BaseController
+} from "../../../shared/http/base-controller";
+
+import {
+  ClientesService
+} from "./clientes.service";
+
+import {
+  CreateClienteDto,
+  PatchClienteDto,
+  UpdateClienteDto
+} from "./dto";
+
+export class ClientesController
+  extends BaseController {
+
+  public constructor(
+    private readonly service: ClientesService =
+      new ClientesService()
+  ) {
+    super();
+  }
+
+  // ================== READ ==================
+
+  public async getAll(
+    _req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(res, async () => {
+
+      const clientes =
+        await this.service.getAll();
+
+      res.status(200).json({
+        clientes
+      });
+    });
+  }
+
+  public async getOne(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(res, async () => {
+
+      const cliente =
+        await this.service.getOne(
+          this.paramId(req)
+        );
+
+      res.status(200).json({
+        cliente
+      });
+    });
+  }
+
+  // ================== CREATE ==================
+
+  public async create(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(res, async () => {
+
+      const cliente =
+        await this.service.create(
+          req.body as CreateClienteDto
+        );
+
+      res.status(201).json({
+        cliente
+      });
+    });
+  }
+
+  // ================== UPDATE ==================
+
+  public async updatePut(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(res, async () => {
+
+      const cliente =
+        await this.service.updatePut(
+          this.paramId(req),
+          req.body as UpdateClienteDto
+        );
+
+      res.status(200).json({
+        cliente
+      });
+    });
+  }
+
+  public async updatePatch(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(res, async () => {
+
+      const cliente =
+        await this.service.updatePatch(
+          this.paramId(req),
+          req.body as PatchClienteDto
+        );
+
+      res.status(200).json({
+        cliente
+      });
+    });
+  }
+
+  // ================== DELETE ==================
+
+  public async deletePhysical(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(res, async () => {
+
+      const id = this.paramId(req);
+
+      await this.service.deletePhysical(id);
+
+      res.status(200).json({
+        message: "Cliente eliminado permanentemente",
+        id
+      });
+    });
+  }
+
+  public async deleteLogical(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(res, async () => {
+
+      const cliente =
+        await this.service.deleteLogical(
+          this.paramId(req)
+        );
+
+      res.status(200).json({
+        message: "Cliente desactivado correctamente",
+        cliente
+      });
+    });
+  }
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 115934.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 21. Routes (esqueleto)
+
+
+
+``` bash
+cat > src/features/business/clientes/clientes.routes.ts << 'EOF'
+import {
+  Application
+} from "express";
+
+import {
+  ClientesController
+} from "./clientes.controller";
+
+export class ClientesRoutes {
+
+  public clientesController:
+    ClientesController =
+      new ClientesController();
+
+  public routes(
+    app: Application
+  ): void {
+
+    // ================== GET ==================
+
+    app
+      .route("/api/clientes")
+      .get(
+        this.clientesController.getAll.bind(
+          this.clientesController
+        )
+      );
+
+    app
+      .route("/api/clientes/:id")
+      .get(
+        this.clientesController.getOne.bind(
+          this.clientesController
+        )
+      );
+
+    // ================== CREATE ==================
+
+    app
+      .route("/api/clientes")
+      .post(
+        this.clientesController.create.bind(
+          this.clientesController
+        )
+      );
+
+    // ================== UPDATE ==================
+
+    app
+      .route("/api/clientes/:id")
+      .put(
+        this.clientesController.updatePut.bind(
+          this.clientesController
+        )
+      )
+      .patch(
+        this.clientesController.updatePatch.bind(
+          this.clientesController
+        )
+      );
+
+    // ================== DELETE ==================
+
+    app
+      .route("/api/clientes/:id")
+      .delete(
+        this.clientesController.deletePhysical.bind(
+          this.clientesController
+        )
+      );
+
+    app
+      .route("/api/clientes/:id/deactivate")
+      .patch(
+        this.clientesController.deleteLogical.bind(
+          this.clientesController
+        )
+      );
+  }
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 120155.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 22. Agregador Routes + cableado en Config
+
+``` bash
+cat > src/routes/index.ts << 'EOF'
+import {
+  ClientesRoutes
+} from "../features/business/clientes/clientes.routes";
+
+export class Routes {
+
+  public clientesRoutes:
+    ClientesRoutes =
+      new ClientesRoutes();
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 120447.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 23.PARCHE — src/config/index.ts ya existe (ISS-01).
+
+
+
+``` bash
+
+import { sequelize, getDatabaseInfo, testConnection } from "../database/db";
+import "../features/business/clients/client.model";
+import { Routes } from "../routes/index";
+Dentro de export class App, debajo de public app: Application; añadir:
+
+  public routePrv: Routes = new Routes();
+Dentro de routes(), reemplazar el comentario // ISS-03 §4.3 por:
+
+    this.routePrv.clientsRoutes.routes(this.app);
+Dentro de dbConnection(), reemplazar el comentario // ISS-02 / ISS-03 por:
+
+    try {
+      // Mostrar información de la base de datos seleccionada
+      const dbInfo = getDatabaseInfo();
+      console.log(`🔗 Intentando conectar a: ${dbInfo.engine.toUpperCase()}`);
+
+      // Probar la conexión
+      const isConnected = await testConnection();
+
+      if (!isConnected) {
+        throw new Error(`No se pudo conectar a la base de datos ${dbInfo.engine.toUpperCase()}`);
+      }
+
+      // alter: true actualiza columnas faltantes (ej. createdAt/updatedAt tras timestamps: true).
+      // force: false no recrea tablas; no borra datos. En producción preferir migraciones.
+      await sequelize.sync({ force: false, alter: true });
+      console.log(`📦 Base de datos sincronizada exitosamente`);
+    } catch (error) {
+      console.error("❌ Error al conectar con la base de datos:", error);
+      process.exit(1); // Terminar la aplicación si no se puede conectar
+    }
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 121326.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 24. ISS-03-B — Feature Client — GetAll y GetOne
+## HTTP — archivo nuevo
+
+
+
+``` bash
+cat > src/features/business/clientes/http/clientes.get.http << 'EOF'
+### CELEBRAHUB - CLIENTES
+### ISS-03 - GET ALL
+
+@baseUrl = http://localhost:4000
+
+### Obtener todos los clientes activos
+GET {{baseUrl}}/api/clientes
+
+### Obtener cliente por ID
+GET {{baseUrl}}/api/clientes/1
+
+### ID inválido
+GET {{baseUrl}}/api/clientes/abc
+
+### ID cero
+GET {{baseUrl}}/api/clientes/0
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 122104.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+-----------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 25. CREATE
+
+
+
+``` bash
+cat > src/features/business/clientes/http/clientes.create.http << 'EOF'
+### CELEBRAHUB - CLIENTES
+### ISS-03 - CREATE
+
+@baseUrl = http://localhost:4000
+
+### Crear cliente
+POST {{baseUrl}}/api/clientes
+Content-Type: application/json
+
+{
+  "tipo_documento": "CC",
+  "numero_documento": "1234567890",
+  "nombre": "Ana Pérez",
+  "telefono": "3001234567",
+  "email": "ana.perez@example.com"
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 122213.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -1316,26 +1551,43 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-## 26. config/logger/logger.module.ts
+## 26. UPDATE
 
 
 
 ``` bash
-mkdir -p src/config/logger
-cat > src/config/logger/logger.module.ts <<'EOF_BACKEND_IA'
-import { Module, Global, Logger } from '@nestjs/common';
+cat > src/features/business/clientes/http/clientes.update.http << 'EOF'
+### CELEBRAHUB - CLIENTES
+### ISS-03 - UPDATE
 
-@Global()
-@Module({
-  providers: [Logger],
-  exports: [Logger],
-})
-export class LoggerModule {}
-EOF_BACKEND_IA
+@baseUrl = http://localhost:4000
+
+### PUT
+PUT {{baseUrl}}/api/clientes/1
+Content-Type: application/json
+
+{
+  "tipo_documento": "CC",
+  "numero_documento": "1234567890",
+  "nombre": "Ana Pérez Actualizada",
+  "telefono": "3009876543",
+  "email": "ana.actualizada@example.com"
+}
+
+###
+
+### PATCH
+PATCH {{baseUrl}}/api/clientes/1
+Content-Type: application/json
+
+{
+  "telefono": "3011112233"
+}
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 213131.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 122309.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -1344,23 +1596,29 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 27.  config/swagger/swagger.constants.ts
+## 27.  DELETE
 
 
 
 ``` bash
-mkdir -p src/config/swagger
-cat > src/config/swagger/swagger.constants.ts <<'EOF_BACKEND_IA'
-export const SWAGGER_TITLE = 'CelebraHub API';
-export const SWAGGER_DESCRIPTION =
-  'API: envíos, tracking, tarifas y facturación (Clean Architecture / DDD sobre NestJS + Sequelize, multi-motor)';
-export const SWAGGER_VERSION = '1.0';
-export const SWAGGER_PATH = 'api/docs';
-EOF_BACKEND_IA
+cat > src/features/business/clientes/http/clientes.delete.http << 'EOF'
+### CELEBRAHUB - CLIENTES
+### ISS-03 - DELETE
+
+@baseUrl = http://localhost:4000
+
+### Borrado lógico
+PATCH {{baseUrl}}/api/clientes/1/deactivate
+
+###
+
+### Borrado físico
+DELETE {{baseUrl}}/api/clientes/1
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 213410.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 122916.png">
 </p>
 
 --------------------------------------------------------------------------------

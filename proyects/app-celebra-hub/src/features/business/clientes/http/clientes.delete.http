@@ -1,0 +1,12 @@
+### CELEBRAHUB - CLIENTES
+### ISS-03 - DELETE
+
+@baseUrl = http://localhost:4000
+
+### Borrado lógico
+PATCH {{baseUrl}}/api/clientes/1/deactivate
+
+###
+
+### Borrado físico
+DELETE {{baseUrl}}/api/clientes/1
