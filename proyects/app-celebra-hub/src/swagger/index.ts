@@ -3,7 +3,9 @@ import { Application } from "express";
 
 import { clientesSwagger } from "../features/business/clientes/clientes.swagger";
 import { serviciosSwagger } from "../features/business/servicios/servicios.swagger";
+import { salonesSwagger } from "../features/business/salones/salones.swagger";
 import { eventoServiciosSwagger } from "../features/business/evento-servicios/evento-servicios.swagger";
+import { reservasSwagger } from "../features/business/reservas/reservas.swagger";
 
 export type FeatureSwaggerModule = {
   tags: unknown[];
@@ -14,9 +16,10 @@ export type FeatureSwaggerModule = {
 };
 
 const featureSwaggerModules: FeatureSwaggerModule[] = [
-  clientesSwagger,
-  serviciosSwagger,
-  eventoServiciosSwagger
+clientesSwagger,
+serviciosSwagger,
+salonesSwagger,
+eventoServiciosSwagger
 ];
 
 const tags = featureSwaggerModules.flatMap(

@@ -5,6 +5,7 @@ export interface SeedCounts {
   servicios: number;
   salones: number;
   eventoServicios: number;
+  reservas: number;
 }
 
 function readEnvCount(
@@ -27,6 +28,7 @@ function readEnvCount(
 function readCliCount(
   prefix: string
 ): number | undefined {
+
   const argument =
     process.argv.find(
       (arg) => arg.startsWith(`${prefix}=`)
@@ -58,23 +60,42 @@ export function resolveSeedCounts(): SeedCounts {
   const eventoServiciosCli =
     readCliCount("--evento-servicios");
 
+  const reservasCli =
+    readCliCount("--reservas");
+
   return {
     clientes:
       clientesCli ??
-      readEnvCount("SEED_CLIENTES", 10),
+      readEnvCount(
+        "SEED_CLIENTES",
+        10
+      ),
 
     servicios:
       serviciosCli ??
-      readEnvCount("SEED_SERVICIOS", 10),
+      readEnvCount(
+        "SEED_SERVICIOS",
+        10
+      ),
 
     salones:
       salonesCli ??
-      readEnvCount("SEED_SALONES", 10),
+      readEnvCount(
+        "SEED_SALONES",
+        10
+      ),
 
     eventoServicios:
       eventoServiciosCli ??
       readEnvCount(
         "SEED_EVENTO_SERVICIOS",
+        10
+      ),
+
+    reservas:
+      reservasCli ??
+      readEnvCount(
+        "SEED_RESERVAS",
         10
       )
   };

@@ -6,28 +6,30 @@ import {
 } from "../db";
 
 import "../../features/business/clientes/cliente.model";
+import "../../features/business/servicios/servicio.model";
+import "../../features/business/salones/salon.model";
+import "../../features/business/evento-servicios/evento-servicio.model";
+import "../../features/business/reservas/reserva.model";
 
 import {
   seedClientes
 } from "../../features/business/clientes/clientes.seeder";
 
-import "../../features/business/servicios/servicio.model";
-
 import {
   seedServicios
 } from "../../features/business/servicios/servicios.seeder";
-
-import "../../features/business/salones/salon.model";
 
 import {
   seedSalones
 } from "../../features/business/salones/salones.seeder";
 
-import "../../features/business/evento-servicios/evento-servicio.model";
-
 import {
   seedEventoServicios
 } from "../../features/business/evento-servicios/evento-servicios.seeder";
+
+import {
+  seedReservas
+} from "../../features/business/reservas/reservas.seeder";
 
 import {
   resolveSeedCounts
@@ -35,18 +37,22 @@ import {
 
 dotenv.config();
 
-/**
- * SeedersRunner — ejecuta todos los seeders
- * de las features de CelebraHub.
- */
 export async function runAllSeeders(): Promise<void> {
 
-  const counts = resolveSeedCounts();
+  const counts =
+    resolveSeedCounts();
 
-  console.log("🌱 Iniciando SeedersRunner...");
-  console.log("📊 Conteos:", counts);
+  console.log(
+    "🌱 Iniciando SeedersRunner..."
+  );
 
-  const ok = await testConnection();
+  console.log(
+    "📊 Conteos:",
+    counts
+  );
+
+  const ok =
+    await testConnection();
 
   if (!ok) {
     throw new Error(
@@ -59,18 +65,29 @@ export async function runAllSeeders(): Promise<void> {
     alter: true
   });
 
-  // Orden: business (padres → hijos)
-  await seedClientes(counts.clientes);
+  await seedClientes(
+    counts.clientes
+  );
 
-  await seedServicios(counts.servicios);
+  await seedServicios(
+    counts.servicios
+  );
 
-  await seedSalones(counts.salones);
+  await seedSalones(
+    counts.salones
+  );
 
   await seedEventoServicios(
     counts.eventoServicios
   );
 
-  console.log("🌱 SeedersRunner finalizado");
+  await seedReservas(
+    counts.reservas
+  );
+
+  console.log(
+    "🌱 SeedersRunner finalizado"
+  );
 }
 
 if (require.main === module) {
