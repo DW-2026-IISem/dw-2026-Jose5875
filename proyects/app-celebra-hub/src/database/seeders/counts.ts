@@ -3,6 +3,7 @@ import "dotenv/config";
 export interface SeedCounts {
   clientes: number;
   servicios: number;
+  salones: number;
   eventoServicios: number;
 }
 
@@ -51,6 +52,9 @@ export function resolveSeedCounts(): SeedCounts {
   const serviciosCli =
     readCliCount("--servicios");
 
+  const salonesCli =
+    readCliCount("--salones");
+
   const eventoServiciosCli =
     readCliCount("--evento-servicios");
 
@@ -62,6 +66,10 @@ export function resolveSeedCounts(): SeedCounts {
     servicios:
       serviciosCli ??
       readEnvCount("SEED_SERVICIOS", 10),
+
+    salones:
+      salonesCli ??
+      readEnvCount("SEED_SALONES", 10),
 
     eventoServicios:
       eventoServiciosCli ??

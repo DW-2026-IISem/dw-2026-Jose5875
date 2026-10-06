@@ -17,6 +17,12 @@ import {
   seedServicios
 } from "../../features/business/servicios/servicios.seeder";
 
+import "../../features/business/salones/salon.model";
+
+import {
+  seedSalones
+} from "../../features/business/salones/salones.seeder";
+
 import "../../features/business/evento-servicios/evento-servicio.model";
 
 import {
@@ -57,6 +63,8 @@ export async function runAllSeeders(): Promise<void> {
   await seedClientes(counts.clientes);
 
   await seedServicios(counts.servicios);
+
+  await seedSalones(counts.salones);
 
   await seedEventoServicios(
     counts.eventoServicios

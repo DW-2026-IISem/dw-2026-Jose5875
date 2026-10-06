@@ -16,6 +16,7 @@ import {
 import "../features/business/clientes/cliente.model";
 import "../features/business/servicios/servicio.model";
 import "../features/business/evento-servicios/evento-servicio.model";
+import "../features/business/salones/salon.model";
 
 import { Routes } from "../routes/index";
 import { setupSwagger } from "../swagger/index";
@@ -102,6 +103,10 @@ private routes(): void {
 
     this.routePrv
     .eventoServiciosRoutes
+    .routes(this.app);
+
+    this.routePrv
+    .salonesRoutes
     .routes(this.app);
 }
   
