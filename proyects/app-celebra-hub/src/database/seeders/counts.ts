@@ -6,6 +6,7 @@ export interface SeedCounts {
   salones: number;
   eventoServicios: number;
   reservas: number;
+  proveedores: number;
 }
 
 function readEnvCount(
@@ -48,54 +49,46 @@ function readCliCount(
 
 export function resolveSeedCounts(): SeedCounts {
 
-  const clientesCli =
-    readCliCount("--clientes");
-
-  const serviciosCli =
-    readCliCount("--servicios");
-
-  const salonesCli =
-    readCliCount("--salones");
-
-  const eventoServiciosCli =
-    readCliCount("--evento-servicios");
-
-  const reservasCli =
-    readCliCount("--reservas");
-
   return {
     clientes:
-      clientesCli ??
+      readCliCount("--clientes") ??
       readEnvCount(
         "SEED_CLIENTES",
         10
       ),
 
     servicios:
-      serviciosCli ??
+      readCliCount("--servicios") ??
       readEnvCount(
         "SEED_SERVICIOS",
         10
       ),
 
     salones:
-      salonesCli ??
+      readCliCount("--salones") ??
       readEnvCount(
         "SEED_SALONES",
         10
       ),
 
     eventoServicios:
-      eventoServiciosCli ??
+      readCliCount("--evento-servicios") ??
       readEnvCount(
         "SEED_EVENTO_SERVICIOS",
         10
       ),
 
     reservas:
-      reservasCli ??
+      readCliCount("--reservas") ??
       readEnvCount(
         "SEED_RESERVAS",
+        10
+      ),
+
+    proveedores:
+      readCliCount("--proveedores") ??
+      readEnvCount(
+        "SEED_PROVEEDORES",
         10
       )
   };

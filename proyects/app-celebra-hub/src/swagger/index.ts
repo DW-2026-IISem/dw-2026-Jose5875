@@ -6,6 +6,7 @@ import { serviciosSwagger } from "../features/business/servicios/servicios.swagg
 import { salonesSwagger } from "../features/business/salones/salones.swagger";
 import { eventoServiciosSwagger } from "../features/business/evento-servicios/evento-servicios.swagger";
 import { reservasSwagger } from "../features/business/reservas/reservas.swagger";
+import { proveedoresSwagger } from "../features/business/proveedores/proveedores.swagger";
 
 export type FeatureSwaggerModule = {
   tags: unknown[];
@@ -15,11 +16,13 @@ export type FeatureSwaggerModule = {
   };
 };
 
-const featureSwaggerModules: FeatureSwaggerModule[] = [
-clientesSwagger,
-serviciosSwagger,
-salonesSwagger,
-eventoServiciosSwagger
+const featureSwaggerModules = [
+  clientesSwagger,
+  serviciosSwagger,
+  salonesSwagger,
+  reservasSwagger,
+  proveedoresSwagger,
+  eventoServiciosSwagger
 ];
 
 const tags = featureSwaggerModules.flatMap(
@@ -37,7 +40,11 @@ const schemas = Object.assign(
   {},
   ...featureSwaggerModules.map(
     (module) =>
-      module.components?.schemas ?? {}
+      ("schemas" in module
+        ? module.schemas
+        : "components" in module
+          ? module.components?.schemas ?? {}
+          : {})
   )
 );
 

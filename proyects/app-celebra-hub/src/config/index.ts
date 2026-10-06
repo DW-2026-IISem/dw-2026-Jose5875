@@ -18,6 +18,7 @@ import "../features/business/servicios/servicio.model";
 import "../features/business/evento-servicios/evento-servicio.model";
 import "../features/business/salones/salon.model";
 import "../features/business/reservas/reserva.model";
+import "../features/business/proveedores/proveedor.model";
 
 import { Routes } from "../routes/index";
 import { setupSwagger } from "../swagger/index";
@@ -113,7 +114,10 @@ private routes(): void {
     this.routePrv
     .reservasRoutes
     .routes(this.app);
-
+    
+    this.routePrv
+    .proveedoresRoutes
+    .routes(this.app);
 
 }
   

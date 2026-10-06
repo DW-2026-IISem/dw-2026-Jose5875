@@ -2,9 +2,11 @@ import { ClientesRoutes } from "../features/business/clientes/clientes.routes";
 import { ServiciosRoutes } from "../features/business/servicios/servicios.routes";
 import { SalonesRoutes } from "../features/business/salones/salones.routes";
 import { ReservasRoutes } from "../features/business/reservas/reservas.routes";
+import { ProveedoresRoutes } from "../features/business/proveedores/proveedores.routes";
 import { EventoServiciosRoutes } from "../features/business/evento-servicios/evento-servicios.routes";
 
 export class Routes {
+
   public clientesRoutes: ClientesRoutes =
     new ClientesRoutes();
 
@@ -16,6 +18,9 @@ export class Routes {
 
   public reservasRoutes: ReservasRoutes =
     new ReservasRoutes();
+
+  public proveedoresRoutes: ProveedoresRoutes =
+    new ProveedoresRoutes();
 
   public eventoServiciosRoutes: EventoServiciosRoutes =
     new EventoServiciosRoutes();

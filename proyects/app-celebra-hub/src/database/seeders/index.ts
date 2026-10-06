@@ -10,6 +10,7 @@ import "../../features/business/servicios/servicio.model";
 import "../../features/business/salones/salon.model";
 import "../../features/business/evento-servicios/evento-servicio.model";
 import "../../features/business/reservas/reserva.model";
+import "../../features/business/proveedores/proveedor.model";
 
 import {
   seedClientes
@@ -34,6 +35,10 @@ import {
 import {
   resolveSeedCounts
 } from "./counts";
+
+import {
+  seedProveedores
+} from "../../features/business/proveedores/proveedores.seeder";
 
 dotenv.config();
 
@@ -83,6 +88,10 @@ export async function runAllSeeders(): Promise<void> {
 
   await seedReservas(
     counts.reservas
+  );
+
+  await seedProveedores(
+   counts.proveedores
   );
 
   console.log(
