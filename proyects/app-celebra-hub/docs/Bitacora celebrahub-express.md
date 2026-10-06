@@ -3656,54 +3656,103 @@ EOF
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 43. common/pipes/validation.pipe.ts
+## 43.Business — ISS-07 — Feature Product (productos)
 
-
+##  Modelo Product
 
 ``` bash
-mkdir -p src/common/pipes
-cat > src/common/pipes/validation.pipe.ts <<'EOF_BACKEND_IA'
-import {
-  PipeTransform,
-  Injectable,
-  ArgumentMetadata,
-  BadRequestException,
-} from '@nestjs/common';
-import { validate } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
+cat > src/features/business/evento-servicios/evento-servicio.model.ts <<'EOF'
+import { DataTypes, Model } from "sequelize";
+import { sequelize } from "../../../database/db";
 
-@Injectable()
-export class CustomValidationPipe implements PipeTransform<any> {
-  async transform(value: any, { metatype }: ArgumentMetadata) {
-    if (!metatype || !this.toValidate(metatype)) {
-      return value;
-    }
-
-    const object = plainToInstance(metatype, value);
-    const errors = await validate(object);
-
-    if (errors.length > 0) {
-      const messages = errors.map(
-        (err) =>
-          `${err.property}: ${Object.values(err.constraints || {}).join(', ')}`,
-      );
-      throw new BadRequestException(messages);
-    }
-
-    return object;
-  }
-
-  private toValidate(metatype: any): boolean {
-    const types = [String, Boolean, Number, Array, Object];
-    return !types.includes(metatype);
-  }
+export interface EventoServicioI {
+  id?: number;
+  referencia_id: number;
+  tipo: string;
+  fecha: Date;
+  cantidad: number;
+  observaciones?: string | null;
+  estado: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
-EOF_BACKEND_IA
+
+export class EventoServicio
+  extends Model<EventoServicioI>
+  implements EventoServicioI {
+
+  public id!: number;
+
+  public referencia_id!: number;
+
+  public tipo!: string;
+
+  public fecha!: Date;
+
+  public cantidad!: number;
+
+  public observaciones!: string | null;
+
+  public estado!: string;
+
+  public readonly createdAt!: Date;
+
+  public readonly updatedAt!: Date;
+}
+
+EventoServicio.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true
+    },
+
+    referencia_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+
+    tipo: {
+      type: DataTypes.STRING(100),
+      allowNull: false
+    },
+
+    fecha: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+
+    cantidad: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1
+    },
+
+    observaciones: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+
+    estado: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: "pendiente"
+    }
+  },
+  {
+    sequelize,
+    modelName: "EventoServicio",
+    tableName: "evento_servicios",
+    timestamps: true
+  }
+);
+EOF
 
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 231007.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 195459.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -3712,38 +3761,70 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 44. common/pipes/parse-positive-int.pipe.ts
+## 44. DTO + Repository + Service + Controller + routes
 
 
 
 ``` bash
-mkdir -p src/common/pipes
-cat > src/common/pipes/parse-positive-int.pipe.ts <<'EOF_BACKEND_IA'
-import {
-  PipeTransform,
-  Injectable,
-  BadRequestException,
-} from '@nestjs/common';
+mkdir -p src/features/business/evento-servicios/dto
 
-@Injectable()
-export class ParsePositiveIntPipe implements PipeTransform<string, number> {
-  transform(value: string): number {
-    const parsed = parseInt(value, 10);
-
-    if (isNaN(parsed) || parsed <= 0) {
-      throw new BadRequestException(
-        `El valor '${value}' no es un entero positivo`,
-      );
-    }
-
-    return parsed;
-  }
+cat > src/features/business/evento-servicios/dto/create-evento-servicio.dto.ts <<'EOF'
+export interface CreateEventoServicioDto {
+  referencia_id: number;
+  tipo: string;
+  fecha: string;
+  cantidad: number;
+  observaciones?: string | null;
+  estado?: string;
 }
-EOF_BACKEND_IA
+EOF
+
+cat > src/features/business/evento-servicios/dto/update-evento-servicio.dto.ts <<'EOF'
+export interface UpdateEventoServicioDto {
+  referencia_id: number;
+  tipo: string;
+  fecha: string;
+  cantidad: number;
+  observaciones?: string | null;
+  estado?: string;
+}
+EOF
+
+cat > src/features/business/evento-servicios/dto/patch-evento-servicio.dto.ts <<'EOF'
+import { UpdateEventoServicioDto } from "./update-evento-servicio.dto";
+
+export type PatchEventoServicioDto =
+  Partial<UpdateEventoServicioDto>;
+EOF
+
+cat > src/features/business/evento-servicios/dto/evento-servicio-response.dto.ts <<'EOF'
+import {
+  EventoServicio,
+  EventoServicioI
+} from "../evento-servicio.model";
+
+export type EventoServicioResponseDto =
+  EventoServicioI;
+
+export function toEventoServicioResponse(
+  eventoServicio: EventoServicio
+): EventoServicioResponseDto {
+
+  return eventoServicio.toJSON()
+    as EventoServicioResponseDto;
+}
+EOF
+
+cat > src/features/business/evento-servicios/dto/index.ts <<'EOF'
+export * from "./create-evento-servicio.dto";
+export * from "./update-evento-servicio.dto";
+export * from "./patch-evento-servicio.dto";
+export * from "./evento-servicio-response.dto";
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 231226.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 195927.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -3752,29 +3833,338 @@ EOF_BACKEND_IA
 ------------------------------------------------------------------------
 v------------------------------------------------------------------------
 
-## 45. common/interfaces/pagination.interface.ts
+## 45. Repository
 
 
 
 ``` bash
-mkdir -p src/common/interfaces
-cat > src/common/interfaces/pagination.interface.ts <<'EOF_BACKEND_IA'
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+cat > src/features/business/evento-servicios/evento-servicios.repository.ts <<'EOF'
+import {
+  CreationAttributes
+} from "sequelize";
 
-export interface PaginatedResult<T> {
-  items: T[];
-  meta: PaginationMeta;
+import {
+  EventoServicio,
+  EventoServicioI
+} from "./evento-servicio.model";
+
+export class EventoServiciosRepository {
+
+  public async findAllActive():
+    Promise<EventoServicio[]> {
+
+    return EventoServicio.findAll({
+      where: {
+        estado: "pendiente"
+      }
+    });
+  }
+
+  public async findById(
+    id: number
+  ): Promise<EventoServicio | null> {
+
+    return EventoServicio.findByPk(id);
+  }
+
+  public async create(
+    data: CreationAttributes<EventoServicio>
+  ): Promise<EventoServicio> {
+
+    return EventoServicio.create(data);
+  }
+
+  public async update(
+    eventoServicio: EventoServicio,
+    data: Partial<EventoServicioI>
+  ): Promise<EventoServicio> {
+
+    return eventoServicio.update(data);
+  }
+
+  public async delete(
+    eventoServicio: EventoServicio
+  ): Promise<void> {
+
+    await eventoServicio.destroy();
+  }
 }
-EOF_BACKEND_IA
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 231658.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 200057.png">
+</p>
+
+--------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+## 46. Service
+
+
+
+
+``` bash
+cat > src/features/business/evento-servicios/evento-servicios.service.ts <<'EOF'
+import {
+  CreateEventoServicioDto,
+  PatchEventoServicioDto,
+  EventoServicioResponseDto,
+  UpdateEventoServicioDto,
+  toEventoServicioResponse
+} from "./dto";
+
+import {
+  EventoServiciosRepository
+} from "./evento-servicios.repository";
+
+import {
+  EventoServicio
+} from "./evento-servicio.model";
+
+import {
+  AppError
+} from "../../../shared/errors/app-error";
+
+export class EventoServiciosService {
+
+  public constructor(
+    private readonly repository:
+      EventoServiciosRepository =
+        new EventoServiciosRepository()
+  ) {}
+
+  // ================== READ ==================
+
+  public async getAll():
+    Promise<EventoServicioResponseDto[]> {
+
+    const registros =
+      await this.repository.findAllActive();
+
+    return registros.map(
+      (registro) =>
+        toEventoServicioResponse(registro)
+    );
+  }
+
+  public async getOne(
+    id: number
+  ): Promise<EventoServicioResponseDto> {
+
+    return toEventoServicioResponse(
+      await this.findOrFail(id)
+    );
+  }
+
+  // ================== CREATE ==================
+
+  public async create(
+    body: CreateEventoServicioDto
+  ): Promise<EventoServicioResponseDto> {
+
+    const eventoServicio =
+      await this.repository.create({
+        referencia_id:
+          body.referencia_id,
+
+        tipo:
+          body.tipo,
+
+        fecha:
+          new Date(body.fecha),
+
+        cantidad:
+          body.cantidad,
+
+        observaciones:
+          body.observaciones ?? null,
+
+        estado:
+          body.estado ?? "pendiente"
+      });
+
+    return toEventoServicioResponse(
+      eventoServicio
+    );
+  }
+
+  // ================== UPDATE ==================
+
+  public async updatePut(
+    id: number,
+    body: UpdateEventoServicioDto
+  ): Promise<EventoServicioResponseDto> {
+
+    const eventoServicio =
+      await this.findOrFail(id);
+
+    await this.repository.update(
+      eventoServicio,
+      {
+        referencia_id:
+          body.referencia_id,
+
+        tipo:
+          body.tipo,
+
+        fecha:
+          new Date(body.fecha),
+
+        cantidad:
+          body.cantidad,
+
+        observaciones:
+          body.observaciones ?? null,
+
+        estado:
+          body.estado ??
+          eventoServicio.estado
+      }
+    );
+
+    return toEventoServicioResponse(
+      eventoServicio
+    );
+  }
+
+  public async updatePatch(
+    id: number,
+    body: PatchEventoServicioDto
+  ): Promise<EventoServicioResponseDto> {
+
+    const eventoServicio =
+      await this.findOrFail(id);
+
+    const data:
+      Partial<EventoServicio> = {};
+
+    if (
+      body.referencia_id !== undefined
+    ) {
+      data.referencia_id =
+        body.referencia_id;
+    }
+
+    if (
+      body.tipo !== undefined
+    ) {
+      data.tipo =
+        body.tipo;
+    }
+
+    if (
+      body.fecha !== undefined
+    ) {
+      data.fecha =
+        new Date(body.fecha);
+    }
+
+    if (
+      body.cantidad !== undefined
+    ) {
+      data.cantidad =
+        body.cantidad;
+    }
+
+    if (
+      body.observaciones !== undefined
+    ) {
+      data.observaciones =
+        body.observaciones;
+    }
+
+    if (
+      body.estado !== undefined
+    ) {
+      data.estado =
+        body.estado;
+    }
+
+    await this.repository.update(
+      eventoServicio,
+      data
+    );
+
+    return toEventoServicioResponse(
+      eventoServicio
+    );
+  }
+
+  // ================== DELETE ==================
+
+  public async deletePhysical(
+    id: number
+  ): Promise<void> {
+
+    const eventoServicio =
+      await this.findOrFail(
+        id,
+        false
+      );
+
+    await this.repository.delete(
+      eventoServicio
+    );
+  }
+
+  public async deleteLogical(
+    id: number
+  ): Promise<EventoServicioResponseDto> {
+
+    const eventoServicio =
+      await this.findOrFail(id);
+
+    await this.repository.update(
+      eventoServicio,
+      {
+        estado: "inactivo"
+      }
+    );
+
+    return toEventoServicioResponse(
+      eventoServicio
+    );
+  }
+
+  // ================== HELPER ==================
+
+  private async findOrFail(
+    id: number,
+    onlyActive = true
+  ): Promise<EventoServicio> {
+
+    const eventoServicio =
+      await this.repository.findById(id);
+
+    if (!eventoServicio) {
+
+      throw new AppError(
+        404,
+        "EventoServicio no encontrado"
+      );
+    }
+
+    if (
+      onlyActive &&
+      eventoServicio.estado === "inactivo"
+    ) {
+
+      throw new AppError(
+        404,
+        "EventoServicio no encontrado"
+      );
+    }
+
+    return eventoServicio;
+  }
+}
+EOF
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-05 200604.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -3782,24 +4172,198 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 46. common/interfaces/api-response.interface.ts
+## 47. Controller
 
 
 
 ``` bash
-mkdir -p src/common/interfaces
-cat > src/common/interfaces/api-response.interface.ts <<'EOF_BACKEND_IA'
-export interface ApiResponseBody<T> {
-  statusCode: number;
-  message: string;
-  data: T;
-  timestamp: string;
+cat > src/features/business/evento-servicios/evento-servicios.controller.ts <<'EOF'
+import {
+  Request,
+  Response
+} from "express";
+
+import {
+  BaseController
+} from "../../../shared/http/base-controller";
+
+import {
+  CreateEventoServicioDto,
+  PatchEventoServicioDto,
+  UpdateEventoServicioDto
+} from "./dto";
+
+import {
+  EventoServiciosService
+} from "./evento-servicios.service";
+
+export class EventoServiciosController
+  extends BaseController {
+
+  public constructor(
+    private readonly service:
+      EventoServiciosService =
+        new EventoServiciosService()
+  ) {
+    super();
+  }
+
+  public async getAll(
+    _req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const eventoServicios =
+          await this.service.getAll();
+
+        res.status(200).json({
+          eventoServicios
+        });
+      }
+    );
+  }
+
+  public async getOne(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const eventoServicio =
+          await this.service.getOne(
+            this.paramId(req)
+          );
+
+        res.status(200).json({
+          eventoServicio
+        });
+      }
+    );
+  }
+
+  public async create(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const eventoServicio =
+          await this.service.create(
+            req.body as CreateEventoServicioDto
+          );
+
+        res.status(201).json({
+          eventoServicio
+        });
+      }
+    );
+  }
+
+  public async updatePut(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const eventoServicio =
+          await this.service.updatePut(
+            this.paramId(req),
+            req.body as UpdateEventoServicioDto
+          );
+
+        res.status(200).json({
+          eventoServicio
+        });
+      }
+    );
+  }
+
+  public async updatePatch(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const eventoServicio =
+          await this.service.updatePatch(
+            this.paramId(req),
+            req.body as PatchEventoServicioDto
+          );
+
+        res.status(200).json({
+          eventoServicio
+        });
+      }
+    );
+  }
+
+  public async deletePhysical(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const id =
+          this.paramId(req);
+
+        await this.service.deletePhysical(id);
+
+        res.status(200).json({
+          message:
+            "EventoServicio eliminado permanentemente",
+          id
+        });
+      }
+    );
+  }
+
+  public async deleteLogical(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+
+    await this.run(
+      res,
+      async () => {
+
+        const eventoServicio =
+          await this.service.deleteLogical(
+            this.paramId(req)
+          );
+
+        res.status(200).json({
+          message:
+            "EventoServicio desactivado correctamente",
+          eventoServicio
+        });
+      }
+    );
+  }
 }
-EOF_BACKEND_IA
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 231944.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 200733.png">
 </p>
 
 --------------------------------------------------------------------------------
@@ -3807,35 +4371,92 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 47. common/types/nullable.type.ts
+## 48. Routes
 
 
 
 ``` bash
-mkdir -p src/common/types
-cat > src/common/types/nullable.type.ts <<'EOF_BACKEND_IA'
-export type Nullable<T> = T | null;
-EOF_BACKEND_IA
-```
+cat > src/features/business/evento-servicios/evento-servicios.routes.ts <<'EOF'
+import {
+  Application
+} from "express";
 
-<p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 232134.png">
-</p>
+import {
+  EventoServiciosController
+} from "./evento-servicios.controller";
 
---------------------------------------------------------------------------------
+export class EventoServiciosRoutes {
 
+  public eventoServiciosController:
+    EventoServiciosController =
+      new EventoServiciosController();
 
-------------------------------------------------------------------------
+  public routes(
+    app: Application
+  ): void {
 
-## 48. common/types/optional.type.ts
+    app
+      .route("/api/evento-servicios")
+      .get(
+        this.eventoServiciosController
+          .getAll
+          .bind(
+            this.eventoServiciosController
+          )
+      )
+      .post(
+        this.eventoServiciosController
+          .create
+          .bind(
+            this.eventoServiciosController
+          )
+      );
 
+    app
+      .route("/api/evento-servicios/:id")
+      .get(
+        this.eventoServiciosController
+          .getOne
+          .bind(
+            this.eventoServiciosController
+          )
+      )
+      .put(
+        this.eventoServiciosController
+          .updatePut
+          .bind(
+            this.eventoServiciosController
+          )
+      )
+      .patch(
+        this.eventoServiciosController
+          .updatePatch
+          .bind(
+            this.eventoServiciosController
+          )
+      )
+      .delete(
+        this.eventoServiciosController
+          .deletePhysical
+          .bind(
+            this.eventoServiciosController
+          )
+      );
 
-
-``` bash
-mkdir -p src/common/types
-cat > src/common/types/optional.type.ts <<'EOF_BACKEND_IA'
-export type Optional<T> = T | undefined;
-EOF_BACKEND_IA
+    app
+      .route(
+        "/api/evento-servicios/:id/deactivate"
+      )
+      .patch(
+        this.eventoServiciosController
+          .deleteLogical
+          .bind(
+            this.eventoServiciosController
+          )
+      );
+  }
+}
+EOF
 ```
 
 <p align="center">
@@ -3847,48 +4468,63 @@ EOF_BACKEND_IA
 
 ------------------------------------------------------------------------
 
-## 49. common/utils/pagination.util.ts
+## 49.  HTTP
 
-
+## mkdir -p src/features/business/evento-servicios/http
 
 ``` bash
-mkdir -p src/common/utils
-cat > src/common/utils/pagination.util.ts <<'EOF_BACKEND_IA'
-import {
-  DEFAULT_LIMIT,
-  DEFAULT_PAGE,
-  MAX_LIMIT,
-} from '../constants/pagination.constants';
-import { PaginatedResult } from '../interfaces/pagination.interface';
+cat > src/features/business/evento-servicios/http/evento-servicios.http.ts <<'EOF'
+### Obtener todos los eventos-servicios
+GET http://localhost:3000/api/evento-servicios
 
-export function normalizePagination(page?: number, limit?: number) {
-  const safePage = !page || page < 1 ? DEFAULT_PAGE : page;
-  const safeLimit = !limit || limit < 1 ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
-  const offset = (safePage - 1) * safeLimit;
-  return { page: safePage, limit: safeLimit, offset };
+### Obtener un evento-servicio por ID
+GET http://localhost:3000/api/evento-servicios/1
+
+### Crear un evento-servicio
+POST http://localhost:3000/api/evento-servicios
+Content-Type: application/json
+
+{
+  "referencia_id": 1,
+  "tipo": "Servicio de alimentación",
+  "fecha": "2026-10-10",
+  "cantidad": 100,
+  "observaciones": "Servicio para evento empresarial",
+  "estado": "pendiente"
 }
 
-export function buildPaginatedResult<T>(
-  items: T[],
-  total: number,
-  page: number,
-  limit: number,
-): PaginatedResult<T> {
-  return {
-    items,
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit) || 0,
-    },
-  };
+### Actualizar completamente un evento-servicio
+PUT http://localhost:3000/api/evento-servicios/1
+Content-Type: application/json
+
+{
+  "referencia_id": 1,
+  "tipo": "Servicio de alimentación",
+  "fecha": "2026-10-15",
+  "cantidad": 120,
+  "observaciones": "Servicio actualizado",
+  "estado": "pendiente"
 }
-EOF_BACKEND_IA
+
+### Actualizar parcialmente un evento-servicio
+PATCH http://localhost:3000/api/evento-servicios/1
+Content-Type: application/json
+
+{
+  "cantidad": 150,
+  "observaciones": "Cantidad modificada"
+}
+
+### Desactivar lógicamente un evento-servicio
+PATCH http://localhost:3000/api/evento-servicios/1/deactivate
+
+### Eliminar físicamente un evento-servicio
+DELETE http://localhost:3000/api/evento-servicios/1
+EOF
 ```
 
 <p align="center">
-  <img src="imagenes/Captura de pantalla 2026-09-15 232609.png">
+  <img src="capturas/Captura de pantalla 2026-10-05 201600.png">
 </p>
 
 --------------------------------------------------------------------------------

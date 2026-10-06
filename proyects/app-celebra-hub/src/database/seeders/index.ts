@@ -17,6 +17,12 @@ import {
   seedServicios
 } from "../../features/business/servicios/servicios.seeder";
 
+import "../../features/business/evento-servicios/evento-servicio.model";
+
+import {
+  seedEventoServicios
+} from "../../features/business/evento-servicios/evento-servicios.seeder";
+
 import {
   resolveSeedCounts
 } from "./counts";
@@ -51,6 +57,10 @@ export async function runAllSeeders(): Promise<void> {
   await seedClientes(counts.clientes);
 
   await seedServicios(counts.servicios);
+
+  await seedEventoServicios(
+    counts.eventoServicios
+  );
 
   console.log("🌱 SeedersRunner finalizado");
 }

@@ -1,13 +1,9 @@
-import { Application } from "express";
 import swaggerUi from "swagger-ui-express";
+import { Application } from "express";
 
-import {
-  clientesSwagger
-} from "../features/business/clientes/clientes.swagger";
-
-import {
-  serviciosSwagger
-} from "../features/business/servicios/servicios.swagger";
+import { clientesSwagger } from "../features/business/clientes/clientes.swagger";
+import { serviciosSwagger } from "../features/business/servicios/servicios.swagger";
+import { eventoServiciosSwagger } from "../features/business/evento-servicios/evento-servicios.swagger";
 
 export type FeatureSwaggerModule = {
   tags: unknown[];
@@ -17,102 +13,68 @@ export type FeatureSwaggerModule = {
   };
 };
 
-/**
- * Registry externo:
- * reúne la documentación OpenAPI
- * de cada feature.
- */
-const featureSwaggerModules:
-  FeatureSwaggerModule[] = [
-    clientesSwagger,
-    serviciosSwagger
+const featureSwaggerModules: FeatureSwaggerModule[] = [
+  clientesSwagger,
+  serviciosSwagger,
+  eventoServiciosSwagger
+];
 
-    // futuros módulos:
-  ];
+const tags = featureSwaggerModules.flatMap(
+  (module) => module.tags
+);
 
-export function buildOpenApiDocument() {
+const paths = Object.assign(
+  {},
+  ...featureSwaggerModules.map(
+    (module) => module.paths
+  )
+);
 
-  const tags: unknown[] = [];
+const schemas = Object.assign(
+  {},
+  ...featureSwaggerModules.map(
+    (module) =>
+      module.components?.schemas ?? {}
+  )
+);
 
-  const paths: Record<string, unknown> = {};
+export const swaggerDocument = {
+  openapi: "3.0.0",
 
-  const schemas: Record<string, unknown> = {};
+  info: {
+    title: "CelebraHub API",
+    version: "1.0.0",
+    description:
+      "API para la gestión del centro de eventos CelebraHub"
+  },
 
-  for (
-    const mod of featureSwaggerModules
-  ) {
+  tags,
 
-    tags.push(...mod.tags);
+  paths,
 
-    Object.assign(
-      paths,
-      mod.paths
-    );
-
-    if (
-      mod.components?.schemas
-    ) {
-
-      Object.assign(
-        schemas,
-        mod.components.schemas
-      );
-    }
+  components: {
+    schemas
   }
+};
 
-  return {
-
-    openapi: "3.0.3",
-
-    info: {
-      title: "CelebraHub API",
-      version: "1.0.0",
-      description:
-        "API CelebraHub - Centro de eventos."
-    },
-
-    servers: [
-      {
-        url:
-          `http://localhost:${process.env.PORT || 4000}`,
-        description: "Local"
-      }
-    ],
-
-    tags,
-
-    paths,
-
-    components: {
-      schemas
-    }
-  };
-}
-
-/**
- * Monta Swagger UI y el JSON OpenAPI.
- */
 export function setupSwagger(
   app: Application
 ): void {
 
-  const document =
-    buildOpenApiDocument();
-
   app.use(
     "/api/docs",
     swaggerUi.serve,
-    swaggerUi.setup(document)
+    swaggerUi.setup(
+      swaggerDocument
+    )
   );
 
   app.get(
     "/api/docs.json",
     (_req, res) => {
-      res.json(document);
+      res.json(
+        swaggerDocument
+      );
     }
-  );
-
-  console.log(
-    "📘 Swagger UI: /api/docs | OpenAPI JSON: /api/docs.json"
   );
 }

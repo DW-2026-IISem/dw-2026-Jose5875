@@ -1,69 +1,73 @@
-/**
- * Cantidad de registros por feature/entidad.
- *
- * Prioridad:
- * CLI (--clientes=N, --servicios=N)
- * > env (SEED_CLIENTES, SEED_SERVICIOS)
- * > default
- */
-export type SeedCounts = {
+import "dotenv/config";
+
+export interface SeedCounts {
   clientes: number;
   servicios: number;
-};
+  eventoServicios: number;
+}
 
-export const DEFAULT_SEED_COUNTS: SeedCounts = {
-  clientes: 10,
-  servicios: 10,
-};
+function readEnvCount(
+  name: string,
+  fallback: number
+): number {
+  const value = process.env[name];
 
-export function resolveSeedCounts(
-  argv: string[] = process.argv.slice(2)
-): SeedCounts {
-
-  const counts: SeedCounts = {
-    ...DEFAULT_SEED_COUNTS
-  };
-
-  const envClientes =
-    process.env.SEED_CLIENTES;
-
-  const envServicios =
-    process.env.SEED_SERVICIOS;
-
-  if (
-    envClientes !== undefined &&
-    envClientes !== ""
-  ) {
-    counts.clientes =
-      Number(envClientes);
+  if (value === undefined) {
+    return fallback;
   }
 
-  if (
-    envServicios !== undefined &&
-    envServicios !== ""
-  ) {
-    counts.servicios =
-      Number(envServicios);
-  }
+  const parsed = Number(value);
 
-  for (const arg of argv) {
+  return Number.isFinite(parsed) && parsed >= 0
+    ? Math.floor(parsed)
+    : fallback;
+}
 
-    const m = arg.match(
-      /^--([a-zA-Z_]+)=(\d+)$/
+function readCliCount(
+  prefix: string
+): number | undefined {
+  const argument =
+    process.argv.find(
+      (arg) => arg.startsWith(`${prefix}=`)
     );
 
-    if (!m) continue;
-
-    const key =
-      m[1] as keyof SeedCounts;
-
-    const value =
-      Number(m[2]);
-
-    if (key in counts) {
-      counts[key] = value;
-    }
+  if (!argument) {
+    return undefined;
   }
 
-  return counts;
+  const value =
+    Number(argument.split("=")[1]);
+
+  return Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : undefined;
+}
+
+export function resolveSeedCounts(): SeedCounts {
+
+  const clientesCli =
+    readCliCount("--clientes");
+
+  const serviciosCli =
+    readCliCount("--servicios");
+
+  const eventoServiciosCli =
+    readCliCount("--evento-servicios");
+
+  return {
+    clientes:
+      clientesCli ??
+      readEnvCount("SEED_CLIENTES", 10),
+
+    servicios:
+      serviciosCli ??
+      readEnvCount("SEED_SERVICIOS", 10),
+
+    eventoServicios:
+      eventoServiciosCli ??
+      readEnvCount(
+        "SEED_EVENTO_SERVICIOS",
+        10
+      )
+  };
 }
