@@ -12,6 +12,11 @@ import { cambiosContratoSwagger } from "../features/business/cambios-contrato/ca
 import { eventoServiciosSwagger } from "../features/business/evento-servicios/evento-servicios.swagger";
 import { cancelacionesSwagger } from "../features/business/cancelaciones/cancelaciones.swagger";
 import { eventosSwagger } from "../features/business/eventos/eventos.swagger";
+import {
+  bearerSecurityScheme,
+  forbiddenResponse,
+  unauthorizedResponse,
+} from "../shared/http/swagger-security";
 
 const featureSwaggerModules = [
   clientesSwagger,
@@ -53,15 +58,16 @@ const swaggerDocument = {
   ),
   components: {
     schemas,
+    securitySchemes: bearerSecurityScheme,
+    responses: {
+      Unauthorized: unauthorizedResponse,
+      Forbidden: forbiddenResponse,
+    },
   },
 };
 
 export function setupSwagger(app: Application) {
   const swaggerUi = require("swagger-ui-express");
 
-  app.use(
-    "/api-docs",
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerDocument)
-  );
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 }

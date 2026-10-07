@@ -9,6 +9,13 @@ import { CambiosContratoRoutes } from "../features/business/cambios-contrato/cam
 import { EventoServiciosRoutes } from "../features/business/evento-servicios/evento-servicios.routes";
 import { CancelacionesRoutes } from "../features/business/cancelaciones/cancelaciones.routes";
 import { EventosRoutes } from "../features/business/eventos/eventos.routes";
+import { SessionRoutes } from "../features/auth/session/session.routes";
+import { RefreshTokensRoutes } from "../features/auth/refresh-tokens/refresh-tokens.routes";
+import { UsersRoutes } from "../features/auth/users/users.routes";
+import { RolesRoutes } from "../features/auth/roles/roles.routes";
+import { ResourcesRoutes } from "../features/auth/resources/resources.routes";
+import { RoleUsersRoutes } from "../features/auth/role-users/role-users.routes";
+import { ResourceRolesRoutes } from "../features/auth/resource-roles/resource-roles.routes";
 
 export class Routes {
   public clientesRoutes = new ClientesRoutes();
@@ -22,4 +29,11 @@ export class Routes {
   public eventoServiciosRoutes = new EventoServiciosRoutes();
   public cancelacionesRoutes = new CancelacionesRoutes();
   public eventosRoutes = new EventosRoutes();
+  public sessionRoutes = new SessionRoutes();
+  public refreshTokensRoutes = new RefreshTokensRoutes();
+  public usersRoutes = new UsersRoutes();
+  public rolesRoutes = new RolesRoutes();
+  public resourcesRoutes = new ResourcesRoutes();
+  public roleUsersRoutes = new RoleUsersRoutes();
+  public resourceRolesRoutes = new ResourceRolesRoutes();
 }

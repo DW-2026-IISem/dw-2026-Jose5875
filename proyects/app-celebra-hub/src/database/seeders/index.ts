@@ -9,6 +9,13 @@ import "../../features/business/cambios-contrato/cambio-contrato.model";
 import "../../features/business/cancelaciones/cancelacion.model";
 import "../../features/business/evento-servicios/evento-servicio.model";
 import "../../features/business/eventos/evento.model";
+import "../../features/auth/users/user.model";
+import "../../features/auth/roles/role.model";
+import "../../features/auth/resources/resource.model";
+import "../../features/auth/role-users/role-user.model";
+import "../../features/auth/resource-roles/resource-role.model";
+import "../../features/auth/refresh-tokens/refresh-token.model";
+import "../../features/auth/rbac.associations";
 
 import { sequelize } from "../db";
 import { resolveSeedCounts } from "./counts";
