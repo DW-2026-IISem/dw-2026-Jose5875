@@ -1,0 +1,36 @@
+### Feature RefreshTokens: sesiones propias (JWT, sin RBAC)
+@baseUrl = http://localhost:4000
+
+# @name loginComercial
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "comercial",
+  "password": "Comercial123!"
+}
+
+@token = {{loginComercial.response.body.$.access_token}}
+
+### Listar mis sesiones activas; token_hash no se incluye
+GET {{baseUrl}}/api/sesiones
+Authorization: Bearer {{token}}
+
+### Consultar una sesión propia
+GET {{baseUrl}}/api/sesiones/1
+Authorization: Bearer {{token}}
+
+### Revocar todas mis sesiones
+PATCH {{baseUrl}}/api/sesiones/deactivate-all
+Authorization: Bearer {{token}}
+
+### Revocar una sesión propia
+PATCH {{baseUrl}}/api/sesiones/1/deactivate
+Authorization: Bearer {{token}}
+
+### Purgar sesiones revocadas o expiradas
+DELETE {{baseUrl}}/api/sesiones
+Authorization: Bearer {{token}}
+
+### Sin token devuelve 401
+GET {{baseUrl}}/api/sesiones

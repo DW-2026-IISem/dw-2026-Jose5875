@@ -19,6 +19,8 @@ import {
 } from "../shared/http/swagger-security";
 import { rolesSwagger } from "../features/auth/roles/roles.swagger";
 import { resourcesSwagger } from "../features/auth/resources/resources.swagger";
+import { refreshTokensSwagger } from "../features/auth/refresh-tokens/refresh-tokens.swagger";
+import { sessionSwagger } from "../features/auth/session/session.swagger";
 
 const featureSwaggerModules = [
   clientesSwagger,
@@ -34,6 +36,8 @@ const featureSwaggerModules = [
   eventosSwagger,
   rolesSwagger,
   resourcesSwagger,
+  sessionSwagger,
+  refreshTokensSwagger,
 ];
 
 const schemas = Object.assign(

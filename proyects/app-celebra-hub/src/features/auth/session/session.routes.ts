@@ -1,21 +1,16 @@
 import { Application } from "express";
+import { authenticate } from "../access";
+import { SessionController } from "./session.controller";
 
 export class SessionRoutes {
+  private readonly controller = new SessionController();
+
   public routes(app: Application): void {
-    app.route("/api/sesion/login").post((_req, res) => {
-      res.status(200).json({ message: "Auth module ready", mode: "login" });
-    });
-
-    app.route("/api/sesion/refresh").post((_req, res) => {
-      res.status(200).json({ message: "Auth module ready", mode: "refresh" });
-    });
-
-    app.route("/api/sesion/logout").post((_req, res) => {
-      res.status(200).json({ message: "Auth module ready", mode: "logout" });
-    });
-
-    app.route("/api/sesion/perfil").get((_req, res) => {
-      res.status(200).json({ message: "Auth module ready", mode: "perfil" });
-    });
+    app.route("/api/sesion/login").post(this.controller.login.bind(this.controller));
+    app.route("/api/sesion/refresh").post(this.controller.refresh.bind(this.controller));
+    app.route("/api/sesion/logout").post(this.controller.logout.bind(this.controller));
+    app
+      .route("/api/sesion/perfil")
+      .get(authenticate, this.controller.profile.bind(this.controller));
   }
 }
