@@ -1,20 +1,14 @@
-import swaggerUi from "swagger-ui-express";
+
 import { Application } from "express";
 
 import { clientesSwagger } from "../features/business/clientes/clientes.swagger";
 import { serviciosSwagger } from "../features/business/servicios/servicios.swagger";
 import { salonesSwagger } from "../features/business/salones/salones.swagger";
-import { eventoServiciosSwagger } from "../features/business/evento-servicios/evento-servicios.swagger";
 import { reservasSwagger } from "../features/business/reservas/reservas.swagger";
 import { proveedoresSwagger } from "../features/business/proveedores/proveedores.swagger";
-
-export type FeatureSwaggerModule = {
-  tags: unknown[];
-  paths: Record<string, unknown>;
-  components?: {
-    schemas?: Record<string, unknown>;
-  };
-};
+import { contratosSwagger } from "../features/business/contratos/contratos.swagger";
+import { pagosSwagger } from "../features/business/pagos/pagos.swagger";
+import { eventoServiciosSwagger } from "../features/business/evento-servicios/evento-servicios.swagger";
 
 const featureSwaggerModules = [
   clientesSwagger,
@@ -22,69 +16,46 @@ const featureSwaggerModules = [
   salonesSwagger,
   reservasSwagger,
   proveedoresSwagger,
-  eventoServiciosSwagger
+  contratosSwagger,
+  pagosSwagger,
+  eventoServiciosSwagger,
 ];
-
-const tags = featureSwaggerModules.flatMap(
-  (module) => module.tags
-);
-
-const paths = Object.assign(
-  {},
-  ...featureSwaggerModules.map(
-    (module) => module.paths
-  )
-);
 
 const schemas = Object.assign(
   {},
   ...featureSwaggerModules.map(
     (module) =>
-      ("schemas" in module
+      "schemas" in module
         ? module.schemas
         : "components" in module
           ? module.components?.schemas ?? {}
-          : {})
+          : {}
   )
 );
 
-export const swaggerDocument = {
+const swaggerDocument = {
   openapi: "3.0.0",
-
   info: {
     title: "CelebraHub API",
     version: "1.0.0",
-    description:
-      "API para la gestión del centro de eventos CelebraHub"
+    description: "API del sistema CelebraHub - Centro de eventos",
   },
-
-  tags,
-
-  paths,
-
+  tags: featureSwaggerModules.flatMap((module) => module.tags ?? []),
+  paths: Object.assign(
+    {},
+    ...featureSwaggerModules.map((module) => module.paths ?? {})
+  ),
   components: {
-    schemas
-  }
+    schemas,
+  },
 };
 
-export function setupSwagger(
-  app: Application
-): void {
+export function setupSwagger(app: Application) {
+  const swaggerUi = require("swagger-ui-express");
 
   app.use(
-    "/api/docs",
+    "/api-docs",
     swaggerUi.serve,
-    swaggerUi.setup(
-      swaggerDocument
-    )
-  );
-
-  app.get(
-    "/api/docs.json",
-    (_req, res) => {
-      res.json(
-        swaggerDocument
-      );
-    }
+    swaggerUi.setup(swaggerDocument)
   );
 }

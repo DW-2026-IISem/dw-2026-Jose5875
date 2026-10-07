@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 export interface SeedCounts {
   clientes: number;
   servicios: number;
@@ -7,89 +5,68 @@ export interface SeedCounts {
   eventoServicios: number;
   reservas: number;
   proveedores: number;
+  contratos: number;
+  pagos: number;
 }
 
-function readEnvCount(
-  name: string,
-  fallback: number
-): number {
-  const value = process.env[name];
+function getArgValue(name: string): number | undefined {
+  const arg = process.argv.find((item) => item.startsWith(`--${name}=`));
 
-  if (value === undefined) {
-    return fallback;
-  }
-
-  const parsed = Number(value);
-
-  return Number.isFinite(parsed) && parsed >= 0
-    ? Math.floor(parsed)
-    : fallback;
-}
-
-function readCliCount(
-  prefix: string
-): number | undefined {
-
-  const argument =
-    process.argv.find(
-      (arg) => arg.startsWith(`${prefix}=`)
-    );
-
-  if (!argument) {
+  if (!arg) {
     return undefined;
   }
 
-  const value =
-    Number(argument.split("=")[1]);
+  const value = Number(arg.split("=")[1]);
 
-  return Number.isFinite(value) && value >= 0
-    ? Math.floor(value)
-    : undefined;
+  return Number.isFinite(value) ? value : undefined;
+}
+
+function getEnvValue(name: string): number | undefined {
+  const value = Number(process.env[name]);
+
+  return Number.isFinite(value) ? value : undefined;
 }
 
 export function resolveSeedCounts(): SeedCounts {
-
   return {
     clientes:
-      readCliCount("--clientes") ??
-      readEnvCount(
-        "SEED_CLIENTES",
-        10
-      ),
+      getArgValue("clientes") ??
+      getEnvValue("SEED_CLIENTES") ??
+      10,
 
     servicios:
-      readCliCount("--servicios") ??
-      readEnvCount(
-        "SEED_SERVICIOS",
-        10
-      ),
+      getArgValue("servicios") ??
+      getEnvValue("SEED_SERVICIOS") ??
+      5,
 
     salones:
-      readCliCount("--salones") ??
-      readEnvCount(
-        "SEED_SALONES",
-        10
-      ),
+      getArgValue("salones") ??
+      getEnvValue("SEED_SALONES") ??
+      5,
 
     eventoServicios:
-      readCliCount("--evento-servicios") ??
-      readEnvCount(
-        "SEED_EVENTO_SERVICIOS",
-        10
-      ),
+      getArgValue("evento-servicios") ??
+      getEnvValue("SEED_EVENTO_SERVICIOS") ??
+      5,
 
     reservas:
-      readCliCount("--reservas") ??
-      readEnvCount(
-        "SEED_RESERVAS",
-        10
-      ),
+      getArgValue("reservas") ??
+      getEnvValue("SEED_RESERVAS") ??
+      5,
 
     proveedores:
-      readCliCount("--proveedores") ??
-      readEnvCount(
-        "SEED_PROVEEDORES",
-        10
-      )
+      getArgValue("proveedores") ??
+      getEnvValue("SEED_PROVEEDORES") ??
+      5,
+
+    contratos:
+      getArgValue("contratos") ??
+      getEnvValue("SEED_CONTRATOS") ??
+      10,
+
+    pagos:
+      getArgValue("pagos") ??
+      getEnvValue("SEED_PAGOS") ??
+      10,
   };
 }

@@ -1,121 +1,58 @@
-import dotenv from "dotenv";
-
-import {
-  sequelize,
-  testConnection
-} from "../db";
-
 import "../../features/business/clientes/cliente.model";
 import "../../features/business/servicios/servicio.model";
 import "../../features/business/salones/salon.model";
-import "../../features/business/evento-servicios/evento-servicio.model";
 import "../../features/business/reservas/reserva.model";
 import "../../features/business/proveedores/proveedor.model";
+import "../../features/business/contratos/contrato.model";
+import "../../features/business/pagos/pago.model";
+import "../../features/business/evento-servicios/evento-servicio.model";
+import "../../features/business/pagos/pago.model";
 
-import {
-  seedClientes
-} from "../../features/business/clientes/clientes.seeder";
+import { sequelize } from "../db";
+import { resolveSeedCounts } from "./counts";
 
-import {
-  seedServicios
-} from "../../features/business/servicios/servicios.seeder";
+import { seedClientes } from "../../features/business/clientes/clientes.seeder";
+import { seedServicios } from "../../features/business/servicios/servicios.seeder";
+import { seedSalones } from "../../features/business/salones/salones.seeder";
+import { seedReservas } from "../../features/business/reservas/reservas.seeder";
+import { seedProveedores } from "../../features/business/proveedores/proveedores.seeder";
+import { seedContratos } from "../../features/business/contratos/contratos.seeder";
+import { seedPagos } from "../../features/business/pagos/pagos.seeder";
+import { seedEventoServicios } from "../../features/business/evento-servicios/evento-servicios.seeder";
 
-import {
-  seedSalones
-} from "../../features/business/salones/salones.seeder";
+async function runSeeders() {
+  console.log("🌱 Iniciando SeedersRunner...");
 
-import {
-  seedEventoServicios
-} from "../../features/business/evento-servicios/evento-servicios.seeder";
+  const counts = resolveSeedCounts();
 
-import {
-  seedReservas
-} from "../../features/business/reservas/reservas.seeder";
+  console.log("📊 Conteos:", counts);
 
-import {
-  resolveSeedCounts
-} from "./counts";
+  try {
+    await sequelize.authenticate();
 
-import {
-  seedProveedores
-} from "../../features/business/proveedores/proveedores.seeder";
+    console.log("✅ Conexión exitosa a MYSQL");
 
-dotenv.config();
-
-export async function runAllSeeders(): Promise<void> {
-
-  const counts =
-    resolveSeedCounts();
-
-  console.log(
-    "🌱 Iniciando SeedersRunner..."
-  );
-
-  console.log(
-    "📊 Conteos:",
-    counts
-  );
-
-  const ok =
-    await testConnection();
-
-  if (!ok) {
-    throw new Error(
-      "No hay conexión a la base de datos"
-    );
-  }
-
-  await sequelize.sync({
-    force: false,
-    alter: true
-  });
-
-  await seedClientes(
-    counts.clientes
-  );
-
-  await seedServicios(
-    counts.servicios
-  );
-
-  await seedSalones(
-    counts.salones
-  );
-
-  await seedEventoServicios(
-    counts.eventoServicios
-  );
-
-  await seedReservas(
-    counts.reservas
-  );
-
-  await seedProveedores(
-   counts.proveedores
-  );
-
-  console.log(
-    "🌱 SeedersRunner finalizado"
-  );
-}
-
-if (require.main === module) {
-
-  runAllSeeders()
-
-    .then(async () => {
-      await sequelize.close();
-      process.exit(0);
-    })
-
-    .catch(async (err) => {
-
-      console.error(
-        "❌ Error en seeders:",
-        err
-      );
-
-      await sequelize.close();
-      process.exit(1);
+    await sequelize.sync({
+      force: false,
+      alter: true,
     });
+
+    await seedClientes(counts.clientes);
+    await seedServicios(counts.servicios);
+    await seedSalones(counts.salones);
+    await seedReservas(counts.reservas);
+    await seedProveedores(counts.proveedores);
+    await seedContratos(counts.contratos);
+    await seedPagos(counts.pagos);
+    await seedEventoServicios(counts.eventoServicios);
+
+    console.log("🌱 SeedersRunner finalizado");
+  } catch (error) {
+    console.error("❌ Error ejecutando SeedersRunner:", error);
+    process.exitCode = 1;
+  } finally {
+    await sequelize.close();
+  }
 }
+
+runSeeders();

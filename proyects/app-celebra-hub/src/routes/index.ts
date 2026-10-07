@@ -3,25 +3,17 @@ import { ServiciosRoutes } from "../features/business/servicios/servicios.routes
 import { SalonesRoutes } from "../features/business/salones/salones.routes";
 import { ReservasRoutes } from "../features/business/reservas/reservas.routes";
 import { ProveedoresRoutes } from "../features/business/proveedores/proveedores.routes";
+import { ContratosRoutes } from "../features/business/contratos/contratos.routes";
+import { PagosRoutes } from "../features/business/pagos/pagos.routes";
 import { EventoServiciosRoutes } from "../features/business/evento-servicios/evento-servicios.routes";
 
 export class Routes {
-
-  public clientesRoutes: ClientesRoutes =
-    new ClientesRoutes();
-
-  public serviciosRoutes: ServiciosRoutes =
-    new ServiciosRoutes();
-
-  public salonesRoutes: SalonesRoutes =
-    new SalonesRoutes();
-
-  public reservasRoutes: ReservasRoutes =
-    new ReservasRoutes();
-
-  public proveedoresRoutes: ProveedoresRoutes =
-    new ProveedoresRoutes();
-
-  public eventoServiciosRoutes: EventoServiciosRoutes =
-    new EventoServiciosRoutes();
+  public clientesRoutes = new ClientesRoutes();
+  public serviciosRoutes = new ServiciosRoutes();
+  public salonesRoutes = new SalonesRoutes();
+  public reservasRoutes = new ReservasRoutes();
+  public proveedoresRoutes = new ProveedoresRoutes();
+  public contratosRoutes = new ContratosRoutes();
+  public pagosRoutes = new PagosRoutes();
+  public eventoServiciosRoutes = new EventoServiciosRoutes();
 }
