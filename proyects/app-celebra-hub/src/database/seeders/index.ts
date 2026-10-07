@@ -32,6 +32,8 @@ import { seedCancelaciones } from "../../features/business/cancelaciones/cancela
 import { seedEventoServicios } from "../../features/business/evento-servicios/evento-servicios.seeder";
 import { seedEventos } from "../../features/business/eventos/eventos.seeder";
 import { seedUsers } from "../../features/auth/users/users.seeder";
+import { seedRoles } from "../../features/auth/roles/roles.seeder";
+import { seedResources } from "../../features/auth/resources/resources.seeder";
 
 async function runSeeders() {
   console.log("🌱 Iniciando SeedersRunner...");
@@ -62,6 +64,8 @@ async function runSeeders() {
     await seedEventoServicios(counts.eventoServicios);
     await seedEventos(counts.eventos);
     await seedUsers(counts.clientes > 0 ? counts.clientes : 5);
+    await seedRoles();
+    await seedResources();
 
     console.log("🌱 SeedersRunner finalizado");
   } catch (error) {

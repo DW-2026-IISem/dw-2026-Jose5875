@@ -17,6 +17,8 @@ import {
   forbiddenResponse,
   unauthorizedResponse,
 } from "../shared/http/swagger-security";
+import { rolesSwagger } from "../features/auth/roles/roles.swagger";
+import { resourcesSwagger } from "../features/auth/resources/resources.swagger";
 
 const featureSwaggerModules = [
   clientesSwagger,
@@ -30,6 +32,8 @@ const featureSwaggerModules = [
   eventoServiciosSwagger,
   cancelacionesSwagger,
   eventosSwagger,
+  rolesSwagger,
+  resourcesSwagger,
 ];
 
 const schemas = Object.assign(

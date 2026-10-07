@@ -1,0 +1,72 @@
+### Feature Roles — CRUD (modalidad JWT + RBAC)
+### El NOMBRE del rol no autoriza nada: la autorización son las filas de `resource_roles`.
+@baseUrl = http://localhost:4000
+
+# @name loginAdmin
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+# @name loginComercial
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "comercial",
+  "password": "Comercial123!"
+}
+
+@token = {{loginAdmin.response.body.$.access_token}}
+
+### getAll — recurso `GET /api/roles` (ADMIN y COMERCIAL)
+GET {{baseUrl}}/api/roles
+Authorization: Bearer {{token}}
+
+### getOne
+GET {{baseUrl}}/api/roles/1
+Authorization: Bearer {{token}}
+
+### CREATE — nace SIN permisos
+POST {{baseUrl}}/api/roles
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "AUDITOR",
+  "description": "Solo lectura de catálogo"
+}
+
+### UPDATE PUT
+PUT {{baseUrl}}/api/roles/3
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "AUDITOR",
+  "description": "Solo lectura de catálogo y ventas"
+}
+
+### UPDATE PATCH
+PATCH {{baseUrl}}/api/roles/3
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "description": "Auditoría operativa"
+}
+
+### DELETE lógico — efecto inmediato: todos sus usuarios pierden esos permisos (403)
+PATCH {{baseUrl}}/api/roles/3/deactivate
+Authorization: Bearer {{token}}
+
+### DELETE físico
+DELETE {{baseUrl}}/api/roles/3
+Authorization: Bearer {{token}}
+
+### 403 — COMERCIAL no tiene concedido `GET /api/roles`
+GET {{baseUrl}}/api/roles
+Authorization: Bearer {{loginComercial.response.body.$.access_token}}
