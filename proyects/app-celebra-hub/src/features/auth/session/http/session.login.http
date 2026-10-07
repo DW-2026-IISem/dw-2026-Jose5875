@@ -1,0 +1,32 @@
+### Feature Session: login (OPEN)
+@baseUrl = http://localhost:4000
+
+# @name loginAdmin
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+### Login por email
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin@celebrahub.local",
+  "password": "Admin123!"
+}
+
+### Credenciales incorrectas: 401 genérico
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "password-incorrecta"
+}
+
+@adminAccessToken = {{loginAdmin.response.body.$.access_token}}
+@adminRefreshToken = {{loginAdmin.response.body.$.refresh_token}}

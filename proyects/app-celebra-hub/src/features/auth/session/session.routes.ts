@@ -12,5 +12,9 @@ export class SessionRoutes {
     app
       .route("/api/sesion/perfil")
       .get(authenticate, this.controller.profile.bind(this.controller));
+
+    app
+      .route("/api/permisos")
+      .get(authenticate, this.controller.myPermissions.bind(this.controller));
   }
 }

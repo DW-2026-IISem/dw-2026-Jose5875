@@ -14,7 +14,7 @@ export async function seedResourceRoles(): Promise<void> {
     const rule = resources.filter((resource) => {
       if (role.name === "ADMIN") return true;
       if (role.name === "COMERCIAL") {
-        return ["GET", "POST"].includes(resource.method) && [
+        return resource.method === "GET" && [
           "/api/clientes",
           "/api/reservas",
           "/api/eventos",
@@ -28,10 +28,13 @@ export async function seedResourceRoles(): Promise<void> {
     });
 
     for (const resource of rule) {
-      await ResourceRole.findOrCreate({
+      const [grant] = await ResourceRole.findOrCreate({
         where: { role_id: role.id, resource_id: resource.id },
         defaults: { status: "active" },
       });
+      if (grant.status !== "active") {
+        await grant.update({ status: "active" });
+      }
     }
   }
 }

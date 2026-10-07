@@ -3,78 +3,110 @@ import { comparePassword } from "../../../shared/auth/password";
 import { signAccessToken } from "../../../shared/auth/jwt";
 import { UsersRepository } from "../users/users.repository";
 import { RefreshTokensService } from "../refresh-tokens/refresh-tokens.service";
-
-export interface SessionCredentials {
-  access_token: string;
-  token_type: "Bearer";
-  expires_in: number;
-  refresh_token: string;
-  refresh_expires_at: Date;
-  user: { id: number; username: string; email: string };
-}
+import { UsersService } from "../users/users.service";
+import { EffectivePermissionDto } from "../resource-roles/dto";
+import { LoginDto, LogoutSessionDto, ProfileDto, RefreshSessionDto, SessionTokensDto } from "./dto";
 
 export class SessionService {
   public constructor(
     private readonly usersRepository: UsersRepository = new UsersRepository(),
-    private readonly refreshTokens: RefreshTokensService = new RefreshTokensService()
+    private readonly refreshTokens: RefreshTokensService = new RefreshTokensService(),
+    private readonly usersService: UsersService = new UsersService()
   ) {}
 
   public async login(
-    identifier: unknown,
-    password: unknown,
+    body: LoginDto,
     deviceInfo: string | null
-  ): Promise<SessionCredentials> {
-    if (typeof identifier !== "string" || typeof password !== "string" || !password) {
+  ): Promise<SessionTokensDto> {
+    if (
+      !body ||
+      typeof body.identifier !== "string" ||
+      !body.identifier.trim() ||
+      typeof body.password !== "string" ||
+      !body.password
+    ) {
       throw new AppError(400, "identifier and password are required");
     }
 
-    const user = await this.usersRepository.findByIdentifierWithPassword(identifier);
-    if (!user || user.status !== "active" || !(await comparePassword(password, user.password))) {
+    const user = await this.usersRepository.findByIdentifierWithPassword(body.identifier);
+    if (!user || user.status !== "active" || !(await comparePassword(body.password, user.password))) {
       throw new AppError(401, "Invalid credentials");
     }
 
-    const access = signAccessToken({ id: user.id, usuario: user.username });
     const session = await this.refreshTokens.issue(user.id, deviceInfo);
-
-    return {
-      access_token: access.token,
-      token_type: "Bearer",
-      expires_in: access.expiresIn,
-      refresh_token: session.rawToken,
-      refresh_expires_at: session.expiresAt,
-      user: { id: user.id, username: user.username, email: user.email },
-    };
+    return this.buildTokens(user.id, user.username, session.rawToken, session.expiresAt);
   }
 
-  public async refresh(rawToken: unknown, deviceInfo: string | null): Promise<SessionCredentials> {
-    if (typeof rawToken !== "string" || !rawToken) {
-      throw new AppError(401, "Invalid or expired refresh token");
+  public async refresh(
+    body: RefreshSessionDto,
+    deviceInfo: string | null
+  ): Promise<SessionTokensDto> {
+    if (!body || typeof body.refresh_token !== "string" || !body.refresh_token) {
+      throw new AppError(400, "refresh_token is required");
     }
 
-    const outcome = await this.refreshTokens.rotate(rawToken, deviceInfo);
-    if (outcome.kind !== "rotated") {
-      throw new AppError(401, "Invalid or expired refresh token");
+    const outcome = await this.refreshTokens.rotate(body.refresh_token, deviceInfo);
+    if (outcome.kind === "invalid") {
+      throw new AppError(401, "Invalid refresh token");
+    }
+    if (outcome.kind === "expired") {
+      throw new AppError(401, "Refresh token expired");
+    }
+    if (outcome.kind === "reuse") {
+      throw new AppError(401, "Refresh token reuse detected: session family revoked");
     }
 
-    const user = await this.usersRepository.findByIdWithPassword(outcome.userId);
+    const user = await this.usersRepository.findById(outcome.userId);
     if (!user || user.status !== "active") {
-      await this.refreshTokens.revokeByToken(outcome.rawToken);
-      throw new AppError(401, "Invalid or expired refresh token");
+      await this.refreshTokens.revokeAllMine(outcome.userId);
+      throw new AppError(401, "User is not active");
     }
 
-    const access = signAccessToken({ id: user.id, usuario: user.username });
+    return this.buildTokens(user.id, user.username, outcome.rawToken, outcome.expiresAt);
+  }
+
+  public async logout(body: LogoutSessionDto): Promise<void> {
+    if (!body || typeof body.refresh_token !== "string" || !body.refresh_token) {
+      throw new AppError(400, "refresh_token is required");
+    }
+    await this.refreshTokens.revokeByToken(body.refresh_token);
+  }
+
+  public async profile(userId: number): Promise<ProfileDto> {
+    const user = await this.usersRepository.findById(userId);
+    if (!user || user.status !== "active") {
+      throw new AppError(404, "User not found");
+    }
+
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      avatar: user.avatar ?? null,
+      status: user.status,
+    };
+  }
+
+  public async myPermissions(userId: number): Promise<EffectivePermissionDto[]> {
+    return this.usersService.getEffectivePermissions(userId);
+  }
+
+  private buildTokens(
+    userId: number,
+    username: string,
+    refreshToken: string,
+    refreshExpiresAt: Date
+  ): SessionTokensDto {
+    const access = signAccessToken({ id: userId, usuario: username });
     return {
       access_token: access.token,
       token_type: "Bearer",
       expires_in: access.expiresIn,
-      refresh_token: outcome.rawToken,
-      refresh_expires_at: outcome.expiresAt,
-      user: { id: user.id, username: user.username, email: user.email },
+      refresh_token: refreshToken,
+      refresh_expires_in: Math.max(
+        0,
+        Math.floor((refreshExpiresAt.getTime() - Date.now()) / 1000)
+      ),
     };
-  }
-
-  public async logout(rawToken: unknown): Promise<boolean> {
-    if (typeof rawToken !== "string" || !rawToken) return false;
-    return this.refreshTokens.revokeByToken(rawToken);
   }
 }

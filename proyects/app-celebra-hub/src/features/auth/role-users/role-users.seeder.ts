@@ -12,13 +12,19 @@ export async function seedRoleUsers(): Promise<void> {
     return;
   }
 
-  await RoleUser.findOrCreate({
+  const [adminAssignment] = await RoleUser.findOrCreate({
     where: { user_id: adminUser.id, role_id: adminRole.id },
     defaults: { status: "active" },
   });
+  if (adminAssignment.status !== "active") {
+    await adminAssignment.update({ status: "active" });
+  }
 
-  await RoleUser.findOrCreate({
+  const [comercialAssignment] = await RoleUser.findOrCreate({
     where: { user_id: comercialUser.id, role_id: comercialRole.id },
     defaults: { status: "active" },
   });
+  if (comercialAssignment.status !== "active") {
+    await comercialAssignment.update({ status: "active" });
+  }
 }

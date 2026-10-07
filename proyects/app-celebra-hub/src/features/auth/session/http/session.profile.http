@@ -1,0 +1,38 @@
+### Feature Session: perfil/permisos (JWT) y logout (OPEN con refresh token)
+@baseUrl = http://localhost:4000
+
+# @name loginComercial
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "comercial",
+  "password": "Comercial123!"
+}
+
+### Perfil propio con avatar y estado; no contiene password
+GET {{baseUrl}}/api/sesion/perfil
+Authorization: Bearer {{loginComercial.response.body.$.access_token}}
+
+### Permisos efectivos del usuario autenticado
+GET {{baseUrl}}/api/permisos
+Authorization: Bearer {{loginComercial.response.body.$.access_token}}
+
+### Sin access token: 401
+GET {{baseUrl}}/api/sesion/perfil
+
+### Logout idempotente (OPEN)
+POST {{baseUrl}}/api/sesion/logout
+Content-Type: application/json
+
+{
+  "refresh_token": "{{loginComercial.response.body.$.refresh_token}}"
+}
+
+### El refresh revocado ya no se puede renovar: 401
+POST {{baseUrl}}/api/sesion/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{loginComercial.response.body.$.refresh_token}}"
+}
