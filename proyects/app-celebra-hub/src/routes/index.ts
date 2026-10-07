@@ -7,6 +7,8 @@ import { ContratosRoutes } from "../features/business/contratos/contratos.routes
 import { PagosRoutes } from "../features/business/pagos/pagos.routes";
 import { CambiosContratoRoutes } from "../features/business/cambios-contrato/cambios-contrato.routes";
 import { EventoServiciosRoutes } from "../features/business/evento-servicios/evento-servicios.routes";
+import { CancelacionesRoutes } from "../features/business/cancelaciones/cancelaciones.routes";
+import { EventosRoutes } from "../features/business/eventos/eventos.routes";
 
 export class Routes {
   public clientesRoutes = new ClientesRoutes();
@@ -18,4 +20,6 @@ export class Routes {
   public pagosRoutes = new PagosRoutes();
   public cambiosContratoRoutes = new CambiosContratoRoutes();
   public eventoServiciosRoutes = new EventoServiciosRoutes();
+  public cancelacionesRoutes = new CancelacionesRoutes();
+  public eventosRoutes = new EventosRoutes();
 }

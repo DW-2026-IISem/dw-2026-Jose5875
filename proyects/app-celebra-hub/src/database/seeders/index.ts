@@ -6,8 +6,9 @@ import "../../features/business/proveedores/proveedor.model";
 import "../../features/business/contratos/contrato.model";
 import "../../features/business/pagos/pago.model";
 import "../../features/business/cambios-contrato/cambio-contrato.model";
+import "../../features/business/cancelaciones/cancelacion.model";
 import "../../features/business/evento-servicios/evento-servicio.model";
-import "../../features/business/pagos/pago.model";
+import "../../features/business/eventos/evento.model";
 
 import { sequelize } from "../db";
 import { resolveSeedCounts } from "./counts";
@@ -20,7 +21,9 @@ import { seedProveedores } from "../../features/business/proveedores/proveedores
 import { seedContratos } from "../../features/business/contratos/contratos.seeder";
 import { seedPagos } from "../../features/business/pagos/pagos.seeder";
 import { seedCambiosContrato } from "../../features/business/cambios-contrato/cambios-contrato.seeder";
+import { seedCancelaciones } from "../../features/business/cancelaciones/cancelaciones.seeder";
 import { seedEventoServicios } from "../../features/business/evento-servicios/evento-servicios.seeder";
+import { seedEventos } from "../../features/business/eventos/eventos.seeder";
 
 async function runSeeders() {
   console.log("🌱 Iniciando SeedersRunner...");
@@ -47,7 +50,9 @@ async function runSeeders() {
     await seedContratos(counts.contratos);
     await seedPagos(counts.pagos);
     await seedCambiosContrato(counts.cambiosContrato);
+    await seedCancelaciones(counts.cancelaciones);
     await seedEventoServicios(counts.eventoServicios);
+    await seedEventos(counts.eventos);
 
     console.log("🌱 SeedersRunner finalizado");
   } catch (error) {

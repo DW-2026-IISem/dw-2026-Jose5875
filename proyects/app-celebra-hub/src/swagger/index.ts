@@ -10,6 +10,8 @@ import { contratosSwagger } from "../features/business/contratos/contratos.swagg
 import { pagosSwagger } from "../features/business/pagos/pagos.swagger";
 import { cambiosContratoSwagger } from "../features/business/cambios-contrato/cambios-contrato.swagger";
 import { eventoServiciosSwagger } from "../features/business/evento-servicios/evento-servicios.swagger";
+import { cancelacionesSwagger } from "../features/business/cancelaciones/cancelaciones.swagger";
+import { eventosSwagger } from "../features/business/eventos/eventos.swagger";
 
 const featureSwaggerModules = [
   clientesSwagger,
@@ -21,6 +23,8 @@ const featureSwaggerModules = [
   pagosSwagger,
   cambiosContratoSwagger,
   eventoServiciosSwagger,
+  cancelacionesSwagger,
+  eventosSwagger,
 ];
 
 const schemas = Object.assign(

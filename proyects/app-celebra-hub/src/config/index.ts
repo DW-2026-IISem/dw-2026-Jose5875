@@ -22,6 +22,8 @@ import "../features/business/proveedores/proveedor.model";
 import "../features/business/contratos/contrato.model";
 import "../features/business/pagos/pago.model";
 import "../features/business/cambios-contrato/cambio-contrato.model";
+import "../features/business/cancelaciones/cancelacion.model";
+import "../features/business/eventos/evento.model";
 
 import { Routes } from "../routes/index";
 import { setupSwagger } from "../swagger/index";
@@ -133,6 +135,14 @@ private routes(): void {
     this.routePrv
       .pagosRoutes
       .routes(this.app);
+
+      this.routePrv
+      .cancelacionesRoutes
+      .routes(this.app);
+
+      this.routePrv
+     .eventosRoutes
+     .routes(this.app);
 
 }
   

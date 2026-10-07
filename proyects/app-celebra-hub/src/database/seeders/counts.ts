@@ -2,12 +2,14 @@ export interface SeedCounts {
   clientes: number;
   servicios: number;
   salones: number;
-  eventoServicios: number;
   reservas: number;
+  eventos: number;
   proveedores: number;
   contratos: number;
   pagos: number;
   cambiosContrato: number;
+  cancelaciones: number;
+  eventoServicios: number;
 }
 
 function getArgValue(name: string): number | undefined {
@@ -15,9 +17,7 @@ function getArgValue(name: string): number | undefined {
     item.startsWith(`--${name}=`)
   );
 
-  if (!arg) {
-    return undefined;
-  }
+  if (!arg) return undefined;
 
   const value = Number(arg.split("=")[1]);
 
@@ -47,14 +47,14 @@ export function resolveSeedCounts(): SeedCounts {
       getEnvValue("SEED_SALONES") ??
       5,
 
-    eventoServicios:
-      getArgValue("evento-servicios") ??
-      getEnvValue("SEED_EVENTO_SERVICIOS") ??
-      5,
-
     reservas:
       getArgValue("reservas") ??
       getEnvValue("SEED_RESERVAS") ??
+      5,
+
+    eventos:
+      getArgValue("eventos") ??
+      getEnvValue("SEED_EVENTOS") ??
       5,
 
     proveedores:
@@ -75,6 +75,16 @@ export function resolveSeedCounts(): SeedCounts {
     cambiosContrato:
       getArgValue("cambios-contrato") ??
       getEnvValue("SEED_CAMBIOS_CONTRATO") ??
+      5,
+
+    cancelaciones:
+      getArgValue("cancelaciones") ??
+      getEnvValue("SEED_CANCELACIONES") ??
+      5,
+
+    eventoServicios:
+      getArgValue("evento-servicios") ??
+      getEnvValue("SEED_EVENTO_SERVICIOS") ??
       5,
   };
 }
