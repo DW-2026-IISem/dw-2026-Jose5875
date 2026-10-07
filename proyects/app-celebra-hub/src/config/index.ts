@@ -21,6 +21,7 @@ import "../features/business/reservas/reserva.model";
 import "../features/business/proveedores/proveedor.model";
 import "../features/business/contratos/contrato.model";
 import "../features/business/pagos/pago.model";
+import "../features/business/cambios-contrato/cambio-contrato.model";
 
 import { Routes } from "../routes/index";
 import { setupSwagger } from "../swagger/index";
@@ -120,14 +121,15 @@ private routes(): void {
     this.routePrv
     .proveedoresRoutes
     .routes(this.app);
+
     this.routePrv
       .contratosRoutes
       .routes(this.app);
 
     this.routePrv
-      .pagosRoutes
+      .cambiosContratoRoutes
       .routes(this.app);
-
+      
     this.routePrv
       .pagosRoutes
       .routes(this.app);

@@ -7,10 +7,13 @@ export interface SeedCounts {
   proveedores: number;
   contratos: number;
   pagos: number;
+  cambiosContrato: number;
 }
 
 function getArgValue(name: string): number | undefined {
-  const arg = process.argv.find((item) => item.startsWith(`--${name}=`));
+  const arg = process.argv.find((item) =>
+    item.startsWith(`--${name}=`)
+  );
 
   if (!arg) {
     return undefined;
@@ -68,5 +71,10 @@ export function resolveSeedCounts(): SeedCounts {
       getArgValue("pagos") ??
       getEnvValue("SEED_PAGOS") ??
       10,
+
+    cambiosContrato:
+      getArgValue("cambios-contrato") ??
+      getEnvValue("SEED_CAMBIOS_CONTRATO") ??
+      5,
   };
 }

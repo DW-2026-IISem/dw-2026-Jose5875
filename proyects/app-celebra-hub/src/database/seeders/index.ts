@@ -5,6 +5,7 @@ import "../../features/business/reservas/reserva.model";
 import "../../features/business/proveedores/proveedor.model";
 import "../../features/business/contratos/contrato.model";
 import "../../features/business/pagos/pago.model";
+import "../../features/business/cambios-contrato/cambio-contrato.model";
 import "../../features/business/evento-servicios/evento-servicio.model";
 import "../../features/business/pagos/pago.model";
 
@@ -18,6 +19,7 @@ import { seedReservas } from "../../features/business/reservas/reservas.seeder";
 import { seedProveedores } from "../../features/business/proveedores/proveedores.seeder";
 import { seedContratos } from "../../features/business/contratos/contratos.seeder";
 import { seedPagos } from "../../features/business/pagos/pagos.seeder";
+import { seedCambiosContrato } from "../../features/business/cambios-contrato/cambios-contrato.seeder";
 import { seedEventoServicios } from "../../features/business/evento-servicios/evento-servicios.seeder";
 
 async function runSeeders() {
@@ -44,6 +46,7 @@ async function runSeeders() {
     await seedProveedores(counts.proveedores);
     await seedContratos(counts.contratos);
     await seedPagos(counts.pagos);
+    await seedCambiosContrato(counts.cambiosContrato);
     await seedEventoServicios(counts.eventoServicios);
 
     console.log("🌱 SeedersRunner finalizado");

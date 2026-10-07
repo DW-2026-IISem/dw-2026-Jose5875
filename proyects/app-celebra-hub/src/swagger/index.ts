@@ -8,6 +8,7 @@ import { reservasSwagger } from "../features/business/reservas/reservas.swagger"
 import { proveedoresSwagger } from "../features/business/proveedores/proveedores.swagger";
 import { contratosSwagger } from "../features/business/contratos/contratos.swagger";
 import { pagosSwagger } from "../features/business/pagos/pagos.swagger";
+import { cambiosContratoSwagger } from "../features/business/cambios-contrato/cambios-contrato.swagger";
 import { eventoServiciosSwagger } from "../features/business/evento-servicios/evento-servicios.swagger";
 
 const featureSwaggerModules = [
@@ -18,6 +19,7 @@ const featureSwaggerModules = [
   proveedoresSwagger,
   contratosSwagger,
   pagosSwagger,
+  cambiosContratoSwagger,
   eventoServiciosSwagger,
 ];
 
