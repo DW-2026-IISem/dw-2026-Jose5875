@@ -55,6 +55,7 @@ const swaggerDocument = {
     version: "1.0.0",
     description: "API del sistema CelebraHub - Centro de eventos",
   },
+  security: [{ bearerAuth: [] }],
   tags: featureSwaggerModules.flatMap((module) => module.tags ?? []),
   paths: Object.assign(
     {},

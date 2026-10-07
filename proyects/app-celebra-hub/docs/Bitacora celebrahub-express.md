@@ -10221,3 +10221,361 @@ npm run db:seed
 SELECT COUNT(*) FROM role_users;      -- 2 (admin→ADMIN, comercial→COMERCIAL)
 SELECT COUNT(*) FROM resource_roles;  -- 65 (ADMIN 58 + COMERCIAL 7)
 ```
+
+## 23. ISS-22 — Middlewares de acceso y las tres modalidades en rutas
+
+**Objetivo:** materializar las tres modalidades mediante dos middlewares componibles y aplicarlos a las rutas existentes sin tocar controllers, services ni repositories.
+
+```
+OPEN            app.route(...).get(controller)
+JWT             app.route(...).get(authenticate, controller)
+JWT + RBAC      app.route(...).get(authenticate, authorize, controller)
+```
+
+**Bloqueado por:** ISS-21 (la matriz debe existir para que authorize tenga algo que consultar).
+
+Criterios de aceptación (ISS-22) — consolidados
+
+- [ ] 23.1 authenticate valida el Bearer token, verifica algoritmo/issuer/audience/exp y carga el usuario activo en req.auth
+- [ ] 23.2 authorize resuelve (method, path) y busca concesión activa; deny by default → 403
+- [ ] 23.3 access/index.ts reexporta ambos middlewares
+- [ ] 23.4 las 5 features de negocio (clients, salones, servicios, reservas, evento-servicios) aplican authenticate, authorize
+- [ ] 23.5 documentadas las tres modalidades y qué códigos produce cada una
+- [ ] 23.6 sin token → 401; con token pero sin concesión → 403; con concesión → 200/201
+- [ ] npx tsc --noEmit OK
+
+## 23.1 authenticate — modalidad JWT
+
+Hace exactamente cuatro cosas, en este orden:
+
+1. Lee el encabezado Authorization: Bearer <token> (RFC 6750). Si falta o está mal formado → 401.
+
+2. Verifica el JWT con algoritmo, emisor y audiencia fijos (RFC 8725). Si falla → 401.
+
+3. Carga el usuario en BD y exige status = 'active'. Si no existe o está inactivo → 401.
+
+4. Deja la identidad en req.auth (tipado por auth-user.ts) y llama a next().
+
+> No consulta roles ni permisos. La autorización es responsabilidad del siguiente middleware: mezclar ambas impediría tener endpoints solo-JWT.
+
+```bash
+: > src/features/auth/access/authenticate.middleware.ts
+cat >> src/features/auth/access/authenticate.middleware.ts << 'EOF'
+import { NextFunction, Request, Response } from "express";
+import { AppError } from "../../../shared/errors/app-error";
+import { sendError } from "../../../shared/http/error-response";
+import { extractBearerToken, verifyAccessToken } from "../../../shared/auth/jwt";
+import { UsersRepository } from "../users/users.repository";
+
+/**
+ * **MODALIDAD 2 — JWT (identidad).** Middleware de autenticación.
+ *
+ * Responde únicamente a la pregunta **¿quién eres?**:
+ *
+ *  1. Lee el token de `Authorization: Bearer <token>` (RFC 6750).
+ *  2. Verifica firma, algoritmo, `iss`, `aud`, `exp` (RFC 8725).
+ *  3. **Revalida contra la base de datos** que el usuario sigue existiendo y con
+ *     `status = active`. Un token firmado sigue siendo válido después de
+ *     desactivar la cuenta; esta revalidación hace que la desactivación tenga
+ *     efecto inmediato.
+ *
+ * NO consulta la matriz de permisos: eso es responsabilidad de `authorize`.
+ * Si todo va bien, deja la identidad en `req.auth` y cede el paso.
+ *
+ * Cualquier fallo se responde con **401 (no autenticado)**.
+ */
+const usersRepository = new UsersRepository();
+
+export async function authenticate(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const token = extractBearerToken(req.headers.authorization);
+    if (!token) {
+      throw new AppError(401, "Missing Bearer token");
+    }
+
+    const payload = verifyAccessToken(token);
+
+    // Defensa en profundidad: `verifyAccessToken` ya garantiza que `sub` es un
+    // entero positivo. Se vuelve a comprobar para que ningún cambio futuro en la
+    // verificación pueda enviar un `NaN` al repositorio (500 en vez de 401).
+    const userId = Number(payload.sub);
+    if (!Number.isInteger(userId) || userId < 1) {
+      throw new AppError(401, "Invalid or expired access token");
+    }
+
+    const user = await usersRepository.findById(userId);
+
+    if (!user || user.status !== "active") {
+      throw new AppError(401, "User is not active");
+    }
+
+    req.auth = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      tokenId: payload.jti,
+    };
+    next();
+  } catch (error) {
+    sendError(res, error);
+  }
+}
+EOF
+```
+
+## 23.2 authorize — modalidad JWT + RBAC
+
+Recibe la petición, normaliza el (method, path) real y comprueba si el usuario autenticado alcanza ese recurso por el grafo:
+
+```
+req.auth.user
+  → role_users (active)
+  → roles (active)
+  → resource_roles (active)
+  → resources (active, method = req.method, path ≈ req.path)
+```
+
+Si no hay concesión → 403 (deny by default). Como la consulta se hace en cada petición, revocar un permiso tiene efecto inmediato (no hay que esperar a que caduque el token, porque los permisos no viajan en él).
+
+```bash
+: > src/features/auth/access/authorize.middleware.ts
+cat >> src/features/auth/access/authorize.middleware.ts << 'EOF'
+import { NextFunction, Request, Response } from "express";
+import { AppError } from "../../../shared/errors/app-error";
+import { sendError } from "../../../shared/http/error-response";
+import { isOperationGranted, normalizePath } from "../../../shared/auth/resource-match";
+import { ResourceRolesRepository } from "../resource-roles/resource-roles.repository";
+
+/**
+ * **MODALIDAD 3 — RBAC (identidad + autorización granular).** Middleware de
+ * autorización.
+ *
+ * Debe montarse **después** de `authenticate`. Responde a la segunda pregunta:
+ * *¿puede esta identidad ejecutar `method + path`?*
+ *
+ * Cómo resuelve la decisión:
+ *  1. Toma la identidad ya resuelta en `req.auth`.
+ *  2. Consulta la **cadena completa** de autorización en la base de datos
+ *     (`resource_roles → roles → role_users → resources`, todos los eslabones
+ *     activos) para ese `user_id`.
+ *  3. Compara el par `(method, path)` de la petición con las concesiones,
+ *     por patrón (`/api/reservas/:id` casa con `/api/reservas/42`).
+ *
+ * Reglas:
+ *  - **Deny by default**: sin concesión activa que cubra la operación -> 403.
+ *  - **401** si no hay identidad (falta `authenticate` o el token no valió).
+ *  - **403** si hay identidad válida pero no hay permiso.
+ *
+ * No recibe parámetros: el recurso y la acción se derivan de la propia petición.
+ * Añadir un permiso es insertar filas en la base de datos, nunca tocar el código.
+ */
+const resourceRolesRepository = new ResourceRolesRepository();
+
+export async function authorize(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.auth) {
+      throw new AppError(401, "Authentication required");
+    }
+
+    const method = req.method.toUpperCase();
+    const path = normalizePath(req.originalUrl);
+
+    const granted = await resourceRolesRepository.findEffectiveForUser(req.auth.id);
+
+    if (!isOperationGranted(granted, method, path)) {
+      throw new AppError(403, `Forbidden: no grant for ${method} ${path}`);
+    }
+
+    next();
+  } catch (error) {
+    sendError(res, error);
+  }
+}
+EOF
+```
+
+## 23.3 Barrel de acceso
+
+```bash
+: > src/features/auth/access/index.ts
+cat >> src/features/auth/access/index.ts << 'EOF'
+export * from "./authenticate.middleware";
+export * from "./authorize.middleware";
+EOF
+```
+
+## 23.4 PARCHE: las rutas de negocio de CelebraHub pasan a JWT + RBAC
+
+El cambio es quirúrgico: se importa `authenticate` y `authorize` desde el barrel
+de Auth y se insertan entre la ruta y el controller. **No se cambian las tablas,
+DTOs, services ni repositories de negocio.**
+
+En CelebraHub se protegen los once módulos de negocio existentes:
+
+```text
+clientes
+servicios
+salones
+reservas
+eventos
+proveedores
+evento-servicios
+contratos
+pagos
+cambios-contrato
+cancelaciones
+```
+
+Cada operación de negocio usa:
+
+```text
+authenticate → authorize → controller
+```
+
+`authenticate` devuelve 401 cuando no existe una identidad válida.
+`authorize` devuelve 403 cuando el usuario está autenticado pero no posee una
+concesión activa para `(method, path)`.
+
+### Ejemplo: Clientes
+
+```ts
+import { Application } from "express";
+import { ClientesController } from "./clientes.controller";
+import { authenticate, authorize } from "../../auth/access";
+
+export class ClientesRoutes {
+  public clientesController = new ClientesController();
+
+  public routes(app: Application): void {
+    app
+      .route("/api/clientes")
+      .get(
+        authenticate,
+        authorize,
+        this.clientesController.getAll.bind(this.clientesController)
+      )
+      .post(
+        authenticate,
+        authorize,
+        this.clientesController.create.bind(this.clientesController)
+      );
+
+    app
+      .route("/api/clientes/:id")
+      .get(
+        authenticate,
+        authorize,
+        this.clientesController.getOne.bind(this.clientesController)
+      )
+      .put(
+        authenticate,
+        authorize,
+        this.clientesController.updatePut.bind(this.clientesController)
+      )
+      .patch(
+        authenticate,
+        authorize,
+        this.clientesController.updatePatch.bind(this.clientesController)
+      )
+      .delete(
+        authenticate,
+        authorize,
+        this.clientesController.deletePhysical.bind(this.clientesController)
+      );
+
+    app
+      .route("/api/clientes/:id/deactivate")
+      .patch(
+        authenticate,
+        authorize,
+        this.clientesController.deleteLogical.bind(this.clientesController)
+      );
+  }
+}
+```
+
+### Adaptación de los demás módulos
+
+En cada archivo `*.routes.ts` de CelebraHub se conserva exactamente el controller
+que ya existe y únicamente se agregan los dos middlewares.
+
+Ejemplo:
+
+```ts
+.get(authenticate, authorize, controller.getAll.bind(controller))
+.post(authenticate, authorize, controller.create.bind(controller))
+.put(authenticate, authorize, controller.updatePut.bind(controller))
+.patch(authenticate, authorize, controller.updatePatch.bind(controller))
+.delete(authenticate, authorize, controller.deletePhysical.bind(controller))
+```
+
+Para las rutas que no tienen `/deactivate` en el módulo original, **no se inventa
+esa operación**. Por tanto:
+
+- `reservas` conserva sus operaciones existentes.
+- `eventos` conserva sus operaciones existentes.
+- `evento-servicios` conserva sus operaciones existentes.
+- `contratos` conserva sus operaciones existentes.
+- `pagos` conserva sus operaciones existentes.
+- `cancelaciones` conserva sus operaciones existentes.
+
+### Regla final
+
+```text
+Fase I — tablas y CRUD de CelebraHub: SIN CAMBIOS.
+Fase II — Auth: agrega identidad, JWT, refresh tokens y RBAC.
+Fase II — negocio: solo agrega authenticate + authorize a las rutas.
+```
+
+## 23.5 Las tres modalidades en una tabla
+
+|Modalidad | Middleware en la ruta | Qué exige | Sin cumplir |
+|----------|-----------------------|-----------|-------------|
+|OPEN |	—	|nada |	—|
+|JWT|	authenticate|	access token válido y usuario activo|	401|
+|JWT + RBAC |	authenticate, authorize	|token válido y concesión activa de (method, path)	|401 (sin token) / 403 (sin permiso)|
+
+|Petición |	Resultado|
+|---------|----------|
+|GET /api/clientes sin Authorization	|401|
+|GET /api/clientes con token de comercial	|200 (COMERCIAL tiene esa lectura)|
+|POST /api/clientes con token de comercial	|403 (COMERCIAL no tiene esa concesión)|
+|POST /api/clientes con token de admin	|201 (ADMIN tiene los 58)|
+|GET /api/clientes/abc con token válido	|400 (paramId)|
+|Cualquier ruta con token caducado o manipulado	|401|
+
+## 23.6 Verificación de 401 y 403
+
+```bash
+npm run dev
+```
+
+```bash
+# 401 — sin token
+curl -i http://localhost:4000/api/clientes
+
+# 401 — token manipulado
+curl -i -H "Authorization: Bearer no.es.un.jwt" http://localhost:4000/api/clientes
+
+# 200 — comercial lee
+TOKEN=$(curl -s -X POST http://localhost:4000/api/sesion/login \
+  -H "Content-Type: application/json" \
+  -d '{"identifier":"comercial","password":"Comercial123!"}' | node -pe "JSON.parse(require('fs').readFileSync(0)).access_token")
+curl -i -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/clientes
+
+# 403 — comercial intenta crear (no tiene la concesión)
+curl -i -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"x","phone":"1","email":"x@x.com","password":"x"}' \
+  http://localhost:4000/api/clientes
+```
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-06 231638.png">
+</p>
