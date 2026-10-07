@@ -31,6 +31,7 @@ import { seedCambiosContrato } from "../../features/business/cambios-contrato/ca
 import { seedCancelaciones } from "../../features/business/cancelaciones/cancelaciones.seeder";
 import { seedEventoServicios } from "../../features/business/evento-servicios/evento-servicios.seeder";
 import { seedEventos } from "../../features/business/eventos/eventos.seeder";
+import { seedUsers } from "../../features/auth/users/users.seeder";
 
 async function runSeeders() {
   console.log("🌱 Iniciando SeedersRunner...");
@@ -60,6 +61,7 @@ async function runSeeders() {
     await seedCancelaciones(counts.cancelaciones);
     await seedEventoServicios(counts.eventoServicios);
     await seedEventos(counts.eventos);
+    await seedUsers(counts.clientes > 0 ? counts.clientes : 5);
 
     console.log("🌱 SeedersRunner finalizado");
   } catch (error) {

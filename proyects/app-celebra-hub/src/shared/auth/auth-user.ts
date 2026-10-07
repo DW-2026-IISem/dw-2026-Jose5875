@@ -3,16 +3,20 @@ import { AppError } from "../errors/app-error";
 
 export interface AuthUser {
   id: number;
-  usuario: string;
+  usuario?: string;
+  username?: string;
   email?: string;
   tokenId?: string;
 }
 
+export type AuthenticatedRequest = Request & { auth?: AuthUser };
+
 export function requireAuthUser(req: Request): AuthUser {
-  if (!req.auth) {
+  const authReq = req as AuthenticatedRequest;
+  if (!authReq.auth) {
     throw new AppError(401, "Authentication required");
   }
-  return req.auth;
+  return authReq.auth;
 }
 
 declare global {

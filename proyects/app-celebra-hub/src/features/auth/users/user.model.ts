@@ -4,7 +4,7 @@ import { hashPassword } from "../../../shared/auth/password";
 
 export interface UserI {
   id?: number;
-  usuario: string;
+  username: string;
   email: string;
   password: string;
   avatar?: string | null;
@@ -15,7 +15,7 @@ export interface UserI {
 
 export class User extends Model {
   public id!: number;
-  public usuario!: string;
+  public username!: string;
   public email!: string;
   public password!: string;
   public avatar!: string | null;
@@ -26,13 +26,13 @@ export class User extends Model {
 
 User.init(
   {
-    usuario: {
+    username: {
       type: DataTypes.STRING(80),
       allowNull: false,
-      unique: "uq_users_usuario",
+      unique: "uq_users_username",
       validate: {
-        notEmpty: { msg: "Usuario cannot be empty" },
-        len: { args: [3, 80], msg: "Usuario must be between 3 and 80 characters" },
+        notEmpty: { msg: "Username cannot be empty" },
+        len: { args: [3, 80], msg: "Username must be between 3 and 80 characters" },
       },
     },
     email: {
@@ -84,7 +84,7 @@ User.init(
         }
       },
       beforeValidate: (user: User) => {
-        if (user.usuario) user.usuario = user.usuario.trim().toLowerCase();
+        if (user.username) user.username = user.username.trim().toLowerCase();
         if (user.email) user.email = user.email.trim().toLowerCase();
       },
     },

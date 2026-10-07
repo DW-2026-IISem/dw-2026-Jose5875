@@ -5845,5 +5845,1086 @@ npm run dev         # el servidor debe arrancar
 </p>
 
 
+## 20. ISS-19 — Feature Users (identidad y contraseña)
 
+**Objetivo:** construir el CRUD de identidades como un feature más (mismas 4 capas y mismo contrato DTO que los de Fase I), con dos diferencias clave: la contraseña nunca entra ni reserva en claro, y el service expone una consulta de permisos efectivos que recorre el grafo RBAC.
+
+**Bloqueado por:** ISS-19 (modelo User y rbac.associations.ts).
+
+Criterios de aceptación (ISS-19) — consolidados
+
+- [ ] 20.1 carpeta dto/ con create-user.dto.ts, update-user.dto.ts, patch-user.dto.ts, change-password.dto.ts, user-response.dto.ts e index.ts
+- [ ] 20.2 users.repository.ts accede a Sequelize con UserEntity; incluye findByUsernameOrEmail
+- [ ] 20.3 users.service.ts: hashea al crear/actualizar, valida unicidad de username/email (409) y ofrece getEffectivePermissions
+- [ ] 20.4 users.controller.ts: usa this.run(res, …) y this.paramId(req); nunca devuelve el hash
+- [ ] 20.5 users.routes.ts protege todas las operaciones con authenticate, authorize
+- [ ] 20.6 users.seeder.ts crea admin y comercial de forma idempotente
+- [ ] 20.7 users.swagger.ts documenta los 9 endpoints con security: bearerAuth
+- [ ] 20.8 archivos .http de lectura y escritura
+- [ ] npx tsc --noEmit OK
+
+## 20.1 DTOs del feature
+
+Contrato de la API (el repository no los conoce):
+
+```bash
+: > src/features/auth/users/dto/create-user.dto.ts
+cat >> src/features/auth/users/dto/create-user.dto.ts << 'EOF'
+/**
+ * Datos de entrada de `POST /api/usuarios`.
+ *
+ * `status` es opcional y por defecto `active` (como en business). Después de
+ * crear el usuario, el estado solo cambia con el borrado lógico.
+ */
+export interface CreateUserDto {
+  username: string;
+  email: string;
+  password: string;
+  avatar?: string | null;
+  status?: "active" | "inactive";
+}
+EOF
+```
+
+```bash
+: > src/features/auth/users/dto/update-user.dto.ts
+cat >> src/features/auth/users/dto/update-user.dto.ts << 'EOF'
+/**
+ * Datos de entrada de `PUT /api/usuarios/:id` (reemplazo completo).
+ *
+ * Ni `password` ni `status` están aquí, a propósito:
+ *  - la contraseña tiene su propia operación (`PATCH /api/usuarios/:id/password`),
+ *    porque cambiar una credencial exige verificar la anterior;
+ *  - el estado solo cambia con el borrado lógico (`/deactivate`).
+ */
+export interface UpdateUserDto {
+  username: string;
+  email: string;
+  avatar?: string | null;
+}
+EOF
+```
+
+```bash
+: > src/features/auth/users/dto/patch-user.dto.ts
+cat >> src/features/auth/users/dto/patch-user.dto.ts << 'EOF'
+import { UpdateUserDto } from "./update-user.dto";
+
+/** Datos de entrada de `PATCH /api/usuarios/:id` (actualización parcial). */
+export type PatchUserDto = Partial<UpdateUserDto>;
+EOF
+```
+
+```bash
+: > src/features/auth/users/dto/change-password.dto.ts
+cat >> src/features/auth/users/dto/change-password.dto.ts << 'EOF'
+/**
+ * Datos de entrada de `PATCH /api/usuarios/:id/password`.
+ *
+ * Exige la contraseña **actual** además de la nueva. Es una defensa en
+ * profundidad: aunque el RBAC autorice la operación, nadie puede cambiar la
+ * credencial de otro usuario sin conocerla (evita que un administrador
+ * comprometido rote contraseñas ajenas sin más).
+ */
+export interface ChangePasswordDto {
+  current_password: string;
+  new_password: string;
+}
+EOF
+```
+
+```bash
+: > src/features/auth/users/dto/user-response.dto.ts
+cat >> src/features/auth/users/dto/user-response.dto.ts << 'EOF'
+import { User, UserI } from "../user.model";
+
+/**
+ * Respuesta HTTP de un usuario.
+ *
+ * Regla del DTO: `password` **nunca** reserva de la API. El repositorio ni siquiera
+ * lo proyecta en las lecturas (`attributes: { exclude: ["password"] }`), pero el
+ * mapper lo elimina igualmente por si el modelo se cargó con el hash (p. ej. al
+ * cambiar la contraseña). Doble red: el tipo no lo permite y el mapper lo borra.
+ */
+export type UserResponseDto = Omit<UserI, "password">;
+
+/** Mapper modelo -> DTO de respuesta (objeto plano; elimina `password`). */
+export function toUserResponse(user: User): UserResponseDto {
+  const { password, ...safe } = user.toJSON() as UserI & { password?: string };
+  return safe;
+}
+EOF
+```
+
+```bash
+: > src/features/auth/users/dto/index.ts
+cat >> src/features/auth/users/dto/index.ts << 'EOF'
+export * from "./create-user.dto";
+export * from "./update-user.dto";
+export * from "./patch-user.dto";
+export * from "./change-password.dto";
+export * from "./user-response.dto";
+EOF
+```
+
+> **Regla transversal que se mantiene:** status no viaja en UpdateUserDto ni en PatchUserDto. Solo cambia al crear o con el borrado lógico /deactivate.
+
+> change-password.dto.ts es específico del cambio de contraseña (no es un patch del recurso): exige la contraseña actual y la nueva, y permite revoke_sessions para cerrar las sesiones abiertas del usuario.
+
+## 20.2 Repository
+
+Única capa que usa Sequelize. Además del CRUD genérico, aporta findByUsernameOrEmail, que necesita el login (ISS-15): acepta usuario o correo en un solo campo.
+
+```bash
+: > src/features/auth/users/users.repository.ts
+cat >> src/features/auth/users/users.repository.ts << 'EOF'
+import { CreationAttributes, Op, Transaction } from "sequelize";
+import { User } from "./user.model";
+
+/**
+ * Capa Repository del feature Users.
+ *
+ * Única que habla con Sequelize (el modelo `User`). No contiene reglas de
+ * negocio ni conoce `req`/`res`.
+ *
+ * Detalle de seguridad: las lecturas **normales** excluyen `password` en la
+ * proyección SQL. Solo dos consultas lo incluyen, ambas con nombre explícito en
+ * su firma (`...WithPassword`), de modo que un `findById` cualquiera jamás puede
+ * devolver el hash por descuido.
+ */
+export class UsersRepository {
+  /** Proyección sin credencial: la que usan todas las lecturas de API. */
+  private static readonly WITHOUT_PASSWORD = { exclude: ["password"] };
+
+  /** Todos los usuarios activos (sin `password`). */
+  public async findAllActive(): Promise<User[]> {
+    return User.findAll({
+      where: { status: "active" },
+      attributes: UsersRepository.WITHOUT_PASSWORD,
+    });
+  }
+
+  /** Un usuario por PK (o `null`), sin `password`. Acepta transacción. */
+  public async findById(id: number, transaction?: Transaction): Promise<User | null> {
+    return User.findByPk(id, {
+      attributes: UsersRepository.WITHOUT_PASSWORD,
+      transaction,
+    });
+  }
+
+  /** Un usuario por PK **con** su hash. Uso exclusivo: cambio de contraseña. */
+  public async findByIdWithPassword(id: number): Promise<User | null> {
+    return User.findByPk(id);
+  }
+
+  /**
+   * Un usuario por `username` **o** `email`, con su hash.
+   *
+   * Uso exclusivo: validación de credenciales en el login (única operación que
+   * lee la credencial). Normaliza el identificador a minúsculas para casar con
+   * el valor almacenado.
+   */
+  public async findByIdentifierWithPassword(identifier: string): Promise<User | null> {
+    const value = identifier.trim().toLowerCase();
+    return User.findOne({
+      where: { [Op.or]: [{ username: value }, { email: value }] },
+    });
+  }
+
+  /** Busca por `username` o `email` (sin `password`) para detectar duplicados. */
+  public async findConflicts(username: string, email: string): Promise<User[]> {
+    return User.findAll({
+      where: {
+        [Op.or]: [
+          { username: username.trim().toLowerCase() },
+          { email: email.trim().toLowerCase() },
+        ],
+      },
+      attributes: ["id", "username", "email"],
+    });
+  }
+
+  /** Inserta un usuario (el hook del modelo hashea `password`). */
+  public async create(data: CreationAttributes<User>): Promise<User> {
+    return User.create(data);
+  }
+
+  /** Persiste cambios sobre una instancia existente. */
+  public async update(user: User, data: Partial<User>): Promise<User> {
+    return user.update(data);
+  }
+
+  /** Elimina físicamente una instancia. */
+  public async delete(user: User): Promise<void> {
+    await user.destroy();
+  }
+}
+EOF
+```
+
+## 20.3 Service
+
+Aquí viven las reglas de User:
+
+- Nunca se guarda la contraseña en claro (hashPassword, bcrypt 12).
+
+- username y email son únicos: si ya existen, AppError(409, …).
+
+- Al actualizar, si llega password se vuelve a hashear; si no llega, se conserva.
+
+- El borrado lógico (deactivate) no borra el hash: el registro queda inactivo e invisible.
+
+- getEffectivePermissions recorre el grafo y devuelve la lista de (method, path) vigentes.
+
+```bash
+: > src/features/auth/users/users.service.ts
+cat >> src/features/auth/users/users.service.ts << 'EOF'
+import {
+  ChangePasswordDto,
+  CreateUserDto,
+  PatchUserDto,
+  UpdateUserDto,
+  UserResponseDto,
+  toUserResponse,
+} from "./dto";
+import { UsersRepository } from "./users.repository";
+import { User } from "./user.model";
+import { AppError } from "../../../shared/errors/app-error";
+import { comparePassword } from "../../../shared/auth/password";
+import { ResourceRolesService } from "../resource-roles/resource-roles.service";
+import { EffectivePermissionDto } from "../resource-roles/dto";
+
+/**
+ * Capa Service del feature Users.
+ *
+ * Reglas de negocio: unicidad de `username`/`email`, default de `status`,
+ * política de borrado lógico, cambio de credencial y consulta de permisos
+ * efectivos (que delega en el feature `resource-roles`: el permiso es una
+ * concesión rol-recurso, no un atributo del usuario).
+ *
+ * No conoce `req`/`res` ni escribe Sequelize directamente.
+ */
+export class UsersService {
+  public constructor(
+    private readonly repository: UsersRepository = new UsersRepository(),
+    private readonly resourceRolesService: ResourceRolesService = new ResourceRolesService()
+  ) {}
+
+  // ================== READ ==================
+  public async getAll(): Promise<UserResponseDto[]> {
+    const users = await this.repository.findAllActive();
+    return users.map((user) => toUserResponse(user));
+  }
+
+  public async getOne(id: number): Promise<UserResponseDto> {
+    return toUserResponse(await this.findOrFail(id));
+  }
+
+  /** Permisos efectivos del usuario (cadena RBAC completa). 404 si no existe. */
+  public async getEffectivePermissions(id: number): Promise<EffectivePermissionDto[]> {
+    await this.findOrFail(id);
+    return this.resourceRolesService.findEffectiveForUser(id);
+  }
+
+  // ================== CREATE ==================
+  public async create(body: CreateUserDto): Promise<UserResponseDto> {
+    await this.assertUnique(body.username, body.email);
+
+    // Copia campo a campo: solo lo que declara el DTO llega al modelo
+    // (evita *mass assignment*, p. ej. inyectar un `id` o un `status` raro).
+    const user = await this.repository.create({
+      username: body.username,
+      email: body.email,
+      password: body.password,
+      avatar: body.avatar ?? null,
+      status: body.status ?? "active",
+    });
+    return toUserResponse(user);
+  }
+
+  // ================== UPDATE ==================
+  public async updatePut(id: number, body: UpdateUserDto): Promise<UserResponseDto> {
+    const user = await this.findOrFail(id);
+    await this.assertUnique(body.username, body.email, id);
+
+    await this.repository.update(user, {
+      username: body.username,
+      email: body.email,
+      avatar: body.avatar ?? null,
+    });
+    return toUserResponse(user);
+  }
+
+  public async updatePatch(id: number, body: PatchUserDto): Promise<UserResponseDto> {
+    const user = await this.findOrFail(id);
+
+    const username = body.username ?? user.username;
+    const email = body.email ?? user.email;
+    await this.assertUnique(username, email, id);
+
+    await this.repository.update(user, body);
+    return toUserResponse(user);
+  }
+
+  /**
+   * Cambia la contraseña de un usuario.
+   *
+   * Verifica la credencial actual antes de aceptar la nueva. El hash lo vuelve a
+   * calcular el hook `beforeUpdate` del modelo al detectar el campo cambiado.
+   */
+  public async changePassword(id: number, body: ChangePasswordDto): Promise<void> {
+    if (!body.current_password || !body.new_password) {
+      throw new AppError(400, "current_password and new_password are required");
+    }
+
+    const user = await this.repository.findByIdWithPassword(id);
+    if (!user || user.status !== "active") {
+      throw new AppError(404, "User not found");
+    }
+
+    const matches = await comparePassword(body.current_password, user.password);
+    if (!matches) {
+      throw new AppError(400, "Current password is incorrect");
+    }
+
+    await this.repository.update(user, { password: body.new_password });
+  }
+
+  // ================== DELETE ==================
+  /** Eliminación física. */
+  public async deletePhysical(id: number): Promise<void> {
+    const user = await this.findOrFail(id, false);
+    await this.repository.delete(user);
+  }
+
+  /** Eliminación lógica -> `status = inactive`. */
+  public async deleteLogical(id: number): Promise<UserResponseDto> {
+    const user = await this.findOrFail(id);
+    await this.repository.update(user, { status: "inactive" });
+    return toUserResponse(user);
+  }
+
+  // ================== HELPERS ==================
+  /** Busca por PK y falla con 404. `onlyActive` aplica la política de borrado lógico. */
+  private async findOrFail(id: number, onlyActive = true): Promise<User> {
+    const user = await this.repository.findById(id);
+    if (!user || (onlyActive && user.status !== "active")) {
+      throw new AppError(404, "User not found");
+    }
+    return user;
+  }
+
+  /**
+   * Comprueba que `username` y `email` no estén tomados por **otro** usuario.
+   *
+   * `excludeId` permite excluir al propio usuario en las actualizaciones. Se
+   * hace antes de escribir para responder 409 con un mensaje útil en lugar de
+   * dejar que la restricción única de la BD reviente como un 500.
+   */
+  private async assertUnique(
+    username: string,
+    email: string,
+    excludeId?: number
+  ): Promise<void> {
+    const conflicts = await this.repository.findConflicts(username, email);
+    const taken = conflicts.find((candidate) => candidate.id !== excludeId);
+
+    if (!taken) return;
+    if (taken.username === username.trim().toLowerCase()) {
+      throw new AppError(409, "Username already in use");
+    }
+    throw new AppError(409, "Email already in use");
+  }
+}
+EOF
+```
+
+> User → (role_users.status = 'active') → Role → (resource_roles.status = 'active') → Resource con Role.status = 'active' y Resource.status = 'active'
+
+## 20.4 Controller
+
+HTTP puro: this.run(res, …), this.paramId(req) y findOrFail en el service. Expone dos operaciones que no son CRUD: cambio de contraseña y permisos efectivos.
+
+```bash
+: > src/features/auth/users/users.controller.ts
+cat >> src/features/auth/users/users.controller.ts << 'EOF'
+import { Request, Response } from "express";
+import { BaseController } from "../../../shared/http/base-controller";
+import {
+  ChangePasswordDto,
+  CreateUserDto,
+  PatchUserDto,
+  UpdateUserDto,
+} from "./dto";
+import { UsersService } from "./users.service";
+
+/**
+ * Capa Controller del feature Users.
+ * Solo HTTP: lee `req`, llama al service y arma la respuesta.
+ * El manejo de errores se delega en `run()` (ver `BaseController`).
+ */
+export class UsersController extends BaseController {
+  public constructor(
+    private readonly service: UsersService = new UsersService()
+  ) {
+    super();
+  }
+
+  // ================== READ ==================
+  public async getAll(_req: Request, res: Response): Promise<void> {
+    await this.run(res, async () => {
+      const users = await this.service.getAll();
+      res.status(200).json({ users });
+    });
+  }
+
+  public async getOne(req: Request, res: Response): Promise<void> {
+    await this.run(res, async () => {
+      const user = await this.service.getOne(this.paramId(req));
+      res.status(200).json({ user });
+    });
+  }
+
+  // ================== CREATE ==================
+  public async create(req: Request, res: Response): Promise<void> {
+    await this.run(res, async () => {
+      const user = await this.service.create(req.body as CreateUserDto);
+      res.status(201).json({ user });
+    });
+  }
+
+  // ================== UPDATE ==================
+  public async updatePut(req: Request, res: Response): Promise<void> {
+    await this.run(res, async () => {
+      const user = await this.service.updatePut(
+        this.paramId(req),
+        req.body as UpdateUserDto
+      );
+      res.status(200).json({ user });
+    });
+  }
+
+  public async updatePatch(req: Request, res: Response): Promise<void> {
+    await this.run(res, async () => {
+      const user = await this.service.updatePatch(
+        this.paramId(req),
+        req.body as PatchUserDto
+      );
+      res.status(200).json({ user });
+    });
+  }
+
+  // ================== DELETE ==================
+  /** Eliminación física. */
+  public async deletePhysical(req: Request, res: Response): Promise<void> {
+    await this.run(res, async () => {
+      const id = this.paramId(req);
+      await this.service.deletePhysical(id);
+      res.status(200).json({ message: "User permanently deleted", id });
+    });
+  }
+
+  /** Eliminación lógica -> `status = inactive`. */
+  public async deleteLogical(req: Request, res: Response): Promise<void> {
+    await this.run(res, async () => {
+      const user = await this.service.deleteLogical(this.paramId(req));
+      res.status(200).json({ message: "User deactivated (logical delete)", user });
+    });
+  }
+
+  // ================== IDENTIDAD Y PERMISOS ==================
+  /** Cambio de credencial (exige la contraseña actual). */
+  public async changePassword(req: Request, res: Response): Promise<void> {
+    await this.run(res, async () => {
+      const id = this.paramId(req);
+      await this.service.changePassword(id, req.body as ChangePasswordDto);
+      res.status(200).json({ message: "Password updated", id });
+    });
+  }
+
+  /** Permisos efectivos del usuario: recursos concedidos por sus roles activos. */
+  public async getEffectivePermissions(req: Request, res: Response): Promise<void> {
+    await this.run(res, async () => {
+      const permissions = await this.service.getEffectivePermissions(this.paramId(req));
+      res.status(200).json({ permissions });
+    });
+  }
+}
+EOF
+```
+
+## 20.5 Rutas (modalidad JWT + RBAC)
+
+Todos los endpoints de administración de identidades están ellos mismos protegidos por la matriz: no basta con estar autenticado, hay que tener la concesión concreta (GET /api/usuarios, POST /api/usuarios, …).
+
+```bash
+: > src/features/auth/users/users.routes.ts
+cat >> src/features/auth/users/users.routes.ts << 'EOF'
+import { Application } from "express";
+import { UsersController } from "./users.controller";
+import { authenticate, authorize } from "../access";
+
+/**
+ * Rutas del feature Users — **modalidad 3 (JWT + RBAC)** en todas las operaciones.
+ *
+ * La administración de identidades está ella misma protegida por la matriz de
+ * permisos: no basta con estar autenticado, hay que tener la concesión concreta
+ * (`GET /api/usuarios`, `POST /api/usuarios`, ...). El catálogo de recursos ya
+ * incluye las 9 operaciones de este feature.
+ */
+export class UsersRoutes {
+  public usersController: UsersController = new UsersController();
+
+  public routes(app: Application): void {
+    // getAll
+    app
+      .route("/api/usuarios")
+      .get(authenticate, authorize, this.usersController.getAll.bind(this.usersController));
+
+    // getOne
+    app
+      .route("/api/usuarios/:id")
+      .get(authenticate, authorize, this.usersController.getOne.bind(this.usersController));
+
+    // create
+    app
+      .route("/api/usuarios")
+      .post(authenticate, authorize, this.usersController.create.bind(this.usersController));
+
+    // update (PUT / PATCH)
+    app
+      .route("/api/usuarios/:id")
+      .put(authenticate, authorize, this.usersController.updatePut.bind(this.usersController))
+      .patch(authenticate, authorize, this.usersController.updatePatch.bind(this.usersController));
+
+    // delete físico
+    app
+      .route("/api/usuarios/:id")
+      .delete(
+        authenticate,
+        authorize,
+        this.usersController.deletePhysical.bind(this.usersController)
+      );
+
+    // delete lógico
+    app
+      .route("/api/usuarios/:id/deactivate")
+      .patch(
+        authenticate,
+        authorize,
+        this.usersController.deleteLogical.bind(this.usersController)
+      );
+
+    // cambio de contraseña
+    app
+      .route("/api/usuarios/:id/password")
+      .patch(
+        authenticate,
+        authorize,
+        this.usersController.changePassword.bind(this.usersController)
+      );
+
+    // permisos efectivos del usuario
+    app
+      .route("/api/usuarios/:id/permisos")
+      .get(
+        authenticate,
+        authorize,
+        this.usersController.getEffectivePermissions.bind(this.usersController)
+      );
+  }
+}
+EOF
+```
+
+## 20.6 Seeder de usuarios canónicos
+
+En CelebraHub se crean cinco usuarios de laboratorio, uno por cada rol definido en el proyecto. Son credenciales locales de prueba y **no representan contraseñas reales de producción**.
+
+```bash
+: > src/features/auth/users/users.seeder.ts
+cat >> src/features/auth/users/users.seeder.ts << 'EOF'
+import { User } from "./user.model";
+import { faker } from "@faker-js/faker";
+
+/**
+ * Usuarios canónicos de CelebraHub.
+ *
+ * Los roles corresponden exactamente al modelo funcional del proyecto:
+ * ADMIN, COMERCIAL, OPERACIONES, PROVEEDOR y CARTERA.
+ *
+ * Las contraseñas son únicamente de laboratorio. El modelo User las almacena
+ * siempre como hash bcrypt.
+ */
+export const SEED_USERS = [
+  { username: "admin", email: "admin@celebrahub.local", password: "Admin123!" },
+  { username: "comercial", email: "comercial@celebrahub.local", password: "Comercial123!" },
+  { username: "operaciones", email: "operaciones@celebrahub.local", password: "Operaciones123!" },
+  { username: "proveedor", email: "proveedor@celebrahub.local", password: "Proveedor123!" },
+  { username: "cartera", email: "cartera@celebrahub.local", password: "Cartera123!" },
+] as const;
+
+export async function seedUsers(count: number): Promise<number> {
+  if (count <= 0) {
+    console.log("⏭️ users: count=0, se omite");
+    return 0;
+  }
+
+  let created = 0;
+
+  for (const item of SEED_USERS) {
+    const [user, wasCreated] = await User.findOrCreate({
+      where: { username: item.username },
+      defaults: {
+        username: item.username,
+        email: item.email,
+        password: item.password,
+        avatar: null,
+        status: "active",
+      },
+    });
+
+    if (wasCreated) {
+      created++;
+    } else if (user.status !== "active") {
+      await user.update({ status: "active" });
+    }
+  }
+
+  const extras = Math.max(0, count - SEED_USERS.length);
+
+  for (let i = 0; i < extras; i++) {
+    const username = `user.${i}.${faker.string.alphanumeric(6)}`.toLowerCase();
+
+    await User.create({
+      username,
+      email: `${username}@celebrahub.local`,
+      password: "Password123!",
+      avatar: null,
+      status: "active",
+    });
+
+    created++;
+  }
+
+  console.log(
+    `✅ users: insertados ${created} usuario(s) ` +
+    `(${SEED_USERS.length} canónicos + ${extras} aleatorios)`
+  );
+
+  return created;
+}
+EOF
+```
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| admin | Admin123! | ADMIN |
+| comercial | Comercial123! | COMERCIAL |
+| operaciones | Operaciones123! | OPERACIONES |
+| proveedor | Proveedor123! | PROVEEDOR |
+| cartera | Cartera123! | CARTERA |
+
+> **Nota de adaptación:** el documento fuente solo traía dos roles de ejemplo. CelebraHub usa los cinco roles definidos por su propio proyecto, por lo que esta versión amplía únicamente la capa Auth y no modifica ninguna tabla de negocio.
+
+## 20.7 Swagger del feature
+
+Los 9 endpoints (GET/POST /api/usuarios, GET/PUT/PATCH/DELETE /:id, /deactivate, /password, /:id/permisos) documentados con security: [{ bearerAuth: [] }] y las respuestas 401/403 reutilizables.
+
+```bash
+: > src/features/auth/users/users.swagger.ts
+cat >> src/features/auth/users/users.swagger.ts << 'EOF'
+import {
+  bearerSecurity,
+  forbiddenResponse,
+  invalidIdResponse,
+  notFoundResponse,
+  unauthorizedResponse,
+} from "../../../shared/http/swagger-security";
+
+/**
+ * Documentación OpenAPI del feature Users.
+ *
+ * Modalidad de **todas** las operaciones: **JWT + RBAC**. La administración de
+ * identidades está protegida por la propia matriz de permisos: además de un
+ * token válido, se exige la concesión del recurso `(method, path)`.
+ */
+export const usersSwagger = {
+  tags: [
+    {
+      name: "Usuarios",
+      description:
+        "CRUD de identidades + cambio de contraseña + permisos efectivos — **JWT + RBAC**",
+    },
+  ],
+  paths: {
+    "/api/usuarios": {
+      get: {
+        tags: ["Usuarios"],
+        summary: "Listar usuarios activos",
+        description: "JWT + RBAC — recurso `GET /api/usuarios`. Nunca devuelve `password`.",
+        security: bearerSecurity,
+        responses: {
+          "200": { description: "Lista de usuarios (`{ users: [...] }`)" },
+          "401": unauthorizedResponse,
+          "403": forbiddenResponse,
+        },
+      },
+      post: {
+        tags: ["Usuarios"],
+        summary: "Crear usuario",
+        description:
+          "JWT + RBAC — recurso `POST /api/usuarios`. El `password` se hashea (bcrypt, 12 rondas).",
+        security: bearerSecurity,
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": { schema: { $ref: "#/components/schemas/UserCreate" } },
+          },
+        },
+        responses: {
+          "201": { description: "Usuario creado (`{ user }`)" },
+          "401": unauthorizedResponse,
+          "403": forbiddenResponse,
+          "409": { description: "`username` o `email` ya en uso" },
+        },
+      },
+    },
+    "/api/usuarios/{id}": {
+      get: {
+        tags: ["Usuarios"],
+        summary: "Obtener usuario por id",
+        description: "JWT + RBAC — recurso `GET /api/usuarios/:id`. 404 si no existe o está inactivo.",
+        security: bearerSecurity,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        responses: {
+          "200": { description: "Usuario (`{ user }`)" },
+          "400": invalidIdResponse,
+          "401": unauthorizedResponse,
+          "403": forbiddenResponse,
+          "404": notFoundResponse,
+        },
+      },
+      put: {
+        tags: ["Usuarios"],
+        summary: "Reemplazar usuario (PUT)",
+        description: "JWT + RBAC — recurso `PUT /api/usuarios/:id`. No cambia `password` ni `status`.",
+        security: bearerSecurity,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": { schema: { $ref: "#/components/schemas/UserUpdate" } },
+          },
+        },
+        responses: {
+          "200": { description: "Usuario actualizado (`{ user }`)" },
+          "400": invalidIdResponse,
+          "401": unauthorizedResponse,
+          "403": forbiddenResponse,
+          "404": notFoundResponse,
+          "409": { description: "`username` o `email` ya en uso" },
+        },
+      },
+      patch: {
+        tags: ["Usuarios"],
+        summary: "Modificar usuario (PATCH)",
+        description: "JWT + RBAC — recurso `PATCH /api/usuarios/:id`. Actualización parcial.",
+        security: bearerSecurity,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        requestBody: {
+          content: {
+            "application/json": { schema: { $ref: "#/components/schemas/UserPatch" } },
+          },
+        },
+        responses: {
+          "200": { description: "Usuario actualizado (`{ user }`)" },
+          "400": invalidIdResponse,
+          "401": unauthorizedResponse,
+          "403": forbiddenResponse,
+          "404": notFoundResponse,
+        },
+      },
+      delete: {
+        tags: ["Usuarios"],
+        summary: "Eliminar usuario (físico)",
+        description: "JWT + RBAC — recurso `DELETE /api/usuarios/:id`.",
+        security: bearerSecurity,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        responses: {
+          "200": { description: "Eliminado (`{ message, id }`)" },
+          "400": invalidIdResponse,
+          "401": unauthorizedResponse,
+          "403": forbiddenResponse,
+          "404": notFoundResponse,
+        },
+      },
+    },
+    "/api/usuarios/{id}/deactivate": {
+      patch: {
+        tags: ["Usuarios"],
+        summary: "Desactivar usuario (borrado lógico)",
+        description:
+          "JWT + RBAC — recurso `PATCH /api/usuarios/:id/deactivate`. " +
+          "Efecto inmediato: la revalidación del middleware `authenticate` deja de reconocer al usuario (401).",
+        security: bearerSecurity,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        responses: {
+          "200": { description: "Desactivado (`{ message, user }`)" },
+          "400": invalidIdResponse,
+          "401": unauthorizedResponse,
+          "403": forbiddenResponse,
+          "404": notFoundResponse,
+        },
+      },
+    },
+    "/api/usuarios/{id}/password": {
+      patch: {
+        tags: ["Usuarios"],
+        summary: "Cambiar contraseña",
+        description:
+          "JWT + RBAC — recurso `PATCH /api/usuarios/:id/password`. " +
+          "Exige `current_password`: ni un administrador puede cambiar una credencial ajena sin conocerla (defensa en profundidad).",
+        security: bearerSecurity,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": { schema: { $ref: "#/components/schemas/ChangePassword" } },
+          },
+        },
+        responses: {
+          "200": { description: "Contraseña actualizada (`{ message, id }`)" },
+          "400": { description: "Faltan campos o `current_password` incorrecta" },
+          "401": unauthorizedResponse,
+          "403": forbiddenResponse,
+          "404": notFoundResponse,
+        },
+      },
+    },
+    "/api/usuarios/{id}/permisos": {
+      get: {
+        tags: ["Usuarios"],
+        summary: "Permisos efectivos del usuario",
+        description:
+          "JWT + RBAC — recurso `GET /api/usuarios/:id/permisos`. Ejecuta la consulta de autorización " +
+          "(`resource_roles → roles → role_users → resources`, todos los eslabones activos) y devuelve el par `(method, path)` de cada permiso.",
+        security: bearerSecurity,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        responses: {
+          "200": { description: "Permisos efectivos (`{ permissions: [...] }`)" },
+          "400": invalidIdResponse,
+          "401": unauthorizedResponse,
+          "403": forbiddenResponse,
+          "404": notFoundResponse,
+        },
+      },
+    },
+  },
+  components: {
+    schemas: {
+      User: {
+        type: "object",
+        properties: {
+          id: { type: "integer", example: 1 },
+          username: { type: "string", example: "admin" },
+          email: { type: "string", format: "email", example: "admin@celebrahub.local" },
+          avatar: { type: "string", nullable: true, example: null },
+          status: { type: "string", enum: ["active", "inactive"], example: "active" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
+      UserCreate: {
+        type: "object",
+        required: ["username", "email", "password"],
+        properties: {
+          username: { type: "string", minLength: 3, maxLength: 80, example: "nuevo.usuario" },
+          email: { type: "string", format: "email", example: "nuevo@celebrahub.local" },
+          password: { type: "string", format: "password", minLength: 8, example: "Password123!" },
+          avatar: { type: "string", nullable: true },
+          status: { type: "string", enum: ["active", "inactive"], default: "active" },
+        },
+      },
+      UserUpdate: {
+        type: "object",
+        required: ["username", "email"],
+        properties: {
+          username: { type: "string" },
+          email: { type: "string", format: "email" },
+          avatar: { type: "string", nullable: true },
+        },
+      },
+      UserPatch: {
+        type: "object",
+        properties: {
+          username: { type: "string" },
+          email: { type: "string", format: "email" },
+          avatar: { type: "string", nullable: true },
+        },
+      },
+      ChangePassword: {
+        type: "object",
+        required: ["current_password", "new_password"],
+        properties: {
+          current_password: { type: "string", format: "password" },
+          new_password: { type: "string", format: "password", minLength: 8 },
+        },
+      },
+    },
+  },
+};
+EOF
+```
+
+## 20.8 Pruebas HTTP
+
+```bash
+: > src/features/auth/users/http/users.get.http
+cat >> src/features/auth/users/http/users.get.http << 'EOF'
+### Feature Users — GET ALL / GET ONE (modalidad JWT + RBAC)
+### JWT + RBAC: `authenticate` (401 si no hay identidad válida) +
+### `authorize` (403 si la matriz no concede el par method+path).
+@baseUrl = http://localhost:4000
+
+# @name loginAdmin
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+@adminToken = {{loginAdmin.response.body.$.access_token}}
+@id = 1
+
+### getAll — recurso `GET /api/usuarios` (solo ADMIN). Nunca devuelve `password`.
+GET {{baseUrl}}/api/usuarios
+Authorization: Bearer {{adminToken}}
+
+### getOne — recurso `GET /api/usuarios/:id`
+GET {{baseUrl}}/api/usuarios/{{id}}
+Authorization: Bearer {{adminToken}}
+
+### 400 — id no es entero positivo (validado en BaseController.paramId)
+GET {{baseUrl}}/api/usuarios/abc
+Authorization: Bearer {{adminToken}}
+
+### 401 — sin token
+GET {{baseUrl}}/api/usuarios
+
+### 403 — el rol COMERCIAL no tiene concedido `GET /api/usuarios`
+# @name loginComercial
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "comercial",
+  "password": "Comercial123!"
+}
+
+###
+GET {{baseUrl}}/api/usuarios
+Authorization: Bearer {{loginComercial.response.body.$.access_token}}
+EOF
+```
+
+```bash
+: > src/features/auth/users/http/users.create.http
+cat >> src/features/auth/users/http/users.create.http << 'EOF'
+### Feature Users — CREATE / UPDATE / DELETE (modalidad JWT + RBAC)
+@baseUrl = http://localhost:4000
+
+# @name loginAdmin
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+@token = {{loginAdmin.response.body.$.access_token}}
+@id = 2
+
+### CREATE — recurso `POST /api/usuarios`. El `password` se hashea (bcrypt, 12 rondas).
+POST {{baseUrl}}/api/usuarios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "nuevo.usuario",
+  "email": "nuevo.usuario@celebrahub.local",
+  "password": "Password123!",
+  "avatar": null
+}
+
+### 409 — username/email ya en uso
+POST {{baseUrl}}/api/usuarios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "email": "otro@celebrahub.local",
+  "password": "Password123!"
+}
+
+### UPDATE PUT — reemplazo completo. No cambia `password` ni `status`.
+PUT {{baseUrl}}/api/usuarios/{{id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "comercial",
+  "email": "comercial@celebrahub.local",
+  "avatar": "https://example.com/avatar.png"
+}
+
+### UPDATE PATCH — parcial
+PATCH {{baseUrl}}/api/usuarios/{{id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "avatar": null
+}
+
+### CAMBIO DE CONTRASEÑA — recurso `PATCH /api/usuarios/:id/password`.
+### Exige la contraseña ACTUAL (defensa en profundidad, incluso para un admin).
+PATCH {{baseUrl}}/api/usuarios/{{id}}/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "current_password": "Comercial123!",
+  "new_password": "Comercial456!"
+}
+
+### PERMISOS EFECTIVOS del usuario — recurso `GET /api/usuarios/:id/permisos`.
+### Ejecuta la cadena RBAC completa (comercial -> 7 permisos).
+GET {{baseUrl}}/api/usuarios/{{id}}/permisos
+Authorization: Bearer {{token}}
+
+### DELETE lógico — `status = inactive`. Efecto inmediato: sus tokens dejan de valer (401).
+PATCH {{baseUrl}}/api/usuarios/{{id}}/deactivate
+Authorization: Bearer {{token}}
+
+### DELETE físico — recurso `DELETE /api/usuarios/:id`
+DELETE {{baseUrl}}/api/usuarios/{{id}}
+Authorization: Bearer {{token}}
+EOF
+```
+
+**Verificación**
+
+```bash
+npx tsc --noEmit
+npm run db:seed
+npm run dev
+```
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-06 224201.png">
+</p>
 ----

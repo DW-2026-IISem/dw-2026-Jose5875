@@ -1,0 +1,43 @@
+### Feature Users — GET ALL / GET ONE
+@baseUrl = http://localhost:4000
+
+# @name loginAdmin
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+@adminToken = {{loginAdmin.response.body.$.access_token}}
+@id = 1
+
+### getAll
+GET {{baseUrl}}/api/usuarios
+Authorization: Bearer {{adminToken}}
+
+### getOne
+GET {{baseUrl}}/api/usuarios/{{id}}
+Authorization: Bearer {{adminToken}}
+
+### 400
+GET {{baseUrl}}/api/usuarios/abc
+Authorization: Bearer {{adminToken}}
+
+### 401
+GET {{baseUrl}}/api/usuarios
+
+### 403
+# @name loginComercial
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "comercial",
+  "password": "Comercial123!"
+}
+
+###
+GET {{baseUrl}}/api/usuarios
+Authorization: Bearer {{loginComercial.response.body.$.access_token}}
