@@ -115,7 +115,7 @@ export class App {
         await sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
       }
       try {
-        await sequelize.sync({ force, alter: !force });
+        await sequelize.sync({ force, alter: false });
       } finally {
         if (isMysql) {
           await sequelize.query("SET FOREIGN_KEY_CHECKS = 1");

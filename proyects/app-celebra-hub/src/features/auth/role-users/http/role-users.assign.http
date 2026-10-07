@@ -1,0 +1,52 @@
+### Feature RoleUsers — ASIGNAR ROL A USUARIO (modalidad JWT + RBAC)
+@baseUrl = http://localhost:4000
+
+# @name loginAdmin
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+@token = {{loginAdmin.response.body.$.access_token}}
+
+### getAll
+GET {{baseUrl}}/api/asignaciones-rol
+Authorization: Bearer {{token}}
+
+### getOne
+GET {{baseUrl}}/api/asignaciones-rol/1
+Authorization: Bearer {{token}}
+
+### ASIGNAR
+# @name assignCreate
+POST {{baseUrl}}/api/asignaciones-rol
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "user_id": 2,
+  "role_id": 1
+}
+
+@assignmentId = {{assignCreate.response.body.$.assignment.id}}
+
+### 409 - duplicado
+POST {{baseUrl}}/api/asignaciones-rol
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "user_id": 2,
+  "role_id": 1
+}
+
+### patch deactivate
+PATCH {{baseUrl}}/api/asignaciones-rol/{{assignmentId}}/deactivate
+Authorization: Bearer {{token}}
+
+### patch reactivate
+PATCH {{baseUrl}}/api/asignaciones-rol/{{assignmentId}}/reactivate
+Authorization: Bearer {{token}}

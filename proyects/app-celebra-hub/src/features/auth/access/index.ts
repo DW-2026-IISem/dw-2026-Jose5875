@@ -34,6 +34,8 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   }
 }
 
+export const requireAuth = authenticate;
+
 export async function authorize(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const authReq = req as AuthenticatedRequest;
@@ -58,3 +60,29 @@ export async function authorize(req: Request, res: Response, next: NextFunction)
     sendError(res, error);
   }
 }
+
+export function requirePermission(method: string, path: string) {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      if (!authReq.auth) {
+        throw new AppError(401, "Authentication required");
+      }
+
+      const service = new ResourceRolesService();
+      const permissions = await service.findEffectiveForUser(authReq.auth.id);
+      const granted =
+        isOperationGranted(permissions, method, req.originalUrl.split("?")[0]) ||
+        isOperationGranted(permissions, method, path);
+
+      if (!granted) {
+        throw new AppError(403, "Forbidden");
+      }
+
+      next();
+    } catch (error) {
+      sendError(res, error);
+    }
+  };
+}
+

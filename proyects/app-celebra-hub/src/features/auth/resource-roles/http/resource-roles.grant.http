@@ -1,0 +1,52 @@
+### Feature ResourceRoles — CONCEDER / RETIRAR PERMISOS (JWT + RBAC)
+@baseUrl = http://localhost:4000
+
+# @name loginAdmin
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+# @name loginComercial
+POST {{baseUrl}}/api/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "comercial",
+  "password": "Comercial123!"
+}
+
+@token = {{loginAdmin.response.body.$.access_token}}
+@comercialToken = {{loginComercial.response.body.$.access_token}}
+
+### getAll
+GET {{baseUrl}}/api/concesiones-rol
+Authorization: Bearer {{token}}
+
+### getOne
+GET {{baseUrl}}/api/concesiones-rol/1
+Authorization: Bearer {{token}}
+
+### CONCEDER
+# @name grantCreate
+POST {{baseUrl}}/api/concesiones-rol
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "role_id": 2,
+  "resource_id": 3
+}
+
+@grantId = {{grantCreate.response.body.$.grant.id}}
+
+### Deactivate
+PATCH {{baseUrl}}/api/concesiones-rol/{{grantId}}/deactivate
+Authorization: Bearer {{token}}
+
+### Reactivate
+PATCH {{baseUrl}}/api/concesiones-rol/{{grantId}}/reactivate
+Authorization: Bearer {{token}}

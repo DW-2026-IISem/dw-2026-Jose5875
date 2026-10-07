@@ -49,7 +49,7 @@ async function runSeeders() {
 
     await sequelize.sync({
       force: false,
-      alter: true,
+      alter: false,
     });
 
     await seedClientes(counts.clientes);
