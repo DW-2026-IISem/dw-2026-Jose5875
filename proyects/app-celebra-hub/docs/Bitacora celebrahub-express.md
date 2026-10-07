@@ -12079,3 +12079,232 @@ curl -s -X POST $BASE/api/sesion/refresh -H "Content-Type: application/json" \
 |Reusar el refresh anterior|	401 + familia revocada|
 
 ---------
+## 26. Cierre del laboratorio (backend completo)
+
+***Objetivo:*** dejar el backend completo y funcional: 12 features, 11 tablas, 3 modalidades, seguridad stateless con revocación inmediata, y todo verificable con TypeScript, seeders y Swagger.
+
+## 26.1 Cableado final
+
+La Fase II **no reemplaza** el `SeedersRunner` de CelebraHub. Se agregan los
+modelos y seeders Auth al runner existente.
+
+### `src/database/seeders/index.ts`
+
+Conserva los imports de los once seeders de negocio ya existentes y agrega:
+
+```ts
+import "../../features/auth/users/user.model";
+import "../../features/auth/roles/role.model";
+import "../../features/auth/resources/resource.model";
+import "../../features/auth/role-users/role-user.model";
+import "../../features/auth/resource-roles/resource-role.model";
+import "../../features/auth/refresh-tokens/refresh-token.model";
+import "../../features/auth/rbac.associations";
+
+import { seedRoles } from "../../features/auth/roles/roles.seeder";
+import { seedResources } from "../../features/auth/resources/resources.seeder";
+import { seedUsers } from "../../features/auth/users/users.seeder";
+import { seedRoleUsers } from "../../features/auth/role-users/role-users.seeder";
+import { seedResourceRoles } from "../../features/auth/resource-roles/resource-roles.seeder";
+```
+
+Después de `sequelize.sync(...)`, el orden recomendado es:
+
+```ts
+await seedRoles();
+await seedResources();
+await seedUsers(counts.users);
+await seedRoleUsers();
+await seedResourceRoles();
+
+// Después continúan los seeders de negocio que ya tenía CelebraHub.
+await seedClientes(counts.clientes);
+await seedServicios(counts.servicios);
+await seedSalones(counts.salones);
+await seedReservas(counts.reservas);
+await seedEventos(counts.eventos);
+await seedProveedores(counts.proveedores);
+await seedContratos(counts.contratos);
+await seedPagos(counts.pagos);
+await seedCambiosContrato(counts.cambiosContrato);
+await seedCancelaciones(counts.cancelaciones);
+await seedEventoServicios(counts.eventoServicios);
+```
+
+> El orden de Auth es importante: roles → resources → users → role_users →
+> resource_roles. Los seis modelos deben estar importados antes de `sync()` y
+> las asociaciones después de los modelos.
+
+### `src/database/seeders/counts.ts`
+
+Mantén todos los conteos actuales de CelebraHub y añade solamente:
+
+```ts
+users: number;
+```
+
+con:
+
+```ts
+users: getArgValue("users") ?? getEnvValue("SEED_USERS") ?? 5,
+```
+
+Los catálogos `roles`, `resources`, `role_users` y `resource_roles` son
+deterministas y no necesitan una cantidad variable.
+
+### Verificación
+
+```bash
+npx tsc --noEmit
+npm run db:seed
+npm run dev
+```
+
+Comprobar que existen las seis tablas Auth nuevas:
+
+```sql
+SHOW TABLES LIKE 'users';
+SHOW TABLES LIKE 'roles';
+SHOW TABLES LIKE 'role_users';
+SHOW TABLES LIKE 'resources';
+SHOW TABLES LIKE 'resource_roles';
+SHOW TABLES LIKE 'refresh_tokens';
+```
+
+Y que las tablas de negocio de CelebraHub continúan existiendo sin modificación.
+
+---
+
+## Las tres modalidades — mapa definitivo de CelebraHub
+
+### OPEN
+
+No requiere identidad:
+
+```text
+POST /api/sesion/login
+POST /api/sesion/refresh
+POST /api/sesion/logout
+```
+
+### JWT
+
+Requiere access token válido:
+
+```text
+GET /api/sesion/perfil
+GET /api/permisos
+GET /api/sesiones/*
+```
+
+### JWT + RBAC
+
+Requiere:
+
+```text
+1. Access token JWT válido
+2. Usuario activo
+3. Rol activo
+4. Concesión activa para (method, path)
+```
+
+Aplica a los CRUD de negocio y a los módulos administrativos de seguridad.
+
+---
+
+## Credenciales de laboratorio de CelebraHub
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `admin` | `Admin123!` | ADMIN |
+| `comercial` | `Comercial123!` | COMERCIAL |
+| `operaciones` | `Operaciones123!` | OPERACIONES |
+| `proveedor` | `Proveedor123!` | PROVEEDOR |
+| `cartera` | `Cartera123!` | CARTERA |
+
+Estas credenciales son exclusivamente para desarrollo/pruebas locales.
+
+---
+
+## Checklist final de adaptación a CelebraHub
+
+### Fase I — Business
+
+Las tablas existentes no se modifican:
+
+- Cliente
+- Salón
+- Reserva
+- Evento
+- Servicio
+- Proveedor
+- EventoServicio
+- Contrato
+- Pago
+- CambioContrato
+- Cancelación
+
+### Fase II — Auth
+
+Se añaden:
+
+- `users`
+- `roles`
+- `role_users`
+- `resources`
+- `resource_roles`
+- `refresh_tokens`
+
+Y:
+
+- `password.ts`
+- `jwt.ts`
+- `resource-match.ts`
+- `auth-user.ts`
+- `error-response.ts`
+- `base-controller.ts`
+- `swagger-security.ts`
+- `rbac.associations.ts`
+- Users
+- Roles
+- Resources
+- RoleUsers
+- ResourceRoles
+- RefreshTokens
+- Session
+- `authenticate`
+- `authorize`
+
+### Verificación técnica final
+
+```bash
+npx tsc --noEmit
+npm run db:seed
+npm run dev
+```
+
+Luego:
+
+```text
+POST /api/sesion/login
+```
+
+obteniendo el `access_token`.
+
+En Swagger se utiliza:
+
+```text
+Authorize
+Bearer <access_token>
+```
+
+Y las rutas de CelebraHub quedan protegidas por:
+
+```text
+authenticate → authorize → controller
+```
+
+La autorización mantiene la política **deny by default**: si no existe una
+concesión activa para la combinación exacta de método y ruta, la respuesta es
+403.
+

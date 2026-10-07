@@ -1,4 +1,5 @@
 export interface SeedCounts {
+  users: number;
   clientes: number;
   servicios: number;
   salones: number;
@@ -32,6 +33,11 @@ function getEnvValue(name: string): number | undefined {
 
 export function resolveSeedCounts(): SeedCounts {
   return {
+    users:
+      getArgValue("users") ??
+      getEnvValue("SEED_USERS") ??
+      5,
+
     clientes:
       getArgValue("clientes") ??
       getEnvValue("SEED_CLIENTES") ??

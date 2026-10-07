@@ -54,22 +54,23 @@ async function runSeeders() {
       alter: false,
     });
 
+    await seedRoles();
+    await seedResources();
+    await seedUsers(counts.users);
+    await seedRoleUsers();
+    await seedResourceRoles();
+
     await seedClientes(counts.clientes);
     await seedServicios(counts.servicios);
     await seedSalones(counts.salones);
     await seedReservas(counts.reservas);
+    await seedEventos(counts.eventos);
     await seedProveedores(counts.proveedores);
     await seedContratos(counts.contratos);
     await seedPagos(counts.pagos);
     await seedCambiosContrato(counts.cambiosContrato);
     await seedCancelaciones(counts.cancelaciones);
     await seedEventoServicios(counts.eventoServicios);
-    await seedEventos(counts.eventos);
-    await seedUsers(counts.clientes > 0 ? counts.clientes : 5);
-    await seedRoles();
-    await seedResources();
-    await seedRoleUsers();
-    await seedResourceRoles();
 
     console.log("🌱 SeedersRunner finalizado");
   } catch (error) {
