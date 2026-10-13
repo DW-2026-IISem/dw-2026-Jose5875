@@ -1,0 +1,27 @@
+### CelebraHub - Pagos - UPDATE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Actualizacion completa con PUT
+PUT {{baseUrl}}/api/pagos/{{id}}
+Content-Type: application/json
+
+{
+  "referencia_tipo": "contrato",
+  "referencia_id": 1,
+  "metodo": "transferencia",
+  "monto": 750000,
+  "fecha": "2026-10-14T12:00:00.000Z",
+  "estado": "confirmado"
+}
+
+###
+
+### Actualizacion parcial con PATCH
+PATCH {{baseUrl}}/api/pagos/{{id}}
+Content-Type: application/json
+
+{
+  "estado": "confirmado"
+}

@@ -1,0 +1,7 @@
+### CelebraHub - Eventos - DELETE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Eliminar un evento
+DELETE {{baseUrl}}/api/eventos/{{id}}

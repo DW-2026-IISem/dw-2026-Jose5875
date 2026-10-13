@@ -1,0 +1,15 @@
+### CelebraHub - Reservas - CREATE
+
+@baseUrl = http://localhost:4000
+
+### Crear una reserva
+POST {{baseUrl}}/api/reservas
+Content-Type: application/json
+
+{
+  "cliente_id": 1,
+  "fecha_inicio": "2026-11-15T18:00:00.000Z",
+  "fecha_fin": "2026-11-15T23:00:00.000Z",
+  "estado": "pendiente",
+  "observaciones": "Reserva para celebracion familiar"
+}

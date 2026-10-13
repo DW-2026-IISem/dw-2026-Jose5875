@@ -12308,3 +12308,46 @@ La autorización mantiene la política **deny by default**: si no existe una
 concesión activa para la combinación exacta de método y ruta, la respuesta es
 403.
 
+## prebas sin auth.
+
+```text
+ENTIDADES CLIENTES Y EVENTO SIN AUTENTICACION
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 173047.png">
+</p>
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 173436.png">
+</p>
+
+
+
+## HTTP
+
+```text
+ENTIDADES CLIENTES Y EVENTO 
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 174006.png">
+</p>
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 175039.png">
+</p>
+
+## Swagger
+
+```text
+ENTIDADES CLIENTES Y EVENTO 
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 174006.png">
+</p>
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 175039.png">
+</p>

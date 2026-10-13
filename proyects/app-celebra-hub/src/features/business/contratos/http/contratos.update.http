@@ -1,0 +1,27 @@
+### CelebraHub - Contratos - UPDATE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Actualizacion completa con PUT
+PUT {{baseUrl}}/api/contratos/{{id}}
+Content-Type: application/json
+
+{
+  "cliente_id": 1,
+  "numero": "CONT-2026-001",
+  "fecha_inicio": "2026-11-01T00:00:00.000Z",
+  "fecha_fin": "2026-12-15T23:59:59.000Z",
+  "valor": 2750000,
+  "estado": "activo"
+}
+
+###
+
+### Actualizacion parcial con PATCH
+PATCH {{baseUrl}}/api/contratos/{{id}}
+Content-Type: application/json
+
+{
+  "estado": "finalizado"
+}

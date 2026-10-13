@@ -1,0 +1,7 @@
+### CelebraHub - Pagos - DELETE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Eliminar un pago
+DELETE {{baseUrl}}/api/pagos/{{id}}

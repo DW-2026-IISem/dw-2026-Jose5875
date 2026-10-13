@@ -1,0 +1,16 @@
+### CelebraHub - Proveedores - CREATE
+
+@baseUrl = http://localhost:4000
+
+### Crear un proveedor
+POST {{baseUrl}}/api/proveedores
+Content-Type: application/json
+
+{
+  "nit": "900123456-7",
+  "razon_social": "Eventos y Suministros SAS",
+  "contacto": "Ana Perez",
+  "telefono": "3001234567",
+  "email": "contacto@eventos.example",
+  "is_active": true
+}

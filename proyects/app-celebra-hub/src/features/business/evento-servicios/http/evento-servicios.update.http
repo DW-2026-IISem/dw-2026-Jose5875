@@ -1,0 +1,27 @@
+### CelebraHub - Evento servicios - UPDATE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Actualizacion completa con PUT
+PUT {{baseUrl}}/api/evento-servicios/{{id}}
+Content-Type: application/json
+
+{
+  "referencia_id": 1,
+  "tipo": "servicio",
+  "fecha": "2026-11-15T19:00:00.000Z",
+  "cantidad": 2,
+  "observaciones": "Cantidad actualizada para el evento",
+  "estado": "confirmado"
+}
+
+###
+
+### Actualizacion parcial con PATCH
+PATCH {{baseUrl}}/api/evento-servicios/{{id}}
+Content-Type: application/json
+
+{
+  "estado": "confirmado"
+}

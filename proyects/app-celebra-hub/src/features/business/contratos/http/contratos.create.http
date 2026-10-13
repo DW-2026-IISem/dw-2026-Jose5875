@@ -1,0 +1,16 @@
+### CelebraHub - Contratos - CREATE
+
+@baseUrl = http://localhost:4000
+
+### Crear un contrato
+POST {{baseUrl}}/api/contratos
+Content-Type: application/json
+
+{
+  "cliente_id": 1,
+  "numero": "CONT-2026-001",
+  "fecha_inicio": "2026-11-01T00:00:00.000Z",
+  "fecha_fin": "2026-11-30T23:59:59.000Z",
+  "valor": 2500000,
+  "estado": "activo"
+}

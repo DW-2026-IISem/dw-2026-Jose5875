@@ -1,0 +1,16 @@
+### CelebraHub - Eventos - CREATE
+
+@baseUrl = http://localhost:4000
+
+### Crear un evento
+POST {{baseUrl}}/api/eventos
+Content-Type: application/json
+
+{
+  "referencia_id": 1,
+  "tipo": "celebracion",
+  "fecha": "2026-11-15T18:00:00.000Z",
+  "cantidad": 50,
+  "observaciones": "Evento de celebracion",
+  "estado": "pendiente"
+}

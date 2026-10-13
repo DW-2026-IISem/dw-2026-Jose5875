@@ -1,0 +1,7 @@
+### CelebraHub - Cambios de contrato - DELETE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Eliminar un cambio de contrato
+DELETE {{baseUrl}}/api/cambios-contrato/{{id}}

@@ -1,0 +1,7 @@
+### CelebraHub - Contratos - DELETE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Eliminar un contrato
+DELETE {{baseUrl}}/api/contratos/{{id}}

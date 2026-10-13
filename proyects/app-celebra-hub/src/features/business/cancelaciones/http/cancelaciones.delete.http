@@ -1,0 +1,7 @@
+### CelebraHub - Cancelaciones - DELETE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Eliminar una cancelacion
+DELETE {{baseUrl}}/api/cancelaciones/{{id}}

@@ -1,0 +1,26 @@
+### CelebraHub - Reservas - UPDATE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Actualizacion completa con PUT
+PUT {{baseUrl}}/api/reservas/{{id}}
+Content-Type: application/json
+
+{
+  "cliente_id": 1,
+  "fecha_inicio": "2026-11-16T18:00:00.000Z",
+  "fecha_fin": "2026-11-16T23:00:00.000Z",
+  "estado": "confirmada",
+  "observaciones": "Fecha confirmada con el cliente"
+}
+
+###
+
+### Actualizacion parcial con PATCH
+PATCH {{baseUrl}}/api/reservas/{{id}}
+Content-Type: application/json
+
+{
+  "estado": "confirmada"
+}

@@ -1,0 +1,24 @@
+### CelebraHub - Cancelaciones - UPDATE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Actualizacion completa con PUT
+PUT {{baseUrl}}/api/cancelaciones/{{id}}
+Content-Type: application/json
+
+{
+  "nombre": "Cancelacion de evento",
+  "descripcion": "Cancelacion confirmada por el cliente",
+  "is_active": true
+}
+
+###
+
+### Actualizacion parcial con PATCH
+PATCH {{baseUrl}}/api/cancelaciones/{{id}}
+Content-Type: application/json
+
+{
+  "descripcion": "Cancelacion confirmada"
+}

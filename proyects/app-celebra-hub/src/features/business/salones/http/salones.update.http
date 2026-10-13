@@ -1,0 +1,24 @@
+### CelebraHub - Salones - UPDATE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Actualizacion completa con PUT
+PUT {{baseUrl}}/api/salones/{{id}}
+Content-Type: application/json
+
+{
+  "nombre": "Salon Principal Renovado",
+  "descripcion": "Salon renovado para eventos y celebraciones",
+  "is_active": true
+}
+
+###
+
+### Actualizacion parcial con PATCH
+PATCH {{baseUrl}}/api/salones/{{id}}
+Content-Type: application/json
+
+{
+  "descripcion": "Salon con capacidad ampliada"
+}

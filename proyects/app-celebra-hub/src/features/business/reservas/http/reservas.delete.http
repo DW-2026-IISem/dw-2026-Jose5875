@@ -1,0 +1,7 @@
+### CelebraHub - Reservas - DELETE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Eliminar una reserva
+DELETE {{baseUrl}}/api/reservas/{{id}}

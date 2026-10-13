@@ -1,0 +1,24 @@
+### CelebraHub - Cambios de contrato - UPDATE
+
+@baseUrl = http://localhost:4000
+@id = 1
+
+### Actualizacion completa con PUT
+PUT {{baseUrl}}/api/cambios-contrato/{{id}}
+Content-Type: application/json
+
+{
+  "nombre": "Cambio de horario",
+  "descripcion": "Ajuste del horario del evento",
+  "is_active": true
+}
+
+###
+
+### Actualizacion parcial con PATCH
+PATCH {{baseUrl}}/api/cambios-contrato/{{id}}
+Content-Type: application/json
+
+{
+  "descripcion": "Cambio de horario solicitado por el cliente"
+}
