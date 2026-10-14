@@ -3,6 +3,7 @@
 @baseUrl = http://localhost:4000
 @id = 1
 
+
 ### Obtener todos los eventos
 GET {{baseUrl}}/api/eventos
 

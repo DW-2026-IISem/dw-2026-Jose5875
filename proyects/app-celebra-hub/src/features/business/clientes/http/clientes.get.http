@@ -3,9 +3,10 @@
 
 @baseUrl = http://localhost:4000
 
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3VhcmlvIjoiYWRtaW4iLCJpYXQiOjE3OTE5NDE3NzIsImV4cCI6MTc5MTk0MjY3MiwiYXVkIjoiY2VsZWJyYWh1Yi1hcGkiLCJpc3MiOiJjZWxlYnJhaHViLWV4cHJlc3MiLCJzdWIiOiIxIiwianRpIjoiM2QzOGE4YTQtZmQwZi00NmM4LWIyNGEtZGI5ODc0M2ViMzk2In0.u3aGohRvu3i3C70Klmf-FB5MMcI_ZMwtBPrDbakYsWs
 ### Obtener todos los clientes activos
 GET {{baseUrl}}/api/clientes
-
+Authorization: Bearer {{token}}
 ### Obtener cliente por ID
 GET {{baseUrl}}/api/clientes/1
 

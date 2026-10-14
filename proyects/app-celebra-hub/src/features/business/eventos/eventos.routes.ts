@@ -7,12 +7,12 @@ export class EventosRoutes {
   private readonly controller = new EventosController();
 
   routes(app: Application): void {
-    this.router.get("/", this.controller.getAll.bind(this.controller));
-    this.router.post("/", this.controller.create.bind(this.controller));
-    this.router.get("/:id",  this.controller.getOne.bind(this.controller));
-    this.router.put("/:id",  this.controller.updatePut.bind(this.controller));
-    this.router.patch("/:id",  this.controller.updatePatch.bind(this.controller));
-    this.router.delete("/:id",  this.controller.delete.bind(this.controller));
+    this.router.get("/", authenticate, this.controller.getAll.bind(this.controller));
+    this.router.post("/", authenticate, this.controller.create.bind(this.controller));
+    this.router.get("/:id", authenticate, this.controller.getOne.bind(this.controller));
+    this.router.put("/:id", authenticate, this.controller.updatePut.bind(this.controller));
+    this.router.patch("/:id", authenticate, this.controller.updatePatch.bind(this.controller));
+    this.router.delete("/:id", authenticate, this.controller.delete.bind(this.controller));
 
     app.use("/api/eventos", this.router);
   }

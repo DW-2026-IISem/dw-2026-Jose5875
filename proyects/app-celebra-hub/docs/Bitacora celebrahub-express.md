@@ -12345,9 +12345,52 @@ ENTIDADES CLIENTES Y EVENTO
 ```
 
 <p align="center">
-  <img src="capturas/Captura de pantalla 2026-10-13 174006.png">
+  <img src="capturas/Captura de pantalla 2026-10-13 182132.png">
 </p>
 
 <p align="center">
-  <img src="capturas/Captura de pantalla 2026-10-13 175039.png">
+  <img src="capturas/Captura de pantalla 2026-10-13 182307.png">
+</p>
+
+
+## Solo autenticación
+
+```text
+ENTIDADES CLIENTES Y EVENTO SOLO AUTH
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 200940.png">
+</p>
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 201029.png">
+</p>
+
+## HTTP
+
+```text
+ENTIDADES CLIENTES Y EVENTO SIN TOKENS
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 202530.png">
+</p>
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 202619.png">
+</p>
+
+## HTTP
+
+```text
+ENTIDADES CLIENTES Y EVENTO CON TOKENS
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 203641.png">
+</p>
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 203503.png">
 </p>
