@@ -12394,3 +12394,34 @@ ENTIDADES CLIENTES Y EVENTO CON TOKENS
 <p align="center">
   <img src="capturas/Captura de pantalla 2026-10-13 203503.png">
 </p>
+
+## Swagger
+
+```text
+ENTIDADES CLIENTES Y EVENTO CON TOKENS
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 210908.png">
+</p>
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 211104.png">
+</p>
+
+## Autenticacion y JWT Token + Refresh
+
+```text
+Cambiamos JWT_ACCESS_TTL a 15 segundos
+```
+
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 212357.png">
+</p>
+
+```text
+generamos un token nuevo
+```
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-10-13 212839.png">
+</p>
