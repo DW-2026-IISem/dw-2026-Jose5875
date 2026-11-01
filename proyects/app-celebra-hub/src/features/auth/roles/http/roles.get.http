@@ -3,6 +3,7 @@
 @baseUrl = http://localhost:4000
 
 # @name loginAdmin
+
 POST {{baseUrl}}/api/sesion/login
 Content-Type: application/json
 
@@ -20,8 +21,8 @@ Content-Type: application/json
   "password": "Comercial123!"
 }
 
-@token = {{loginAdmin.response.body.$.access_token}}
-
+###
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3VhcmlvIjoiYWRtaW4iLCJpYXQiOjE3OTIwMTI5MTQsImV4cCI6MTc5MjAyMTkxNCwiYXVkIjoiY2VsZWJyYWh1Yi1hcGkiLCJpc3MiOiJjZWxlYnJhaHViLWV4cHJlc3MiLCJzdWIiOiIxIiwianRpIjoiMDczNjMzNjEtMjhiNi00OTAxLThkOWYtZTFkMTFhN2I5N2E2In0.yufv3dg9659WWywGJ3XgLxJEI5bFf4BQdOgDT4kJN58
 ### getAll — recurso `GET /api/roles` (ADMIN y COMERCIAL)
 GET {{baseUrl}}/api/roles
 Authorization: Bearer {{token}}
@@ -36,8 +37,8 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "name": "AUDITOR",
-  "description": "Solo lectura de catálogo"
+  "name": "asistente de eventos",
+  "description": "asistente del los eventos"
 }
 
 ### UPDATE PUT

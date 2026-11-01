@@ -10,7 +10,8 @@ Content-Type: application/json
   "password": "Admin123!"
 }
 
-@token = {{loginAdmin.response.body.$.access_token}}
+### 
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3VhcmlvIjoiYWRtaW4iLCJpYXQiOjE3OTIwMTMxODMsImV4cCI6MTc5MjAyMjE4MywiYXVkIjoiY2VsZWJyYWh1Yi1hcGkiLCJpc3MiOiJjZWxlYnJhaHViLWV4cHJlc3MiLCJzdWIiOiIxIiwianRpIjoiNmYwNjQzNjYtOGVlZS00N2U2LWJjMzYtYTk1ODI4ZTg5ZmEzIn0.3Zy7W8i_Gl4rcpUUipdwGSIxJUHocQCe41MWKVPK5_g
 @id = 2
 
 ### CREATE
@@ -19,9 +20,9 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "username": "nuevo.usuario",
-  "email": "nuevo.usuario@celebrahub.local",
-  "password": "Password123!",
+  "username": "juanasitente",
+  "email": "asistente@celebrahub.local",
+  "password": "juanasistente123!",
   "avatar": null
 }
 

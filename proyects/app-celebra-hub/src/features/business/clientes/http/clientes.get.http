@@ -2,10 +2,10 @@
 ### ISS-03 - GET ALL
 
 @baseUrl = http://localhost:4000
-
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3VhcmlvIjoicHJvdmVlZG9yIiwiaWF0IjoxNzkxOTk1NzMxLCJleHAiOjE3OTE5OTU3NDYsImF1ZCI6ImNlbGVicmFodWItYXBpIiwiaXNzIjoiY2VsZWJyYWh1Yi1leHByZXNzIiwic3ViIjoiNCIsImp0aSI6IjBiNzRiM2RkLTg2MjItNDYxMS04NzE0LTE0N2FiYzA3MDZmZSJ9.eTfIam6w2Wt0qND4ChEOg0gWo8anPkuAnz5NbzSy6xY
 
 GET {{baseUrl}}/api/clientes
-
+Authorization: Bearer {{token}}
 ### Obtener cliente por ID
 GET {{baseUrl}}/api/clientes/1
 x

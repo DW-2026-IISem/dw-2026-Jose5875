@@ -7,6 +7,8 @@ export const SEED_USERS = [
   { username: "operaciones", email: "operaciones@celebrahub.local", password: "Operaciones123!" },
   { username: "proveedor", email: "proveedor@celebrahub.local", password: "Proveedor123!" },
   { username: "cartera", email: "cartera@celebrahub.local", password: "Cartera123!" },
+  { username: "asistente", email: "asistente@celebrahub.local", password: "juanasistente123!" },
+  
 ] as const;
 
 export async function seedUsers(count: number): Promise<number> {

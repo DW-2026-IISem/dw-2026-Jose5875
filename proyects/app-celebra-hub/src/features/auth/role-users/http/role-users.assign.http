@@ -10,7 +10,7 @@ Content-Type: application/json
   "password": "Admin123!"
 }
 
-@token = {{loginAdmin.response.body.$.access_token}}
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3VhcmlvIjoiYWRtaW4iLCJpYXQiOjE3OTIwMTMzMTMsImV4cCI6MTc5MjAyMjMxMywiYXVkIjoiY2VsZWJyYWh1Yi1hcGkiLCJpc3MiOiJjZWxlYnJhaHViLWV4cHJlc3MiLCJzdWIiOiIxIiwianRpIjoiMWFhM2JkY2EtN2MzMS00OTc4LWE5NzAtNTY3YzYyYzBmZDJiIn0.E-l4GMMq5GjhgXZRTPMfxWMuqAW4vAhK-Cw7B_xqOrk
 
 ### getAll
 GET {{baseUrl}}/api/asignaciones-rol
@@ -27,10 +27,11 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "user_id": 2,
-  "role_id": 1
+  "user_id": 28,
+  "role_id": 8
 }
 
+###
 @assignmentId = {{assignCreate.response.body.$.assignment.id}}
 
 ### 409 - duplicado
