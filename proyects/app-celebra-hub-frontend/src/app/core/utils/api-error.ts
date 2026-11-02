@@ -6,7 +6,7 @@ export function toApiMessage(error: unknown): string {
       return 'No se pudo conectar con CelebraHub. Verifica que la API esté activa en http://localhost:4000.';
     }
     if (error.status === 401) {
-      return 'La sesión no es válida o expiró. Inicia sesión nuevamente.';
+      return 'La API rechazó esta solicitud (401). Verifica que el recurso esté configurado como público.';
     }
     if (error.status === 403) {
       return 'No tienes permiso para realizar esta operación.';

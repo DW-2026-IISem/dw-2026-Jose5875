@@ -82,4 +82,9 @@ export class CancelacionesController {
 
     res.status(204).send();
   };
+
+  deactivate = async (req: Request, res: Response) => {
+    const cancelacion = await this.service.deactivate(Number(req.params.id));
+    res.status(200).json(cancelacion);
+  };
 }

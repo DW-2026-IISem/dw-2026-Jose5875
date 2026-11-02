@@ -160,7 +160,25 @@ export const reservasSwagger = {
           }
         }
       }
-    }
+    },
+    "/api/reservas/{id}/deactivate": {
+      patch: {
+        tags: ["Reservas"],
+        summary: "Desactivar una reserva",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "integer", minimum: 1 },
+          },
+        ],
+        responses: {
+          "200": { description: "Reserva desactivada; su estado cambia a Inactivo" },
+          "404": { description: "Reserva no encontrada" },
+        },
+      },
+    },
   },
 
   schemas: {

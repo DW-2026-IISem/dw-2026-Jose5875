@@ -155,6 +155,24 @@ export const contratosSwagger = {
         },
       },
     },
+    "/api/contratos/{id}/deactivate": {
+      patch: {
+        tags: ["Contratos"],
+        summary: "Desactivar un contrato",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "integer", minimum: 1 },
+          },
+        ],
+        responses: {
+          "200": { description: "Contrato desactivado; su estado cambia a Inactivo" },
+          "404": { description: "Contrato no encontrado" },
+        },
+      },
+    },
   },
 
   schemas: {

@@ -152,6 +152,24 @@ export const pagosSwagger = {
         },
       },
     },
+    "/api/pagos/{id}/deactivate": {
+      patch: {
+        tags: ["Pagos"],
+        summary: "Desactivar un pago",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "integer", minimum: 1 },
+          },
+        ],
+        responses: {
+          "200": { description: "Pago desactivado; su estado cambia a Inactivo" },
+          "404": { description: "Pago no encontrado" },
+        },
+      },
+    },
   },
 
   schemas: {

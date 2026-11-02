@@ -73,4 +73,9 @@ export class CambiosContratoController {
 
     res.status(204).send();
   };
+
+  deactivate = async (req: Request, res: Response) => {
+    const cambio = await this.service.deactivate(Number(req.params.id));
+    res.status(200).json(cambio);
+  };
 }

@@ -113,4 +113,12 @@ export class ContratosController {
         "Contrato eliminado correctamente"
     });
   }
+
+  async deactivate(
+    req: Request,
+    res: Response
+  ) {
+    const contrato = await this.service.deactivate(Number(req.params.id));
+    return res.status(200).json({ contrato });
+  }
 }

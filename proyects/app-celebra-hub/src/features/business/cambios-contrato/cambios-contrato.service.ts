@@ -56,6 +56,11 @@ export class CambiosContratoService {
     await this.repository.delete(cambioContrato);
   }
 
+  async deactivate(id: number) {
+    const cambioContrato = await this.findOrFail(id);
+    return this.repository.update(cambioContrato, { is_active: false });
+  }
+
   private async findOrFail(id: number) {
     const cambioContrato =
       await this.repository.findById(id);

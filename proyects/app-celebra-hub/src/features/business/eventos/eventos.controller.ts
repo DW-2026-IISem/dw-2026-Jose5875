@@ -41,4 +41,9 @@ export class EventosController {
     await this.service.deletePhysical(Number(req.params.id));
     res.status(204).send();
   }
+
+  async deactivate(req: Request, res: Response): Promise<void> {
+    const evento = await this.service.deactivate(Number(req.params.id));
+    res.status(200).json(evento);
+  }
 }

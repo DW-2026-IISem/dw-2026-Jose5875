@@ -158,6 +158,12 @@ export class ReservasService {
     );
   }
 
+  async deactivate(id: number) {
+    const reserva = await this.findOrFail(id);
+    const updated = await this.repository.update(reserva, { estado: "Inactivo" });
+    return toReservaResponse(updated);
+  }
+
   private async findOrFail(
     id: number
   ) {

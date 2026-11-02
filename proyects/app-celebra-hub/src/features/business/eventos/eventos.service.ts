@@ -43,6 +43,11 @@ export class EventosService {
     await this.repository.delete(evento);
   }
 
+  async deactivate(id: number): Promise<Evento> {
+    const evento = await this.findOrFail(id);
+    return this.repository.update(evento, { estado: "Inactivo" });
+  }
+
   private async findOrFail(id: number): Promise<Evento> {
     const evento = await this.repository.findById(id);
 

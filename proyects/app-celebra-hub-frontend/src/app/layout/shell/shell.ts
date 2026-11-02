@@ -8,6 +8,7 @@ import { watchMediaQuery } from '../../core/utils/media-query';
 import { Aside } from '../aside/aside';
 import { Footer } from '../footer/footer';
 import { Header } from '../header/header';
+import { businessCrudConfigs } from '../../features/business-crud/business-crud.config';
 
 @Component({
   host: { class: 'block' },
@@ -25,6 +26,12 @@ export class Shell {
   readonly items: MenuItem[] = [
     { label: 'Inicio', icon: 'pi pi-home', routerLink: '/inicio' },
     { label: 'Clientes', icon: 'pi pi-users', routerLink: '/clientes' },
+    { label: 'Proveedores', icon: 'pi pi-truck', routerLink: '/proveedores' },
+    ...Object.values(businessCrudConfigs).map((config) => ({
+      label: config.title,
+      icon: config.icon,
+      routerLink: `/${config.path}`,
+    })),
   ];
 
   protected onMenuToggle(): void {

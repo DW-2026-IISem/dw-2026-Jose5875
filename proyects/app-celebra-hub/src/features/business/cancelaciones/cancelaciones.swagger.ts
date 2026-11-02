@@ -146,6 +146,24 @@ export const cancelacionesSwagger = {
         },
       },
     },
+    "/api/cancelaciones/{id}/deactivate": {
+      patch: {
+        tags: ["Cancelaciones"],
+        summary: "Desactivar una cancelación",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "integer", minimum: 1 },
+          },
+        ],
+        responses: {
+          "200": { description: "Cancelación desactivada" },
+          "404": { description: "Cancelación no encontrada" },
+        },
+      },
+    },
   },
 
   schemas: {

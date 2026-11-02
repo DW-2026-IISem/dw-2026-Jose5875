@@ -152,6 +152,24 @@ export const cambiosContratoSwagger = {
         },
       },
     },
+    "/api/cambios-contrato/{id}/deactivate": {
+      patch: {
+        tags: ["CambiosContrato"],
+        summary: "Desactivar un tipo de cambio de contrato",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "integer", minimum: 1 },
+          },
+        ],
+        responses: {
+          "200": { description: "Tipo de cambio desactivado" },
+          "404": { description: "Cambio de contrato no encontrado" },
+        },
+      },
+    },
   },
 
   schemas: {

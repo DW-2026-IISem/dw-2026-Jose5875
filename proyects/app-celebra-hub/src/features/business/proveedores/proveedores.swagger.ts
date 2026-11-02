@@ -11,6 +11,7 @@ export const proveedoresSwagger = {
       get: {
         tags: ["Proveedores"],
         summary: "Listar proveedores activos",
+        security: [],
         responses: {
           200: {
             description: "Lista de proveedores"
@@ -21,6 +22,7 @@ export const proveedoresSwagger = {
       post: {
         tags: ["Proveedores"],
         summary: "Crear un proveedor",
+        security: [],
         requestBody: {
           required: true,
           content: {
@@ -46,6 +48,7 @@ export const proveedoresSwagger = {
       get: {
         tags: ["Proveedores"],
         summary: "Obtener proveedor por ID",
+        security: [],
         parameters: [
           {
             name: "id",
@@ -69,6 +72,7 @@ export const proveedoresSwagger = {
       put: {
         tags: ["Proveedores"],
         summary: "Actualizar proveedor",
+        security: [],
         parameters: [
           {
             name: "id",
@@ -105,6 +109,7 @@ export const proveedoresSwagger = {
       patch: {
         tags: ["Proveedores"],
         summary: "Actualizar parcialmente un proveedor",
+        security: [],
         parameters: [
           {
             name: "id",
@@ -141,6 +146,7 @@ export const proveedoresSwagger = {
       delete: {
         tags: ["Proveedores"],
         summary: "Eliminar proveedor",
+        security: [],
         parameters: [
           {
             name: "id",
@@ -166,6 +172,7 @@ export const proveedoresSwagger = {
       patch: {
         tags: ["Proveedores"],
         summary: "Desactivar proveedor",
+        security: [],
         parameters: [
           {
             name: "id",

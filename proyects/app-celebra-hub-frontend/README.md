@@ -6,6 +6,24 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 
 La ruta `/clientes` permite consultar, buscar, crear, editar, desactivar y eliminar clientes mediante la API pública de CelebraHub (`/api/clientes`); no requiere iniciar sesión.
 
+## Módulo de proveedores
+
+La ruta `/proveedores` ofrece búsqueda y operaciones CRUD para proveedores mediante la API pública `/api/proveedores`; no requiere iniciar sesión.
+
+## Módulos de operación
+
+Las rutas `/servicios`, `/salones`, `/reservas`, `/contratos`, `/pagos`,
+`/cambios-contrato`, `/evento-servicios`, `/cancelaciones` y `/eventos`
+incluyen consulta, búsqueda, formularios de creación/edición y acciones de
+eliminación conforme a los campos y respuestas de la API CelebraHub. Servicios,
+salones y servicios de evento también incluyen desactivación cuando el backend
+ofrece esa operación.
+
+En desarrollo local, el backend permite estos CRUD desde `localhost` sin
+iniciar sesión. En otros entornos o desde conexiones remotas se mantienen la
+autenticación y los permisos del backend. Las rutas administrativas no forman
+parte de estos CRUD.
+
 ## Development server
 
 To start a local development server, run:

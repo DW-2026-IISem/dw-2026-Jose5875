@@ -1,0 +1,137 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label for="proveedor-nit" class="mb-1 block text-sm font-medium text-slate-700">
+        NIT <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="proveedor-nit"
+        pInputText
+        formControlName="nit"
+        maxlength="50"
+        autocomplete="off"
+        class="w-full"
+      />
+      @if (form.controls.nit.touched && form.controls.nit.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El NIT es obligatorio (máximo 50 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="proveedor-razon-social" class="mb-1 block text-sm font-medium text-slate-700">
+        Razón social <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="proveedor-razon-social"
+        pInputText
+        formControlName="razon_social"
+        maxlength="150"
+        autocomplete="organization"
+        class="w-full"
+      />
+      @if (form.controls.razon_social.touched && form.controls.razon_social.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          La razón social es obligatoria (máximo 150 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="proveedor-contacto" class="mb-1 block text-sm font-medium text-slate-700">
+        Persona de contacto <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="proveedor-contacto"
+        pInputText
+        formControlName="contacto"
+        maxlength="150"
+        autocomplete="name"
+        class="w-full"
+      />
+      @if (form.controls.contacto.touched && form.controls.contacto.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El contacto es obligatorio (máximo 150 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="proveedor-telefono" class="mb-1 block text-sm font-medium text-slate-700">
+        Teléfono <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="proveedor-telefono"
+        pInputText
+        type="tel"
+        formControlName="telefono"
+        maxlength="30"
+        autocomplete="tel"
+        class="w-full"
+      />
+      @if (form.controls.telefono.touched && form.controls.telefono.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El teléfono es obligatorio (máximo 30 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div class="sm:col-span-2">
+      <label for="proveedor-email" class="mb-1 block text-sm font-medium text-slate-700">
+        Correo electrónico <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="proveedor-email"
+        pInputText
+        type="email"
+        formControlName="email"
+        maxlength="150"
+        autocomplete="email"
+        class="w-full"
+      />
+      @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El correo electrónico es obligatorio.
+        </p-message>
+      } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          Escribe un correo electrónico válido.
+        </p-message>
+      } @else if (form.controls.email.touched && form.controls.email.hasError('maxlength')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El correo no puede superar 150 caracteres.
+        </p-message>
+      }
+    </div>
+
+    <div class="sm:col-span-2">
+      <label for="proveedor-is-active" class="mb-1 block text-sm font-medium text-slate-700">
+        Estado
+      </label>
+      <p-select
+        [fluid]="true"
+        inputId="proveedor-is-active"
+        formControlName="is_active"
+        [options]="activeOptions"
+        optionLabel="label"
+        optionValue="value"
+      />
+      @if (proveedor()) {
+        <p class="mt-1 text-xs text-slate-500">
+          El estado de un proveedor existente se cambia con la acción de baja lógica.
+        </p>
+      }
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+    <button pButton type="button" severity="secondary" outlined (click)="cancelled.emit()">
+      <span pButtonLabel>Cancelar</span>
+    </button>
+    <button pButton type="submit" [loading]="saving()" [disabled]="saving()">
+      <i pButtonIcon class="pi pi-check"></i>
+      <span pButtonLabel>Guardar</span>
+    </button>
+  </div>
+</form>

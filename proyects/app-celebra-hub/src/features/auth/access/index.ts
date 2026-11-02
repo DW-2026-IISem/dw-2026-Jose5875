@@ -36,6 +36,36 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 
 export const requireAuth = authenticate;
 
+function isLocalDevelopmentRequest(req: Request): boolean {
+  const remoteAddress = req.socket.remoteAddress;
+  const isLoopback =
+    remoteAddress === "::1" ||
+    remoteAddress === "127.0.0.1" ||
+    remoteAddress?.startsWith("::ffff:127.") === true;
+
+  return process.env.NODE_ENV !== "production" && isLoopback;
+}
+
+export function localBusinessApiAccess(req: Request, res: Response, next: NextFunction): void {
+  if (isLocalDevelopmentRequest(req)) {
+    next();
+    return;
+  }
+
+  void authenticate(req, res, next);
+}
+
+export function businessApiAccess(req: Request, res: Response, next: NextFunction): void {
+  if (isLocalDevelopmentRequest(req)) {
+    next();
+    return;
+  }
+
+  void authenticate(req, res, () => {
+    void authorize(req, res, next);
+  });
+}
+
 export async function authorize(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const authReq = req as AuthenticatedRequest;
@@ -85,4 +115,3 @@ export function requirePermission(method: string, path: string) {
     }
   };
 }
-

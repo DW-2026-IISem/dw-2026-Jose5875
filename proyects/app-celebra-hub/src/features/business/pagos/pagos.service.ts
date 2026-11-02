@@ -54,6 +54,11 @@ export class PagosService {
     await this.repository.delete(pago);
   }
 
+  async deactivate(id: number) {
+    const pago = await this.findOrFail(id);
+    return this.repository.update(pago, { estado: "Inactivo" });
+  }
+
   private async findOrFail(id: number) {
     const pago = await this.repository.findById(id);
 

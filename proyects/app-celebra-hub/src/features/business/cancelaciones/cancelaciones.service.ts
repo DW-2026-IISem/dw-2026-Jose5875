@@ -56,6 +56,11 @@ export class CancelacionesService {
     await this.repository.delete(cancelacion);
   }
 
+  async deactivate(id: number) {
+    const cancelacion = await this.findOrFail(id);
+    return this.repository.update(cancelacion, { is_active: false });
+  }
+
   private async findOrFail(id: number) {
     const cancelacion =
       await this.repository.findById(id);

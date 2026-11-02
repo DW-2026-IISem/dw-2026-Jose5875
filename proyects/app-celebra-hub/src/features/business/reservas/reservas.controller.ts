@@ -112,4 +112,12 @@ export class ReservasController {
       message: "Reserva eliminada correctamente"
     });
   }
+
+  async deactivate(
+    req: Request,
+    res: Response
+  ) {
+    const reserva = await this.service.deactivate(Number(req.params.id));
+    return res.status(200).json({ reserva });
+  }
 }

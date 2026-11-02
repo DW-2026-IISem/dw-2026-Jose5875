@@ -1,0 +1,193 @@
+<app-page-header [title]="config.title" [subtitle]="config.description">
+  <p-tag [value]="rows().length + ' ' + config.plural" severity="info" [rounded]="true" />
+  <button pButton type="button" (click)="openCreate()">
+    <i pButtonIcon class="pi pi-plus"></i>
+    <span pButtonLabel>Nuevo {{ config.singular }}</span>
+  </button>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message>
+}
+
+<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+  <p-table
+    [value]="visibleRows()"
+    [loading]="loading()"
+    [paginator]="visibleRows().length > 10"
+    [rows]="10"
+    dataKey="id"
+    tableStyleClass="min-w-[64rem]"
+  >
+    <ng-template #caption>
+      <div class="flex items-center gap-2">
+        <i class="pi pi-search text-slate-400" aria-hidden="true"></i>
+        <input
+          pInputText
+          type="search"
+          [attr.aria-label]="'Buscar ' + config.plural"
+          [placeholder]="'Buscar ' + config.plural + '…'"
+          [value]="filter()"
+          (input)="setFilter($event)"
+          class="w-full"
+        />
+      </div>
+      @if (filter()) {
+        <p class="mt-2 text-xs text-slate-500">
+          {{ visibleRows().length }} de {{ rows().length }} registros coinciden con la búsqueda.
+        </p>
+      }
+    </ng-template>
+
+    <ng-template #header>
+      <tr>
+        @for (column of config.columns; track column.key) {
+          <th>{{ column.label }}</th>
+        }
+        <th class="sticky right-0 z-10 w-36 whitespace-nowrap bg-white text-right">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-row>
+      <tr>
+        @for (column of config.columns; track column.key) {
+          <td>
+            @if (column.type === 'active') {
+              <app-status-tag [isActive]="row[column.key] === true" />
+            } @else if (column.type === 'status') {
+              <p-tag
+                [value]="displayValue(row, column.key, column.type)"
+                [severity]="statusSeverity(row, column.key)"
+                [rounded]="true"
+              />
+            } @else {
+              {{ displayValue(row, column.key, column.type) }}
+            }
+          </td>
+        }
+        <td class="sticky right-0 z-10 whitespace-nowrap bg-white">
+          <div class="flex justify-end gap-1">
+            <button
+              pButton
+              type="button"
+              text
+              rounded
+              severity="secondary"
+              [attr.aria-label]="'Editar ' + config.singular"
+              pTooltip="Editar"
+              (click)="openEdit(row)"
+            >
+              <i pButtonIcon class="pi pi-pencil"></i>
+            </button>
+            @if (config.supportsDeactivate) {
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="warn"
+                [attr.aria-label]="'Desactivar ' + config.singular"
+                pTooltip="Desactivar"
+                (click)="deactivate(row)"
+              >
+                <i pButtonIcon class="pi pi-ban"></i>
+              </button>
+            }
+            <button
+              pButton
+              type="button"
+              text
+              rounded
+              severity="danger"
+              [attr.aria-label]="'Eliminar ' + config.singular"
+              pTooltip="Eliminar definitivamente"
+              (click)="remove(row)"
+            >
+              <i pButtonIcon class="pi pi-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td [attr.colspan]="config.columns.length + 1">
+          @if (!error()) {
+            @if (filter()) {
+              <app-empty-state
+                icon="pi pi-search"
+                title="Sin coincidencias"
+                message="Ningún registro coincide con la búsqueda. Borra el filtro para ver todos."
+              />
+            } @else {
+              <app-empty-state
+                [icon]="config.icon"
+                [title]="'Sin ' + config.plural"
+                [message]="'Crea el primer registro de ' + config.plural + ' para comenzar.'"
+              />
+            }
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [header]="title()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  styleClass="mx-4 w-full max-w-2xl"
+>
+  <form class="grid gap-4" (ngSubmit)="save()">
+    @for (field of config.fields; track field.key) {
+      <label class="grid gap-1 text-sm font-medium text-slate-700">
+        <span
+          >{{ field.label }}
+          @if (field.required) {
+            <span aria-hidden="true">*</span>
+          }
+        </span>
+        @if (field.type === 'textarea') {
+          <textarea
+            class="w-full rounded-md border border-slate-300 p-2 text-sm"
+            rows="3"
+            [required]="field.required ?? false"
+            [value]="values()[field.key] ?? ''"
+            (input)="setField(field, $event)"
+          ></textarea>
+        } @else if (field.type === 'checkbox') {
+          <input
+            type="checkbox"
+            class="h-4 w-4 accent-emerald-600"
+            [checked]="values()[field.key] === true"
+            (change)="setField(field, $event)"
+          />
+        } @else {
+          <input
+            pInputText
+            [type]="field.type === 'datetime' ? 'datetime-local' : field.type"
+            [step]="field.step ?? null"
+            [required]="field.required ?? false"
+            [value]="values()[field.key] ?? ''"
+            (input)="setField(field, $event)"
+          />
+        }
+      </label>
+    }
+    <div class="flex justify-end gap-2">
+      <button pButton type="button" text severity="secondary" (click)="dialogVisible.set(false)">
+        <span pButtonLabel>Cancelar</span>
+      </button>
+      <button pButton type="submit" [disabled]="saving()">
+        <i pButtonIcon class="pi pi-check"></i>
+        <span pButtonLabel>{{ saving() ? 'Guardando…' : 'Guardar' }}</span>
+      </button>
+    </div>
+  </form>
+</p-dialog>

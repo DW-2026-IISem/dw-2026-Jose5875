@@ -146,6 +146,24 @@ export const eventosSwagger = {
         },
       },
     },
+    "/api/eventos/{id}/deactivate": {
+      patch: {
+        tags: ["Eventos"],
+        summary: "Desactivar un evento",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "integer", minimum: 1 },
+          },
+        ],
+        responses: {
+          "200": { description: "Evento desactivado; su estado cambia a Inactivo" },
+          "404": { description: "Evento no encontrado" },
+        },
+      },
+    },
   },
 
   schemas: {

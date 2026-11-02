@@ -3155,4 +3155,1551 @@ Probar el servicio HTTP con `HttpTestingController`: verificar `GET` y su envolt
 - Desactivar usa `PATCH /api/clientes/:id/deactivate`; eliminar permanentemente usa `DELETE /api/clientes/:id`, con confirmación en ambos casos.
 - Los errores HTTP son visibles y no se presentan como operaciones exitosas.
 - La funcionalidad no implementa ni cambia autenticación.
+
+
 ---------------------------------------------------------------------------------------------
+## ISS-04 · CRUD de Proveedores de CelebraHub con Signals
+
+Adaptar el CRUD de Contacts del issue original al recurso de **Proveedores** de CelebraHub. El backend no tiene un recurso independiente de contactos ni de empresas logísticas: los datos de contacto del proveedor son los campos `contacto`, `telefono` y `email`.
+
+Implementar el módulo de proveedores con Angular, Signals, Reactive Forms y PrimeNG. No implementar ni modificar autenticación en este issue.
+
+### Alcance y adaptación del dominio
+
+- Listar y buscar proveedores activos.
+- Crear, editar, desactivar lógicamente y eliminar permanentemente proveedores.
+- Usar `/api/proveedores`, sus envolturas JSON y los campos reales del backend.
+- No crear `CompanyApi`, `ContactApi`, `Company`, `Contact`, `empresa_id` ni `is_principal`: esas entidades y relaciones no existen en CelebraHub.
+- Mantener visibles los errores de API, incluido el `409` por NIT duplicado, y pedir confirmación antes de desactivar o eliminar.
+- Agregar el acceso a `/proveedores` en el router y menú principal.
+
+**Acceso:** todas las rutas de proveedores son públicas y no requieren access token. No implementar autenticación, permisos RBAC ni cabeceras `Authorization` en este módulo.
+
+### 4.1 Contrato real de `/api/proveedores`
+
+La API recibe cuerpos JSON y los identificadores son numéricos. El endpoint de lista devuelve proveedores activos ordenados por `id` ascendente.
+
+| Operación | Método y ruta | Respuesta |
+|---|---|---|
+| Listar proveedores activos | `GET /api/proveedores` | `{ "proveedores": Proveedor[] }` |
+| Obtener proveedor | `GET /api/proveedores/:id` | `{ "proveedor": Proveedor }` |
+| Crear proveedor | `POST /api/proveedores` | `{ "proveedor": Proveedor }` |
+| Actualizar parcialmente | `PATCH /api/proveedores/:id` | `{ "proveedor": Proveedor }` |
+| Reemplazar proveedor | `PUT /api/proveedores/:id` | `{ "proveedor": Proveedor }` |
+| Desactivar (baja lógica) | `PATCH /api/proveedores/:id/deactivate` | `{ "proveedor": Proveedor }` |
+| Eliminar permanentemente | `DELETE /api/proveedores/:id` | `{ "message": string }` |
+
+Estas operaciones no requieren autenticación ni permisos RBAC. No añadir una cabecera `Authorization` al servicio ni a sus componentes.
+
+Campos del recurso:
+
+| Campo | Tipo | Requerido | Máximo |
+|---|---|---:|---:|
+| `id` | number | respuesta | — |
+| `nit` | string | sí | 50 |
+| `razon_social` | string | sí | 150 |
+| `contacto` | string | sí | 150 |
+| `telefono` | string | sí | 30 |
+| `email` | string | sí | 150 |
+| `is_active` | boolean | respuesta; opcional al crear | — |
+| `created_at` | fecha/string | respuesta | — |
+| `updated_at` | fecha/string | respuesta | — |
+
+El backend asigna `is_active: true` si se omite al crear. La edición parcial acepta los campos de negocio; la operación `PUT` requiere los cinco campos de negocio e `is_active`. La baja lógica establece `is_active: false`; la lista no devuelve inactivos. La eliminación física responde con un mensaje y no devuelve el registro eliminado.
+
+El NIT debe ser único. Si ya existe, el backend contesta `409` con el mensaje `Ya existe un proveedor con ese NIT`. Las restricciones de longitudes se basan en el modelo; agregar validación de email en el formulario y mostrar los errores restantes del servidor sin ocultarlos.
+
+Ejemplo de respuesta del proveedor:
+
+```json
+{
+  "id": 1,
+  "nit": "900123456-7",
+  "razon_social": "Eventos y Suministros S.A.S.",
+  "contacto": "María Pérez",
+  "telefono": "3011234567",
+  "email": "maria@example.com",
+  "is_active": true,
+  "created_at": "2026-11-02T15:00:00.000Z",
+  "updated_at": "2026-11-02T15:00:00.000Z"
+}
+```
+
+Las claves de respuesta no son las del issue original: la colección es `proveedores` y el registro individual es `proveedor`.
+
+### 4.2 Estructura de archivos
+
+```text
+src/app/
+├── core/
+│   └── models/proveedor.model.ts
+└── features/proveedores/
+    ├── proveedor-api.ts
+    ├── proveedor-api.spec.ts
+    ├── proveedor-form/
+    │   ├── proveedor-form.ts
+    │   ├── proveedor-form.html
+    │   └── proveedor-form.css
+    └── proveedor-list/
+        ├── proveedor-list.ts
+        ├── proveedor-list.html
+        └── proveedor-list.css
+```
+
+Reutilizar `filterRows` de `core/utils/filter-rows.ts` y los componentes compartidos existentes (`PageHeader`, `EmptyState`, `StatusTag`, `NotificationService`). No agregar utilidades de fechas, selección de empresa ni dependencias nuevas.
+
+Si se usa Angular CLI para generar componentes, respetar la estructura standalone del proyecto y no crear archivos de prueba genéricos que sustituyan las pruebas de API especificadas en 4.8.
+
+### 4.3 Modelo del proveedor
+
+`src/app/core/models/proveedor.model.ts`
+
+```typescript
+export interface Proveedor {
+  id: number;
+  nit: string;
+  razon_social: string;
+  contacto: string;
+  telefono: string;
+  email: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProveedorPayload {
+  nit: string;
+  razon_social: string;
+  contacto: string;
+  telefono: string;
+  email: string;
+  is_active?: boolean;
+}
+```
+
+El payload de creación permite omitir `is_active`, porque el backend aplica `true` como valor predeterminado. Para editar, la pantalla envía los campos de negocio sin `is_active`; el estado existente solo se cambia mediante `/deactivate`. `PUT` se conserva en el cliente HTTP por completitud, pero el flujo del formulario usa `PATCH`.
+
+### 4.4 Cliente HTTP
+
+`src/app/features/proveedores/proveedor-api.ts`
+
+```typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Proveedor, ProveedorPayload } from '../../core/models/proveedor.model';
+
+@Injectable({ providedIn: 'root' })
+export class ProveedorApi {
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/proveedores`;
+
+  list(): Observable<Proveedor[]> {
+    return this.http
+      .get<{ proveedores: Proveedor[] }>(this.base)
+      .pipe(map((response) => response.proveedores));
+  }
+
+  get(id: number): Observable<Proveedor> {
+    return this.http
+      .get<{ proveedor: Proveedor }>(`${this.base}/${id}`)
+      .pipe(map((response) => response.proveedor));
+  }
+
+  create(payload: ProveedorPayload): Observable<Proveedor> {
+    return this.http
+      .post<{ proveedor: Proveedor }>(this.base, payload)
+      .pipe(map((response) => response.proveedor));
+  }
+
+  update(id: number, payload: Partial<ProveedorPayload>): Observable<Proveedor> {
+    return this.http
+      .patch<{ proveedor: Proveedor }>(`${this.base}/${id}`, payload)
+      .pipe(map((response) => response.proveedor));
+  }
+
+  replace(id: number, payload: ProveedorPayload & { is_active: boolean }): Observable<Proveedor> {
+    return this.http
+      .put<{ proveedor: Proveedor }>(`${this.base}/${id}`, payload)
+      .pipe(map((response) => response.proveedor));
+  }
+
+  deactivate(id: number): Observable<{ proveedor: Proveedor }> {
+    return this.http.patch<{ proveedor: Proveedor }>(`${this.base}/${id}/deactivate`, {});
+  }
+
+  remove(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.base}/${id}`);
+  }
+}
+```
+
+El servicio no captura ni transforma errores HTTP en respuestas exitosas. El manejo de `401`, `403`, `409` y otros errores se hace en la pantalla mediante `toApiMessage`.
+
+### 4.5 Formulario para crear y editar
+
+El formulario no accede a la API. Recibe `proveedor` (o `null` para crear), reinicia sus controles al cambiar `resetKey` y emite el payload validado. Los datos de contacto pertenecen al propio proveedor: son campos de texto, no un contacto relacionado por ID.
+
+`src/app/features/proveedores/proveedor-form/proveedor-form.ts`
+
+```typescript
+import { Component, effect, inject, input, output } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
+import { Proveedor, ProveedorPayload } from '../../../core/models/proveedor.model';
+
+@Component({
+  host: { class: 'block' },
+  selector: 'app-proveedor-form',
+  imports: [ButtonModule, InputTextModule, MessageModule, ReactiveFormsModule, SelectModule],
+  templateUrl: './proveedor-form.html',
+  styleUrl: './proveedor-form.css',
+})
+export class ProveedorForm {
+  readonly proveedor = input<Proveedor | null>(null);
+  readonly resetKey = input(0);
+  readonly saving = input(false);
+
+  readonly saved = output<ProveedorPayload>();
+  readonly cancelled = output<void>();
+
+  private readonly fb = inject(NonNullableFormBuilder);
+
+  readonly activeOptions = [
+    { label: 'Activo', value: true },
+    { label: 'Inactivo', value: false },
+  ];
+
+  readonly form = this.fb.group({
+    nit: ['', [Validators.required, Validators.maxLength(50)]],
+    razon_social: ['', [Validators.required, Validators.maxLength(150)]],
+    contacto: ['', [Validators.required, Validators.maxLength(150)]],
+    telefono: ['', [Validators.required, Validators.maxLength(30)]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+    is_active: [true],
+  });
+
+  constructor() {
+    effect(() => {
+      const current = this.proveedor();
+      this.resetKey();
+
+      this.form.reset({
+        nit: current?.nit ?? '',
+        razon_social: current?.razon_social ?? '',
+        contacto: current?.contacto ?? '',
+        telefono: current?.telefono ?? '',
+        email: current?.email ?? '',
+        is_active: current?.is_active ?? true,
+      });
+
+      if (current) {
+        this.form.controls.is_active.disable();
+      } else {
+        this.form.controls.is_active.enable();
+      }
+    });
+  }
+
+  submit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const value = this.form.getRawValue();
+    const payload: ProveedorPayload = {
+      nit: value.nit.trim(),
+      razon_social: value.razon_social.trim(),
+      contacto: value.contacto.trim(),
+      telefono: value.telefono.trim(),
+      email: value.email.trim(),
+    };
+
+    this.saved.emit(
+      this.proveedor() ? payload : { ...payload, is_active: value.is_active },
+    );
+  }
+}
+```
+
+`src/app/features/proveedores/proveedor-form/proveedor-form.html`
+
+```html
+<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label for="proveedor-nit" class="mb-1 block text-sm font-medium text-slate-700">
+        NIT <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="proveedor-nit"
+        pInputText
+        formControlName="nit"
+        maxlength="50"
+        autocomplete="off"
+        class="w-full"
+      />
+      @if (form.controls.nit.touched && form.controls.nit.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El NIT es obligatorio (máximo 50 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="proveedor-razon-social" class="mb-1 block text-sm font-medium text-slate-700">
+        Razón social <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="proveedor-razon-social"
+        pInputText
+        formControlName="razon_social"
+        maxlength="150"
+        autocomplete="organization"
+        class="w-full"
+      />
+      @if (form.controls.razon_social.touched && form.controls.razon_social.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          La razón social es obligatoria (máximo 150 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="proveedor-contacto" class="mb-1 block text-sm font-medium text-slate-700">
+        Persona de contacto <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="proveedor-contacto"
+        pInputText
+        formControlName="contacto"
+        maxlength="150"
+        autocomplete="name"
+        class="w-full"
+      />
+      @if (form.controls.contacto.touched && form.controls.contacto.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El contacto es obligatorio (máximo 150 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="proveedor-telefono" class="mb-1 block text-sm font-medium text-slate-700">
+        Teléfono <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="proveedor-telefono"
+        pInputText
+        type="tel"
+        formControlName="telefono"
+        maxlength="30"
+        autocomplete="tel"
+        class="w-full"
+      />
+      @if (form.controls.telefono.touched && form.controls.telefono.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El teléfono es obligatorio (máximo 30 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div class="sm:col-span-2">
+      <label for="proveedor-email" class="mb-1 block text-sm font-medium text-slate-700">
+        Correo electrónico <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="proveedor-email"
+        pInputText
+        type="email"
+        formControlName="email"
+        maxlength="150"
+        autocomplete="email"
+        class="w-full"
+      />
+      @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El correo electrónico es obligatorio.
+        </p-message>
+      } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          Escribe un correo electrónico válido.
+        </p-message>
+      } @else if (form.controls.email.touched && form.controls.email.hasError('maxlength')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El correo no puede superar 150 caracteres.
+        </p-message>
+      }
+    </div>
+
+    <div class="sm:col-span-2">
+      <label for="proveedor-is-active" class="mb-1 block text-sm font-medium text-slate-700">
+        Estado
+      </label>
+      <p-select
+        [fluid]="true"
+        inputId="proveedor-is-active"
+        formControlName="is_active"
+        [options]="activeOptions"
+        optionLabel="label"
+        optionValue="value"
+      />
+      @if (proveedor()) {
+        <p class="mt-1 text-xs text-slate-500">
+          El estado de un proveedor existente se cambia con la acción de baja lógica.
+        </p>
+      }
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+    <button pButton type="button" severity="secondary" outlined (click)="cancelled.emit()">
+      <span pButtonLabel>Cancelar</span>
+    </button>
+    <button pButton type="submit" [loading]="saving()">
+      <i pButtonIcon class="pi pi-check"></i>
+      <span pButtonLabel>Guardar</span>
+    </button>
+  </div>
+</form>
+```
+
+No modificar el payload para agregar campos ajenos al modelo del proveedor.
+
+### 4.6 Lista con Signals
+
+La pantalla carga la colección desde `ProveedorApi`, realiza la búsqueda local con `filterRows` y recarga desde el backend después de cada operación exitosa. La lista muestra proveedores activos, según el comportamiento de `findAllActive()` del backend.
+
+`src/app/features/proveedores/proveedor-list/proveedor-list.ts`
+
+```typescript
+import { Component, computed, inject, signal } from '@angular/core';
+import { ConfirmationService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { Proveedor, ProveedorPayload } from '../../../core/models/proveedor.model';
+import { NotificationService } from '../../../core/services/notification';
+import { toApiMessage } from '../../../core/utils/api-error';
+import { filterRows } from '../../../core/utils/filter-rows';
+import { EmptyState } from '../../../shared/ui/empty-state/empty-state';
+import { PageHeader } from '../../../shared/ui/page-header/page-header';
+import { StatusTag } from '../../../shared/ui/status-tag/status-tag';
+import { ProveedorApi } from '../proveedor-api';
+import { ProveedorForm } from '../proveedor-form/proveedor-form';
+
+@Component({
+  host: { class: 'block' },
+  selector: 'app-proveedor-list',
+  imports: [
+    ButtonModule,
+    DialogModule,
+    EmptyState,
+    InputTextModule,
+    MessageModule,
+    PageHeader,
+    ProveedorForm,
+    StatusTag,
+    TableModule,
+    TagModule,
+    TooltipModule,
+  ],
+  templateUrl: './proveedor-list.html',
+  styleUrl: './proveedor-list.css',
+})
+export class ProveedorList {
+  private readonly api = inject(ProveedorApi);
+  private readonly notify = inject(NotificationService);
+  private readonly confirmation = inject(ConfirmationService);
+
+  readonly rows = signal<Proveedor[]>([]);
+  readonly loading = signal(true);
+  readonly saving = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly filter = signal('');
+
+  readonly visibleRows = computed(() =>
+    filterRows(this.rows(), this.filter(), (row) => [
+      row.nit,
+      row.razon_social,
+      row.contacto,
+      row.telefono,
+      row.email,
+    ]),
+  );
+
+  readonly dialogVisible = signal(false);
+  readonly editing = signal<Proveedor | null>(null);
+  readonly resetKey = signal(0);
+  readonly title = computed(() => (this.editing() ? 'Editar proveedor' : 'Nuevo proveedor'));
+
+  constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.api.list().subscribe({
+      next: (rows) => {
+        this.rows.set(rows);
+        this.loading.set(false);
+      },
+      error: (error: unknown) => {
+        this.rows.set([]);
+        this.error.set(toApiMessage(error));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  setFilter(event: Event): void {
+    const target = event.target;
+    if (target instanceof HTMLInputElement) {
+      this.filter.set(target.value);
+    }
+  }
+
+  openCreate(): void {
+    this.editing.set(null);
+    this.resetKey.update((key) => key + 1);
+    this.dialogVisible.set(true);
+  }
+
+  openEdit(proveedor: Proveedor): void {
+    this.editing.set(proveedor);
+    this.resetKey.update((key) => key + 1);
+    this.dialogVisible.set(true);
+  }
+
+  save(payload: ProveedorPayload): void {
+    const current = this.editing();
+    this.saving.set(true);
+
+    const request = current
+      ? this.api.update(current.id, payload)
+      : this.api.create(payload);
+
+    request.subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.dialogVisible.set(false);
+        this.notify.success(current ? 'Proveedor actualizado' : 'Proveedor creado');
+        this.load();
+      },
+      error: (error: unknown) => {
+        this.saving.set(false);
+        this.notify.error('No se pudo guardar el proveedor', toApiMessage(error));
+      },
+    });
+  }
+
+  deactivate(proveedor: Proveedor): void {
+    this.confirmation.confirm({
+      header: 'Desactivar proveedor',
+      message: `¿Desactivar ${proveedor.razon_social}? Dejará de aparecer en el listado de activos.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Desactivar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-warning',
+      accept: () => {
+        this.api.deactivate(proveedor.id).subscribe({
+          next: () => {
+            this.notify.warn('Proveedor desactivado');
+            this.load();
+          },
+          error: (error: unknown) => {
+            this.notify.error('No se pudo desactivar el proveedor', toApiMessage(error));
+          },
+        });
+      },
+    });
+  }
+
+  remove(proveedor: Proveedor): void {
+    this.confirmation.confirm({
+      header: 'Eliminar definitivamente',
+      message: `Se eliminará permanentemente a ${proveedor.razon_social}. Esta acción no se puede deshacer.`,
+      icon: 'pi pi-trash',
+      acceptLabel: 'Eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.api.remove(proveedor.id).subscribe({
+          next: () => {
+            this.notify.success('Proveedor eliminado');
+            this.load();
+          },
+          error: (error: unknown) => {
+            this.notify.error('No se pudo eliminar el proveedor', toApiMessage(error));
+          },
+        });
+      },
+    });
+  }
+}
+```
+
+### 4.7 Plantilla de listado y diálogo
+
+`src/app/features/proveedores/proveedor-list/proveedor-list.html`
+
+```html
+<app-page-header
+  title="Proveedores"
+  subtitle="Administra las empresas proveedoras y sus datos de contacto para los eventos de CelebraHub."
+>
+  <p-tag [value]="rows().length + ' proveedores activos'" severity="info" [rounded]="true" />
+  <button pButton type="button" (click)="openCreate()">
+    <i pButtonIcon class="pi pi-plus"></i>
+    <span pButtonLabel>Nuevo proveedor</span>
+  </button>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">
+    {{ error() }}
+  </p-message>
+}
+
+<div class="rounded-xl border border-slate-200 bg-white">
+  <p-table
+    [value]="visibleRows()"
+    [loading]="loading()"
+    [paginator]="visibleRows().length > 10"
+    [rows]="10"
+    dataKey="id"
+    tableStyleClass="min-w-[64rem]"
+  >
+    <ng-template #caption>
+      <div class="flex items-center gap-2">
+        <i class="pi pi-search text-slate-400" aria-hidden="true"></i>
+        <input
+          pInputText
+          type="search"
+          aria-label="Buscar proveedores"
+          placeholder="Buscar por razón social, NIT, contacto, teléfono o correo…"
+          [value]="filter()"
+          (input)="setFilter($event)"
+          class="w-full"
+        />
+      </div>
+      @if (filter()) {
+        <p class="mt-2 text-xs text-slate-500">
+          {{ visibleRows().length }} de {{ rows().length }} proveedores coinciden con «{{ filter() }}».
+        </p>
+      }
+    </ng-template>
+
+    <ng-template #header>
+      <tr>
+        <th pSortableColumn="razon_social">
+          <div class="flex items-center gap-1">
+            Razón social <p-sort-icon field="razon_social" />
+          </div>
+        </th>
+        <th>NIT</th>
+        <th>Contacto</th>
+        <th>Teléfono y correo</th>
+        <th>Estado</th>
+        <th class="w-36 text-right">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-row>
+      <tr>
+        <td>
+          <p class="font-medium text-slate-800">{{ row.razon_social }}</p>
+          <p class="text-xs text-slate-400">#{{ row.id }}</p>
+        </td>
+        <td><span class="text-sm text-slate-600">{{ row.nit }}</span></td>
+        <td><span class="text-sm text-slate-700">{{ row.contacto }}</span></td>
+        <td>
+          <p class="text-sm text-slate-700">{{ row.telefono }}</p>
+          <p class="text-xs text-slate-500">{{ row.email }}</p>
+        </td>
+        <td><app-status-tag [isActive]="row.is_active" /></td>
+        <td>
+          <div class="flex justify-end gap-1">
+            <button
+              pButton
+              type="button"
+              text
+              rounded
+              severity="secondary"
+              icon="pi pi-pencil"
+              aria-label="Editar proveedor"
+              pTooltip="Editar"
+              (click)="openEdit(row)"
+            ></button>
+            <button
+              pButton
+              type="button"
+              text
+              rounded
+              severity="warn"
+              icon="pi pi-ban"
+              aria-label="Desactivar proveedor"
+              pTooltip="Desactivar"
+              (click)="deactivate(row)"
+            ></button>
+            <button
+              pButton
+              type="button"
+              text
+              rounded
+              severity="danger"
+              icon="pi pi-trash"
+              aria-label="Eliminar proveedor definitivamente"
+              pTooltip="Eliminar definitivamente"
+              (click)="remove(row)"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6">
+          @if (filter()) {
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Ningún proveedor coincide con la búsqueda. Borra el filtro para ver todos."
+            />
+          } @else {
+            <app-empty-state
+              icon="pi pi-truck"
+              title="Sin proveedores activos"
+              message="Crea el primer proveedor o verifica que existan proveedores activos en el backend."
+            />
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [header]="title()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  styleClass="mx-4 w-full max-w-2xl"
+>
+  <app-proveedor-form
+    [proveedor]="editing()"
+    [saving]="saving()"
+    [resetKey]="resetKey()"
+    (saved)="save($event)"
+    (cancelled)="dialogVisible.set(false)"
+  />
+</p-dialog>
+```
+
+Los archivos CSS locales pueden quedar vacíos y utilizar las clases Tailwind y componentes PrimeNG existentes.
+
+### 4.8 Enrutamiento, menú y dependencias compartidas
+
+Registrar la pantalla de forma lazy dentro de las rutas hijas de `Shell`:
+
+```typescript
+{
+  path: 'proveedores',
+  title: 'Proveedores · CelebraHub',
+  loadComponent: () =>
+    import('./features/proveedores/proveedor-list/proveedor-list').then((m) => m.ProveedorList),
+},
+```
+
+Agregar el acceso al array `items` de `src/app/layout/shell/shell.ts`:
+
+```typescript
+{ label: 'Proveedores', icon: 'pi pi-truck', routerLink: '/proveedores' },
+```
+
+El shell debe tener los módulos PrimeNG `ConfirmDialogModule` y `ToastModule`; la configuración de la aplicación debe proveer `ConfirmationService` y `MessageService`. Reutilizar la configuración ya existente, sin duplicar proveedores.
+
+**No agregar guards, login, refresh de tokens, interceptores, almacenamiento de credenciales ni permisos RBAC en este issue.** El backend expone los endpoints de proveedores públicamente.
+
+### 4.9 Pruebas
+
+Crear `proveedor-api.spec.ts` con `HttpTestingController` y probar:
+
+- `GET /api/proveedores` y desenvoltura de `{ proveedores }`.
+- `GET /api/proveedores/:id`, `POST`, `PATCH` y `PUT`, con desenvoltura `{ proveedor }`.
+- `PATCH /api/proveedores/:id/deactivate`, que devuelve `{ proveedor }`.
+- `DELETE /api/proveedores/:id`, que devuelve `{ message }`.
+- Los payloads se envían sin cambiar sus nombres `snake_case`.
+- Los errores HTTP se propagan y no producen objetos de éxito de reemplazo.
+
+Ejemplo del caso de lista:
+
+```typescript
+it('desenvuelve proveedores de la respuesta de lista', () => {
+  let result: Proveedor[] | undefined;
+
+  api.list().subscribe((proveedores) => (result = proveedores));
+
+  const request = http.expectOne(`${environment.apiUrl}/proveedores`);
+  expect(request.request.method).toBe('GET');
+  request.flush({ proveedores: [PROVEEDOR] });
+
+  expect(result).toEqual([PROVEEDOR]);
+});
+```
+
+También verificar el filtro compartido con `filter-rows.spec.ts`. No crear pruebas ni stubs de sesión, token, usuarios o permisos.
+
+### Criterios de aceptación
+
+- `/proveedores` muestra los proveedores activos que devuelve `GET /api/proveedores`.
+- La búsqueda local coincide por NIT, razón social, contacto, teléfono y correo.
+- El formulario refleja los cinco campos de negocio reales y valida obligatoriedad, longitud y correo.
+- El alta puede omitir `is_active` (el backend asigna `true`); la edición usa `PATCH` y no ofrece editar el estado.
+- El NIT duplicado u otros errores del backend aparecen en la interfaz.
+- Desactivar usa la ruta `/deactivate`; eliminar permanentemente usa `DELETE`; ambas acciones piden confirmación.
+- Las respuestas se desenvuelven con las claves reales `proveedores` y `proveedor`.
+- No se crea ninguna relación con empresas/contactos ajena al esquema de CelebraHub.
+- Las rutas de proveedores son públicas y este issue no implementa ni altera autenticación.
+
+Verifica la estructura:
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-11-02 105211.png">
+</p>
+
+# ISS-05 · CRUD de las entidades restantes de CelebraHub
+
+## Alcance
+
+Este documento adapta el Issue 4 al frontend Angular y al backend actual de
+CelebraHub. Los CRUD de **Clientes** y **Proveedores** ya existen y no se vuelven
+a implementar aquí. El alcance comprende las nueve entidades restantes:
+
+1. Servicios
+2. Salones
+3. Reservas
+4. Contratos
+5. Pagos
+6. Cambios de contrato
+7. Servicios de evento
+8. Cancelaciones
+9. Eventos
+
+La implementación existente reutiliza una página CRUD compartida y mantiene
+modelos, adaptadores API y componentes de lista dentro de la carpeta de cada
+entidad. No se agregan pantallas, endpoints ni flujos de autenticación nuevos
+desde este documento.
+
+> **Solo documentación:** este archivo describe el código que ya está en el
+> proyecto. No se deben volver a generar los CRUD ni duplicar las pantallas de
+> Clientes o Proveedores.
+
+## 1. Contrato con la API de CelebraHub
+
+La URL base de desarrollo configurada por el frontend es
+`http://localhost:4000/api`. Los endpoints de negocio usan identificadores
+numéricos y cuerpos JSON.
+
+| Entidad | Ruta | Lista | Registro | Campos principales | Desactivación |
+| --- | --- | --- | --- | --- | --- |
+| Servicio | `/servicios` | `{ servicios }` | `{ servicio }` | `nombre`, `descripcion`, `is_active` | `PATCH /:id/deactivate`; deja `is_active: false` |
+| Salón | `/salones` | `{ salones }` | `{ salon }` | `nombre`, `descripcion`, `is_active` | `PATCH /:id/deactivate`; deja `is_active: false` |
+| Reserva | `/reservas` | `{ reservas }` | `{ reserva }` | `cliente_id`, `fecha_inicio`, `fecha_fin`, `estado`, `observaciones` | `PATCH /:id/deactivate`; cambia `estado` a `Inactivo` |
+| Contrato | `/contratos` | `{ contratos }` | `{ contrato }` | `cliente_id`, `numero`, `fecha_inicio`, `fecha_fin`, `valor`, `estado` | `PATCH /:id/deactivate`; cambia `estado` a `Inactivo` |
+| Pago | `/pagos` | Arreglo JSON | Objeto JSON | `referencia_tipo`, `referencia_id`, `metodo`, `monto`, `fecha`, `estado` | `PATCH /:id/deactivate`; cambia `estado` a `Inactivo` |
+| Cambio de contrato | `/cambios-contrato` | Arreglo JSON | Objeto JSON | `nombre`, `descripcion`, `is_active` | `PATCH /:id/deactivate`; deja `is_active: false` |
+| Servicio de evento | `/evento-servicios` | `{ eventoServicios }` | `{ eventoServicio }` | `referencia_id`, `tipo`, `fecha`, `cantidad`, `observaciones`, `estado` | `PATCH /:id/deactivate`; cambia `estado` a `inactivo` |
+| Cancelación | `/cancelaciones` | Arreglo JSON | Objeto JSON | `nombre`, `descripcion`, `is_active` | `PATCH /:id/deactivate`; deja `is_active: false` |
+| Evento | `/eventos` | Arreglo JSON | Objeto JSON | `referencia_id`, `tipo`, `fecha`, `cantidad`, `observaciones`, `estado` | `PATCH /:id/deactivate`; cambia `estado` a `Inactivo` |
+
+Cada recurso también expone `GET /:id`, `POST /`, `PATCH /:id`, `PUT /:id` y
+`DELETE /:id`. `DELETE` elimina físicamente; la acción **Desactivar** usa el
+endpoint específico anterior.
+
+Los nombres de las envolturas son importantes: el frontend desempaqueta los
+recursos que devuelven un objeto contenedor y acepta arreglos/objetos crudos en
+los endpoints que no usan envoltura. No se debe asumir una respuesta uniforme.
+
+### Acceso desde el frontend
+
+Esta implementación de CRUD no agrega login, guards ni envío de tokens. En
+desarrollo local, el backend permite estas solicitudes sin token desde loopback.
+La protección configurada por el backend fuera de ese caso no se modifica desde
+el frontend.
+
+## 2. Estructura existente
+
+```text
+src/app/
+├── core/models/business-domain.model.ts
+├── features/
+│   ├── business-crud/
+│   │   ├── business-crud-api.ts
+│   │   ├── business-crud.config.ts
+│   │   ├── business-crud-page.ts
+│   │   └── business-crud-page.html
+│   ├── servicios/
+│   ├── salones/
+│   ├── reservas/
+│   ├── contratos/
+│   ├── pagos/
+│   ├── cambios-contrato/
+│   ├── evento-servicios/
+│   ├── cancelaciones/
+│   └── eventos/
+├── app.routes.ts
+└── layout/shell/shell.ts
+```
+
+Cada carpeta de entidad contiene un modelo, un adaptador tipado de API y su
+componente de lista. Los componentes de lista presentan
+`BusinessCrudPage`; el comportamiento común de búsqueda, formulario, edición,
+desactivación y eliminación se mantiene en `business-crud`.
+
+No se crean nueve formularios independientes: los campos de cada formulario y
+las columnas de la tabla proceden de `businessCrudConfigs`.
+
+## 3. Tipos de dominio
+
+`src/app/core/models/business-domain.model.ts`
+
+```typescript
+export type BusinessValue = string | number | boolean | null | undefined;
+
+export interface BusinessRecord extends Record<string, BusinessValue> {
+  id: number;
+}
+
+export interface CatalogRecord extends BusinessRecord {
+  nombre: string;
+  descripcion?: string | null;
+  is_active: boolean;
+}
+
+export interface Servicio extends CatalogRecord {}
+
+export interface Salon extends CatalogRecord {}
+
+export interface Reserva extends BusinessRecord {
+  cliente_id: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+  estado: string;
+  observaciones?: string | null;
+}
+
+export interface Contrato extends BusinessRecord {
+  cliente_id: number;
+  numero: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  valor: number;
+  estado: string;
+}
+
+export interface Pago extends BusinessRecord {
+  referencia_tipo: string;
+  referencia_id: number;
+  metodo: string;
+  monto: number;
+  fecha: string;
+  estado: string;
+}
+
+export interface CambioContrato extends CatalogRecord {}
+
+export interface EventoServicio extends BusinessRecord {
+  referencia_id: number;
+  tipo: string;
+  fecha: string;
+  cantidad: number;
+  observaciones?: string | null;
+  estado: string;
+}
+
+export interface Cancelacion extends CatalogRecord {}
+
+export interface Evento extends BusinessRecord {
+  referencia_id: number;
+  tipo: string;
+  fecha: string;
+  cantidad: number;
+  observaciones: string;
+  estado: string;
+}
+
+export type BusinessFieldType =
+  | 'text'
+  | 'email'
+  | 'number'
+  | 'datetime'
+  | 'textarea'
+  | 'checkbox';
+
+export interface BusinessCrudField {
+  key: string;
+  label: string;
+  type: BusinessFieldType;
+  required?: boolean;
+  step?: string;
+  placeholder?: string;
+}
+
+export interface BusinessCrudColumn {
+  key: string;
+  label: string;
+  type?: 'text' | 'number' | 'datetime' | 'active' | 'status';
+}
+
+export interface BusinessCrudConfig {
+  id: string;
+  path: string;
+  collectionKey: string | null;
+  entityKey: string | null;
+  title: string;
+  singular: string;
+  plural: string;
+  description: string;
+  icon: string;
+  supportsDeactivate: boolean;
+  fields: readonly BusinessCrudField[];
+  columns: readonly BusinessCrudColumn[];
+  searchKeys: readonly string[];
+}
+```
+
+Los modelos específicos de `src/app/features/<entidad>/` conservan la forma
+tipada que utiliza cada servicio. Ejemplos:
+
+`src/app/features/servicios/servicio.model.ts`
+
+```typescript
+import { BusinessRecord } from '../../core/models/business-domain.model';
+
+export interface Servicio extends BusinessRecord {
+  nombre: string;
+  descripcion?: string | null;
+  is_active: boolean;
+}
+
+export type ServicioPayload = Pick<Servicio, 'nombre'> &
+  Partial<Pick<Servicio, 'descripcion'>>;
+```
+
+`ServicioPayload` no envía `is_active`: el backend crea servicios activos y la
+desactivación se realiza mediante su endpoint.
+
+`src/app/features/reservas/reserva.model.ts`
+
+```typescript
+import { BusinessRecord } from '../../core/models/business-domain.model';
+
+export interface Reserva extends BusinessRecord {
+  cliente_id: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+  estado: string;
+  observaciones?: string | null;
+}
+
+export type ReservaPayload = Omit<Reserva, 'id'>;
+```
+
+Los demás modelos específicos reflejan estos contratos:
+
+| Archivo | Payload | Tipo específico |
+| --- | --- | --- |
+| `salones/salon.model.ts` | `Pick<Salon, 'nombre'> & Partial<Pick<Salon, 'descripcion' \| 'is_active'>>` | `Salon` extiende `BusinessRecord` con `nombre`, `descripcion?` e `is_active` |
+| `contratos/contrato.model.ts` | `Omit<Contrato, 'id'>` | `cliente_id`, `numero`, `fecha_inicio`, `fecha_fin`, `valor`, `estado` |
+| `pagos/pago.model.ts` | `Omit<Pago, 'id'>` | `referencia_tipo`, `referencia_id`, `metodo`, `monto`, `fecha`, `estado` |
+| `cambios-contrato/cambio-contrato.model.ts` | Nombre y descripción obligatorios; `is_active` opcional | `CambioContrato` extiende `BusinessRecord` |
+| `evento-servicios/evento-servicio.model.ts` | `Omit<EventoServicio, 'id'>` | Referencia, tipo, fecha, cantidad, observaciones opcionales y estado |
+| `cancelaciones/cancelacion.model.ts` | Nombre y descripción obligatorios; `is_active` opcional | `Cancelacion` extiende `BusinessRecord` |
+| `eventos/evento.model.ts` | `Omit<Evento, 'id'>` | Referencia, tipo, fecha, cantidad, observaciones y estado |
+
+`CambioContrato` y `Cancelacion` son catálogos con `nombre`, `descripcion` e
+`is_active`. `referencia_id` y `referencia_tipo` son campos del contrato actual
+de la API; el frontend no inventa relaciones que el backend no expone.
+
+## 4. API CRUD compartida
+
+`src/app/features/business-crud/business-crud-api.ts`
+
+```typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { BusinessRecord } from '../../core/models/business-domain.model';
+
+@Injectable({ providedIn: 'root' })
+export class BusinessCrudApi {
+  private readonly http = inject(HttpClient);
+  private readonly base = environment.apiUrl;
+
+  list<T extends BusinessRecord>(
+    path: string,
+    collectionKey: string | null,
+  ): Observable<T[]> {
+    return this.http
+      .get<unknown>(`${this.base}/${path}`)
+      .pipe(map((response) => this.readValue<T[]>(response, collectionKey, Array.isArray)));
+  }
+
+  get<T extends BusinessRecord>(
+    path: string,
+    entityKey: string | null,
+    id: number,
+  ): Observable<T> {
+    return this.http
+      .get<unknown>(`${this.base}/${path}/${id}`)
+      .pipe(map((response) => this.readValue<T>(response, entityKey, this.isObject)));
+  }
+
+  create<T extends BusinessRecord>(
+    path: string,
+    entityKey: string | null,
+    payload: Partial<T>,
+  ): Observable<T> {
+    return this.http
+      .post<unknown>(`${this.base}/${path}`, payload)
+      .pipe(map((response) => this.readValue<T>(response, entityKey, this.isObject)));
+  }
+
+  update<T extends BusinessRecord>(
+    path: string,
+    entityKey: string | null,
+    id: number,
+    payload: Partial<T>,
+  ): Observable<T> {
+    return this.http
+      .patch<unknown>(`${this.base}/${path}/${id}`, payload)
+      .pipe(map((response) => this.readValue<T>(response, entityKey, this.isObject)));
+  }
+
+  replace<T extends BusinessRecord>(
+    path: string,
+    entityKey: string | null,
+    id: number,
+    payload: Partial<T>,
+  ): Observable<T> {
+    return this.http
+      .put<unknown>(`${this.base}/${path}/${id}`, payload)
+      .pipe(map((response) => this.readValue<T>(response, entityKey, this.isObject)));
+  }
+
+  deactivate(path: string, id: number): Observable<unknown> {
+    return this.http.patch(`${this.base}/${path}/${id}/deactivate`, {});
+  }
+
+  remove(path: string, id: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/${path}/${id}`);
+  }
+
+  private readValue<T>(
+    response: unknown,
+    key: string | null,
+    isExpected: (value: unknown) => boolean,
+  ): T {
+    const value = key === null ? response : this.isObject(response) ? response[key] : undefined;
+    if (
+      value === undefined ||
+      (key !== null && (!this.isObject(response) || !(key in response))) ||
+      !isExpected(value)
+    ) {
+      const expected = key === null ? 'un recurso válido' : `la propiedad "${key}"`;
+      throw new Error(`La respuesta de la API no contiene ${expected}.`);
+    }
+
+    return value as T;
+  }
+
+  private isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+  }
+}
+```
+
+`readValue` valida los formatos de respuesta y reporta errores de contrato en
+lugar de convertir una respuesta incorrecta en una lista vacía.
+
+### Adaptador tipado por entidad
+
+Cada carpeta mantiene una clase que extiende `BusinessCrudApi`. Este ejemplo
+corresponde a Servicios:
+
+`src/app/features/servicios/servicio-api.ts`
+
+```typescript
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { BusinessCrudApi } from '../business-crud/business-crud-api';
+import { Servicio, ServicioPayload } from './servicio.model';
+
+@Injectable()
+export class ServicioApi extends BusinessCrudApi {
+  listServicios(): Observable<Servicio[]> {
+    return this.list<Servicio>('servicios', 'servicios');
+  }
+
+  getServicio(id: number): Observable<Servicio> {
+    return this.get<Servicio>('servicios', 'servicio', id);
+  }
+
+  createServicio(payload: ServicioPayload): Observable<Servicio> {
+    return this.create<Servicio>('servicios', 'servicio', payload);
+  }
+
+  updateServicio(id: number, payload: Partial<ServicioPayload>): Observable<Servicio> {
+    return this.update<Servicio>('servicios', 'servicio', id, payload);
+  }
+
+  replaceServicio(id: number, payload: ServicioPayload): Observable<Servicio> {
+    return this.replace<Servicio>('servicios', 'servicio', id, payload);
+  }
+
+  deactivateServicio(id: number): Observable<unknown> {
+    return this.deactivate('servicios', id);
+  }
+
+  removeServicio(id: number): Observable<unknown> {
+    return this.remove('servicios', id);
+  }
+}
+```
+
+Los otros adaptadores siguen el mismo contrato. La pareja de claves para
+desempaquetar cada respuesta es:
+
+| Adaptador | `path` | `collectionKey` | `entityKey` |
+| --- | --- | --- | --- |
+| `ServicioApi` | `servicios` | `servicios` | `servicio` |
+| `SalonApi` | `salones` | `salones` | `salon` |
+| `ReservaApi` | `reservas` | `reservas` | `reserva` |
+| `ContratoApi` | `contratos` | `contratos` | `contrato` |
+| `PagoApi` | `pagos` | `null` | `null` |
+| `CambioContratoApi` | `cambios-contrato` | `null` | `null` |
+| `EventoServicioApi` | `evento-servicios` | `eventoServicios` | `eventoServicio` |
+| `CancelacionApi` | `cancelaciones` | `null` | `null` |
+| `EventoApi` | `eventos` | `null` | `null` |
+
+`null` indica que el endpoint devuelve el arreglo u objeto directamente.
+
+## 5. Configuración de las nueve pantallas
+
+`src/app/features/business-crud/business-crud.config.ts` determina columnas,
+campos del formulario, búsqueda, envolturas de respuesta y disponibilidad de
+la acción de desactivar.
+
+| `id` / ruta | Campos del formulario | Columnas | Búsqueda |
+| --- | --- | --- | --- |
+| `servicios` | `nombre`, `descripcion` | `nombre`, `descripcion`, `is_active` | `nombre`, `descripcion` |
+| `salones` | `nombre`, `descripcion`, `is_active` | `nombre`, `descripcion`, `is_active` | `nombre`, `descripcion` |
+| `reservas` | `cliente_id`, `fecha_inicio`, `fecha_fin`, `estado`, `observaciones` | Cliente, inicio, fin, estado, observaciones | Cliente, estado, observaciones |
+| `contratos` | `cliente_id`, `numero`, `fecha_inicio`, `fecha_fin`, `valor`, `estado` | Número, cliente, periodo, valor, estado | Número, cliente, estado |
+| `pagos` | `referencia_tipo`, `referencia_id`, `metodo`, `monto`, `fecha`, `estado` | Tipo, referencia, método, monto, fecha, estado | Tipo, referencia, método, estado |
+| `cambios-contrato` | `nombre`, `descripcion`, `is_active` | `nombre`, `descripcion`, `is_active` | `nombre`, `descripcion` |
+| `evento-servicios` | `referencia_id`, `tipo`, `fecha`, `cantidad`, `observaciones`, `estado` | Referencia, tipo, fecha, cantidad, estado | Referencia, tipo, estado, observaciones |
+| `cancelaciones` | `nombre`, `descripcion`, `is_active` | `nombre`, `descripcion`, `is_active` | `nombre`, `descripcion` |
+| `eventos` | `referencia_id`, `tipo`, `fecha`, `cantidad`, `observaciones`, `estado` | Referencia, tipo, fecha, cantidad, observaciones, estado | Referencia, tipo, estado, observaciones |
+
+En las columnas de tipo `active`, `app-status-tag` muestra **Activo** en verde e
+**Inactivo** en rojo. Las columnas `status` también muestran el estado como
+etiqueta verde y cambian a rojo cuando el valor es `Inactivo` (sin distinguir
+mayúsculas/minúsculas). Así se conserva el estado de negocio existente; no se
+lo reemplaza por un `is_active` inventado.
+
+Las nueve configuraciones tienen `supportsDeactivate: true`. En Servicios no
+se ofrece un checkbox para modificar `is_active`: el alta la deja activa y la
+acción de desactivación usa el endpoint del backend.
+
+## 6. Página compartida y acciones
+
+`BusinessCrudPage` lee el `crudId` de la ruta para cargar la configuración
+correspondiente. La tabla comparte búsqueda, paginación, carga y errores entre
+las entidades.
+
+```typescript
+constructor() {
+  const configId = inject(ActivatedRoute).snapshot.data['crudId'];
+  const config = typeof configId === 'string' ? businessCrudConfigs[configId] : undefined;
+  if (!config) {
+    throw new Error(`No existe la configuración CRUD "${String(configId)}".`);
+  }
+
+  this.config = config;
+  this.load();
+}
+
+load(): void {
+  this.loading.set(true);
+  this.error.set(null);
+
+  this.api.list<BusinessRecord>(this.config.path, this.config.collectionKey).subscribe({
+    next: (rows) => {
+      this.rows.set(rows);
+      this.loading.set(false);
+    },
+    error: (error: unknown) => {
+      this.rows.set([]);
+      this.error.set(toApiMessage(error));
+      this.loading.set(false);
+    },
+  });
+}
+```
+
+Guardar usa `POST` al crear y `PATCH /:id` al editar. La fecha/hora del control
+se convierte a ISO antes de enviarse a la API. Al terminar una operación, se
+notifica el resultado y se vuelve a cargar la lista.
+
+La desactivación y eliminación se confirman antes de enviar la solicitud:
+
+```typescript
+deactivate(row: BusinessRecord): void {
+  this.confirmation.confirm({
+    header: `Desactivar ${this.config.singular}`,
+    message: `¿Desactivar este registro de ${this.config.singular}?`,
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Desactivar',
+    rejectLabel: 'Cancelar',
+    acceptButtonStyleClass: 'p-button-warning',
+    accept: () => {
+      this.api.deactivate(this.config.path, row.id).subscribe({
+        next: () => {
+          this.notify.warn(`${this.config.singular} desactivado`);
+          this.load();
+        },
+        error: (error: unknown) => {
+          this.notify.error('No se pudo desactivar', toApiMessage(error));
+        },
+      });
+    },
+  });
+}
+
+remove(row: BusinessRecord): void {
+  this.confirmation.confirm({
+    header: 'Eliminar definitivamente',
+    message: `Se eliminará permanentemente este registro de ${this.config.singular}. Esta acción no se puede deshacer.`,
+    icon: 'pi pi-trash',
+    acceptLabel: 'Eliminar',
+    rejectLabel: 'Cancelar',
+    acceptButtonStyleClass: 'p-button-danger',
+    accept: () => {
+      this.api.remove(this.config.path, row.id).subscribe({
+        next: () => {
+          this.notify.success(`${this.config.singular} eliminado`);
+          this.load();
+        },
+        error: (error: unknown) => {
+          this.notify.error('No se pudo eliminar', toApiMessage(error));
+        },
+      });
+    },
+  });
+}
+```
+
+La plantilla muestra **Editar**, **Desactivar** y **Eliminar definitivamente**
+en la columna de acciones. El botón Desactivar se presenta cuando la
+configuración de la entidad tiene `supportsDeactivate` habilitado:
+
+```html
+@if (column.type === 'active') {
+  <app-status-tag [isActive]="row[column.key] === true" />
+} @else if (column.type === 'status') {
+  <p-tag
+    [value]="displayValue(row, column.key, column.type)"
+    [severity]="statusSeverity(row, column.key)"
+    [rounded]="true"
+  />
+} @else {
+  {{ displayValue(row, column.key, column.type) }}
+}
+
+@if (config.supportsDeactivate) {
+  <button
+    pButton
+    type="button"
+    text
+    rounded
+    severity="warn"
+    [attr.aria-label]="'Desactivar ' + config.singular"
+    pTooltip="Desactivar"
+    (click)="deactivate(row)"
+  >
+    <i pButtonIcon class="pi pi-ban"></i>
+  </button>
+}
+```
+
+El severity del estado respeta los estados de catálogo y los estados de negocio:
+
+```typescript
+statusSeverity(row: BusinessRecord, key: string): 'success' | 'danger' {
+  return String(row[key] ?? '').trim().toLowerCase() === 'inactivo' ? 'danger' : 'success';
+}
+```
+
+Los errores de red/API se comunican con `toApiMessage`; no se ocultan detrás
+de respuestas vacías presentadas como éxitos.
+
+## 7. Lista específica por entidad
+
+Cada ruta utiliza un componente pequeño que enlaza el adaptador concreto con
+la página compartida. Ejemplo:
+
+`src/app/features/eventos/evento-list/evento-list.ts`
+
+```typescript
+import { Component } from '@angular/core';
+import { BusinessCrudApi } from '../../business-crud/business-crud-api';
+import { BusinessCrudPage } from '../../business-crud/business-crud-page';
+import { EventoApi } from '../evento-api';
+
+@Component({
+  host: { class: 'block' },
+  selector: 'app-evento-list',
+  imports: [BusinessCrudPage],
+  providers: [{ provide: BusinessCrudApi, useClass: EventoApi }],
+  templateUrl: './evento-list.html',
+})
+export class EventoList {}
+```
+
+`src/app/features/eventos/evento-list/evento-list.html`
+
+```html
+<app-business-crud-page />
+```
+
+El patrón es el mismo en las nueve carpetas. Cambian el selector, la clase de
+lista, el adaptador y la ruta de su plantilla:
+
+| Entidad | Clase de lista | Adaptador | Plantilla |
+| --- | --- | --- | --- |
+| Servicios | `ServicioList` | `ServicioApi` | `servicio-list.html` |
+| Salones | `SalonList` | `SalonApi` | `salon-list.html` |
+| Reservas | `ReservaList` | `ReservaApi` | `reserva-list.html` |
+| Contratos | `ContratoList` | `ContratoApi` | `contrato-list.html` |
+| Pagos | `PagoList` | `PagoApi` | `pago-list.html` |
+| Cambios de contrato | `CambioContratoList` | `CambioContratoApi` | `cambio-contrato-list.html` |
+| Servicios de evento | `EventoServicioList` | `EventoServicioApi` | `evento-servicio-list.html` |
+| Cancelaciones | `CancelacionList` | `CancelacionApi` | `cancelacion-list.html` |
+| Eventos | `EventoList` | `EventoApi` | `evento-list.html` |
+
+Cada adaptador se provee en el componente de su lista; esto mantiene el
+`BusinessCrudApi` compartido y permite que las páginas utilicen la URL y el
+formato de respuesta correctos.
+
+## 8. Rutas Angular
+
+Las nueve pantallas ya están conectadas mediante carga diferida. El dato
+`crudId` debe coincidir con una clave de `businessCrudConfigs`.
+
+```typescript
+{
+  path: 'servicios',
+  title: 'Servicios · CelebraHub',
+  data: { crudId: 'servicios' },
+  loadComponent: () =>
+    import('./features/servicios/servicio-list/servicio-list').then((m) => m.ServicioList),
+},
+{
+  path: 'salones',
+  title: 'Salones · CelebraHub',
+  data: { crudId: 'salones' },
+  loadComponent: () =>
+    import('./features/salones/salon-list/salon-list').then((m) => m.SalonList),
+},
+{
+  path: 'reservas',
+  title: 'Reservas · CelebraHub',
+  data: { crudId: 'reservas' },
+  loadComponent: () =>
+    import('./features/reservas/reserva-list/reserva-list').then((m) => m.ReservaList),
+},
+{
+  path: 'contratos',
+  title: 'Contratos · CelebraHub',
+  data: { crudId: 'contratos' },
+  loadComponent: () =>
+    import('./features/contratos/contrato-list/contrato-list').then((m) => m.ContratoList),
+},
+{
+  path: 'pagos',
+  title: 'Pagos · CelebraHub',
+  data: { crudId: 'pagos' },
+  loadComponent: () =>
+    import('./features/pagos/pago-list/pago-list').then((m) => m.PagoList),
+},
+{
+  path: 'cambios-contrato',
+  title: 'Cambios de contrato · CelebraHub',
+  data: { crudId: 'cambios-contrato' },
+  loadComponent: () =>
+    import('./features/cambios-contrato/cambio-contrato-list/cambio-contrato-list')
+      .then((m) => m.CambioContratoList),
+},
+{
+  path: 'evento-servicios',
+  title: 'Servicios de evento · CelebraHub',
+  data: { crudId: 'evento-servicios' },
+  loadComponent: () =>
+    import('./features/evento-servicios/evento-servicio-list/evento-servicio-list')
+      .then((m) => m.EventoServicioList),
+},
+{
+  path: 'cancelaciones',
+  title: 'Cancelaciones · CelebraHub',
+  data: { crudId: 'cancelaciones' },
+  loadComponent: () =>
+    import('./features/cancelaciones/cancelacion-list/cancelacion-list')
+      .then((m) => m.CancelacionList),
+},
+{
+  path: 'eventos',
+  title: 'Eventos · CelebraHub',
+  data: { crudId: 'eventos' },
+  loadComponent: () =>
+    import('./features/eventos/evento-list/evento-list').then((m) => m.EventoList),
+},
+```
+
+Clientes y Proveedores mantienen sus rutas y componentes existentes; no deben
+ser reemplazados por `BusinessCrudPage`.
+
+## 9. Menú de navegación
+
+El menú construye las opciones de negocio desde la configuración. Al añadir
+una entidad a `businessCrudConfigs`, se incorpora su entrada sin repetir una
+lista de enlaces:
+
+```typescript
+readonly items: MenuItem[] = [
+  { label: 'Inicio', icon: 'pi pi-home', routerLink: '/inicio' },
+  { label: 'Clientes', icon: 'pi pi-users', routerLink: '/clientes' },
+  { label: 'Proveedores', icon: 'pi pi-truck', routerLink: '/proveedores' },
+  ...Object.values(businessCrudConfigs).map((config) => ({
+    label: config.title,
+    icon: config.icon,
+    routerLink: `/${config.path}`,
+  })),
+];
+```

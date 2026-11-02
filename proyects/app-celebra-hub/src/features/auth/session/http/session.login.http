@@ -6,8 +6,8 @@ POST {{baseUrl}}/api/sesion/login
 Content-Type: application/json
 
 {
-  "identifier": "juanasitente",
-  "password": "juanasistente123!"
+  "identifier": "admin",
+  "password": "Admin123!"
 }
 
 ### Login por email

@@ -56,4 +56,9 @@ export class PagosController {
 
     res.status(204).send();
   };
+
+  deactivate = async (req: Request, res: Response) => {
+    const pago = await this.service.deactivate(Number(req.params.id));
+    res.status(200).json(pago);
+  };
 }

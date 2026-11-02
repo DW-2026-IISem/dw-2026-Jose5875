@@ -19,7 +19,7 @@ Esta guia describe la API del sistema de gestion de eventos CelebraHub. Las ruta
 | Autenticacion | Requiere un access token valido. |
 | Autenticacion + permiso | Requiere un access token y un permiso RBAC para el metodo y la ruta solicitados. |
 
-Las rutas de clientes son publicas y no requieren access token. Las rutas de eventos requieren autenticacion; los otros recursos de negocio documentados aqui requieren autenticacion y autorizacion RBAC. Las rutas de administracion de roles, recursos y usuarios tambien aplican RBAC. En asignaciones y concesiones, la consulta de la coleccion requiere autenticacion y las demas operaciones requieren el permiso correspondiente. Las rutas protegidas pueden responder `401` sin autenticacion o `403` sin el permiso requerido.
+Las rutas de clientes y proveedores son publicas en todos los entornos. Las demas entidades de negocio aceptan solicitudes sin token unicamente en desarrollo cuando la conexion proviene de loopback (`localhost`); en otros entornos o desde otras redes se mantiene la autenticacion y, donde aplica, la autorizacion RBAC configurada. Las rutas de administracion mantienen sus controles de autenticacion y RBAC. Las rutas protegidas pueden responder `401` sin autenticacion o `403` sin el permiso requerido.
 
 ## Recursos de CelebraHub
 
@@ -28,16 +28,16 @@ En las tablas, `CRUD` representa `GET /<recurso>`, `POST /<recurso>`, `GET /<rec
 | Recurso | Ruta base | Operaciones | Acceso |
 | --- | --- | --- | --- |
 | Clientes | `/api/clientes` | CRUD; `PATCH /:id/deactivate` | Abierto |
-| Servicios | `/api/servicios` | CRUD; `PATCH /:id/deactivate` | Autenticacion + permiso |
-| Salones | `/api/salones` | CRUD; `PATCH /:id/deactivate` | Autenticacion + permiso |
-| Reservas | `/api/reservas` | CRUD | Autenticacion + permiso |
-| Proveedores | `/api/proveedores` | CRUD; `PATCH /:id/deactivate` | Autenticacion + permiso |
-| Contratos | `/api/contratos` | CRUD | Autenticacion + permiso |
-| Cambios de contrato | `/api/cambios-contrato` | CRUD | Autenticacion + permiso |
-| Pagos | `/api/pagos` | CRUD | Autenticacion + permiso |
-| Cancelaciones | `/api/cancelaciones` | CRUD | Autenticacion + permiso |
-| Servicios de evento | `/api/evento-servicios` | CRUD; `PATCH /:id/deactivate` | Autenticacion + permiso |
-| Eventos | `/api/eventos` | CRUD | Autenticacion |
+| Servicios | `/api/servicios` | CRUD; `PATCH /:id/deactivate` | Local en desarrollo; protegido en otros entornos |
+| Salones | `/api/salones` | CRUD; `PATCH /:id/deactivate` | Local en desarrollo; protegido en otros entornos |
+| Reservas | `/api/reservas` | CRUD | Local en desarrollo; protegido en otros entornos |
+| Proveedores | `/api/proveedores` | CRUD; `PATCH /:id/deactivate` | Abierto |
+| Contratos | `/api/contratos` | CRUD | Local en desarrollo; protegido en otros entornos |
+| Cambios de contrato | `/api/cambios-contrato` | CRUD | Local en desarrollo; protegido en otros entornos |
+| Pagos | `/api/pagos` | CRUD | Local en desarrollo; protegido en otros entornos |
+| Cancelaciones | `/api/cancelaciones` | CRUD | Local en desarrollo; protegido en otros entornos |
+| Servicios de evento | `/api/evento-servicios` | CRUD; `PATCH /:id/deactivate` | Local en desarrollo; protegido en otros entornos |
+| Eventos | `/api/eventos` | CRUD | Local en desarrollo; protegido en otros entornos |
 
 Los paths `/:id` y `/:id/deactivate` de la tabla se agregan a la ruta base. Por ejemplo, la desactivacion de un servicio usa `PATCH /api/servicios/:id/deactivate`.
 

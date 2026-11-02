@@ -239,6 +239,12 @@ export class ContratosService {
     );
   }
 
+  async deactivate(id: number) {
+    const contrato = await this.findOrFail(id);
+    const updated = await this.repository.update(contrato, { estado: "Inactivo" });
+    return toContratoResponse(updated);
+  }
+
   private async findOrFail(
     id: number
   ) {
