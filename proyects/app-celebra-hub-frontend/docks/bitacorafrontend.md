@@ -2358,3 +2358,801 @@ grep -R -nE "clientes|servicios|salones|reservas|proveedores|contratos|evento-se
 No marcar criterios de aceptación hasta ejecutar las pruebas y comprobar la aplicación. La API puede responder `401` o `403` cuando una pantalla protegida se pruebe sin sesión o permisos; eso es comportamiento de autorización, no un fallo que se deba ocultar.
 
 ---------------------------------------------------------------------------------------------
+
+## ISS-03 · CRUD de Clientes de CelebraHub con Signals
+
+Implementar el módulo de clientes del frontend de CelebraHub con Angular, Signals, Reactive Forms y PrimeNG. Este issue cubre únicamente clientes; no implementar ni modificar autenticación.
+
+### Alcance
+
+- Listar y buscar clientes activos.
+- Crear, editar, desactivar lógicamente y eliminar físicamente clientes.
+- Usar el contrato real de `/api/clientes` y los nombres de campos `snake_case` del backend.
+- Mostrar errores del backend y confirmar las operaciones destructivas.
+- Acceder al módulo desde `/clientes` y el menú principal.
+
+No se incluyen entidades ajenas al dominio de clientes ni endpoints protegidos de CelebraHub.
+
+### 3.1 Contrato del backend de CelebraHub
+
+La API recibe y devuelve JSON. La ruta de clientes es pública y no necesita access token. El recurso está implementado en `/api/clientes`.
+
+| Operación | Método y ruta | Respuesta |
+|---|---|---|
+| Listar clientes activos | `GET /api/clientes` | `{ "clientes": Cliente[] }` |
+| Obtener un cliente | `GET /api/clientes/:id` | `{ "cliente": Cliente }` |
+| Crear | `POST /api/clientes` | `{ "cliente": Cliente }` |
+| Actualizar parcialmente | `PATCH /api/clientes/:id` | `{ "cliente": Cliente }` |
+| Reemplazar | `PUT /api/clientes/:id` | `{ "cliente": Cliente }` |
+| Desactivar (baja lógica) | `PATCH /api/clientes/:id/deactivate` | `{ "message": string, "cliente": Cliente }` |
+| Eliminar permanentemente | `DELETE /api/clientes/:id` | `{ "message": string, "id": number }` |
+
+`GET /api/clientes` devuelve solo registros con `is_active: true`. Crear un cliente asigna `is_active: true` en el backend; no se envía ese campo en el payload. La ruta `/deactivate` marca el cliente inactivo, mientras que `DELETE /:id` lo elimina físicamente. No existe una ruta de reactivación en este contrato.
+
+La entidad expone `id`, `tipo_documento`, `numero_documento`, `nombre`, `telefono`, `email`, `is_active`, `createdAt` y `updatedAt`. Los cinco campos de negocio son obligatorios al crear. Longitudes máximas del modelo: tipo de documento 20, número 30, nombre 150, teléfono 30 y correo 150 caracteres; el backend también valida el formato del correo.
+
+Ejemplo de registro:
+
+```json
+{
+  "id": 1,
+  "tipo_documento": "CC",
+  "numero_documento": "1121876543",
+  "nombre": "María Fernanda Pérez",
+  "telefono": "3011234567",
+  "email": "maria.perez@example.com",
+  "is_active": true,
+  "createdAt": "2026-11-02T15:00:00.000Z",
+  "updatedAt": "2026-11-02T15:00:00.000Z"
+}
+```
+
+La UI puede ofrecer los tipos de documento usados por CelebraHub (CC, CE, TI y NIT), pero debe enviar el valor del código, no la etiqueta. No se debe asumir una envoltura genérica: las colecciones usan `clientes` y los registros `cliente`.
+
+### 3.2 Archivos y utilidades
+
+La estructura de la funcionalidad es:
+
+```text
+src/app/
+├── core/
+│   ├── models/cliente.model.ts
+│   └── utils/filter-rows.ts
+└── features/clientes/
+    ├── cliente-api.ts
+    ├── cliente-api.spec.ts
+    ├── cliente-form/
+    │   ├── cliente-form.ts
+    │   ├── cliente-form.html
+    │   └── cliente-form.css
+    └── cliente-list/
+        ├── cliente-list.ts
+        ├── cliente-list.html
+        └── cliente-list.css
+```
+
+El filtro local se reutiliza porque el buscador debe incluir nombre, documento, teléfono y correo. PrimeNG 22 no ofrece `globalFilter` en `p-table`; la tabla recibe el resultado calculado en el Signal.
+
+`src/app/core/utils/filter-rows.ts`
+
+```typescript
+export function filterRows<T>(
+  rows: readonly T[],
+  query: string,
+  pick: (row: T) => Array<string | number | null | undefined>,
+): T[] {
+  const term = query.trim().toLowerCase();
+
+  if (!term) {
+    return [...rows];
+  }
+
+  return rows.filter((row) =>
+    pick(row).some((value) => (value ?? '').toString().toLowerCase().includes(term)),
+  );
+}
+```
+
+### 3.3 Modelo del cliente
+
+`src/app/core/models/cliente.model.ts`
+
+```typescript
+export interface Cliente {
+  id: number;
+  tipo_documento: string;
+  numero_documento: string;
+  nombre: string;
+  telefono: string;
+  email: string;
+  is_active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ClientePayload {
+  tipo_documento: string;
+  numero_documento: string;
+  nombre: string;
+  telefono: string;
+  email: string;
+}
+```
+
+El payload no incluye `id`, marcas de tiempo ni `is_active`: esos valores los controla el backend.
+
+### 3.4 Servicio HTTP
+
+El servicio es responsable de las rutas y de desenvolver las respuestas. Los componentes trabajan con `Cliente` y no conocen las envolturas `{ clientes }` o `{ cliente }`.
+
+`src/app/features/clientes/cliente-api.ts`
+
+```typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Cliente, ClientePayload } from '../../core/models/cliente.model';
+
+@Injectable({ providedIn: 'root' })
+export class ClienteApi {
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/clientes`;
+
+  list(): Observable<Cliente[]> {
+    return this.http
+      .get<{ clientes: Cliente[] }>(this.base)
+      .pipe(map((response) => response.clientes));
+  }
+
+  get(id: number): Observable<Cliente> {
+    return this.http
+      .get<{ cliente: Cliente }>(`${this.base}/${id}`)
+      .pipe(map((response) => response.cliente));
+  }
+
+  create(payload: ClientePayload): Observable<Cliente> {
+    return this.http
+      .post<{ cliente: Cliente }>(this.base, payload)
+      .pipe(map((response) => response.cliente));
+  }
+
+  update(id: number, payload: Partial<ClientePayload>): Observable<Cliente> {
+    return this.http
+      .patch<{ cliente: Cliente }>(`${this.base}/${id}`, payload)
+      .pipe(map((response) => response.cliente));
+  }
+
+  replace(id: number, payload: ClientePayload): Observable<Cliente> {
+    return this.http
+      .put<{ cliente: Cliente }>(`${this.base}/${id}`, payload)
+      .pipe(map((response) => response.cliente));
+  }
+
+  deactivate(id: number): Observable<unknown> {
+    return this.http.patch(`${this.base}/${id}/deactivate`, {});
+  }
+
+  remove(id: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/${id}`);
+  }
+}
+```
+
+### 3.5 Formulario para crear y editar
+
+El formulario no llama al backend. Recibe el registro, emite `saved` con un `ClientePayload` válido y notifica la cancelación al componente de lista. `resetKey` limpia el formulario cada vez que se abre el diálogo.
+
+`src/app/features/clientes/cliente-form/cliente-form.ts`
+
+```typescript
+import { Component, effect, inject, input, output } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
+import { Cliente, ClientePayload } from '../../../core/models/cliente.model';
+
+@Component({
+  host: { class: 'block' },
+  selector: 'app-cliente-form',
+  imports: [ButtonModule, InputTextModule, MessageModule, ReactiveFormsModule, SelectModule],
+  templateUrl: './cliente-form.html',
+  styleUrl: './cliente-form.css',
+})
+export class ClienteForm {
+  readonly cliente = input<Cliente | null>(null);
+  readonly resetKey = input(0);
+  readonly saving = input(false);
+
+  readonly saved = output<ClientePayload>();
+  readonly cancelled = output<void>();
+
+  private readonly fb = inject(NonNullableFormBuilder);
+
+  readonly documentTypes = [
+    { label: 'Cédula de ciudadanía (CC)', value: 'CC' },
+    { label: 'Cédula de extranjería (CE)', value: 'CE' },
+    { label: 'Tarjeta de identidad (TI)', value: 'TI' },
+    { label: 'NIT', value: 'NIT' },
+  ];
+
+  readonly form = this.fb.group({
+    tipo_documento: ['CC', [Validators.required, Validators.maxLength(20)]],
+    numero_documento: ['', [Validators.required, Validators.maxLength(30)]],
+    nombre: ['', [Validators.required, Validators.maxLength(150)]],
+    telefono: ['', [Validators.required, Validators.maxLength(30)]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+  });
+
+  constructor() {
+    effect(() => {
+      const current = this.cliente();
+      this.resetKey();
+
+      this.form.reset({
+        tipo_documento: current?.tipo_documento ?? 'CC',
+        numero_documento: current?.numero_documento ?? '',
+        nombre: current?.nombre ?? '',
+        telefono: current?.telefono ?? '',
+        email: current?.email ?? '',
+      });
+    });
+  }
+
+  submit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const value = this.form.getRawValue();
+    this.saved.emit({
+      tipo_documento: value.tipo_documento,
+      numero_documento: value.numero_documento.trim(),
+      nombre: value.nombre.trim(),
+      telefono: value.telefono.trim(),
+      email: value.email.trim(),
+    });
+  }
+}
+```
+
+`src/app/features/clientes/cliente-form/cliente-form.html`
+
+```html
+<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label for="cliente-tipo-documento" class="mb-1 block text-sm font-medium text-slate-700">
+        Tipo de documento <span class="text-red-500">*</span>
+      </label>
+      <p-select
+        [fluid]="true"
+        inputId="cliente-tipo-documento"
+        formControlName="tipo_documento"
+        [options]="documentTypes"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Selecciona un tipo"
+      />
+      @if (form.controls.tipo_documento.touched && form.controls.tipo_documento.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          Selecciona un tipo de documento válido.
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="cliente-numero-documento" class="mb-1 block text-sm font-medium text-slate-700">
+        Número de documento <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="cliente-numero-documento"
+        pInputText
+        formControlName="numero_documento"
+        maxlength="30"
+        autocomplete="off"
+        class="w-full"
+      />
+      @if (form.controls.numero_documento.touched && form.controls.numero_documento.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El documento es obligatorio (máximo 30 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div class="sm:col-span-2">
+      <label for="cliente-nombre" class="mb-1 block text-sm font-medium text-slate-700">
+        Nombre completo <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="cliente-nombre"
+        pInputText
+        formControlName="nombre"
+        maxlength="150"
+        autocomplete="name"
+        class="w-full"
+      />
+      @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El nombre es obligatorio (máximo 150 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="cliente-telefono" class="mb-1 block text-sm font-medium text-slate-700">
+        Teléfono <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="cliente-telefono"
+        pInputText
+        type="tel"
+        formControlName="telefono"
+        maxlength="30"
+        autocomplete="tel"
+        class="w-full"
+      />
+      @if (form.controls.telefono.touched && form.controls.telefono.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El teléfono es obligatorio (máximo 30 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="cliente-email" class="mb-1 block text-sm font-medium text-slate-700">
+        Correo electrónico <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="cliente-email"
+        pInputText
+        type="email"
+        formControlName="email"
+        maxlength="150"
+        autocomplete="email"
+        class="w-full"
+      />
+      @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El correo electrónico es obligatorio.
+        </p-message>
+      } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          Escribe un correo electrónico válido.
+        </p-message>
+      } @else if (form.controls.email.touched && form.controls.email.hasError('maxlength')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El correo no puede superar 150 caracteres.
+        </p-message>
+      }
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+    <button pButton type="button" severity="secondary" outlined (click)="cancelled.emit()">
+      <span pButtonLabel>Cancelar</span>
+    </button>
+    <button pButton type="submit" [loading]="saving()">
+      <i pButtonIcon class="pi pi-check"></i>
+      <span pButtonLabel>Guardar</span>
+    </button>
+  </div>
+</form>
+```
+
+### 3.6 Lista, Signals y operaciones CRUD
+
+La lista carga desde el servicio, conserva el estado en Signals, filtra localmente y centraliza las notificaciones y confirmaciones. Después de una mutación vuelve a consultar el backend; no mantiene una copia optimista que pueda divergir.
+
+`src/app/features/clientes/cliente-list/cliente-list.ts`
+
+```typescript
+import { Component, computed, inject, signal } from '@angular/core';
+import { ConfirmationService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { Cliente, ClientePayload } from '../../../core/models/cliente.model';
+import { NotificationService } from '../../../core/services/notification';
+import { toApiMessage } from '../../../core/utils/api-error';
+import { filterRows } from '../../../core/utils/filter-rows';
+import { EmptyState } from '../../../shared/ui/empty-state/empty-state';
+import { PageHeader } from '../../../shared/ui/page-header/page-header';
+import { StatusTag } from '../../../shared/ui/status-tag/status-tag';
+import { ClienteApi } from '../cliente-api';
+import { ClienteForm } from '../cliente-form/cliente-form';
+
+@Component({
+  host: { class: 'block' },
+  selector: 'app-cliente-list',
+  imports: [
+    ButtonModule,
+    ClienteForm,
+    DialogModule,
+    EmptyState,
+    InputTextModule,
+    MessageModule,
+    PageHeader,
+    StatusTag,
+    TableModule,
+    TagModule,
+    TooltipModule,
+  ],
+  templateUrl: './cliente-list.html',
+  styleUrl: './cliente-list.css',
+})
+export class ClienteList {
+  private readonly api = inject(ClienteApi);
+  private readonly notify = inject(NotificationService);
+  private readonly confirmation = inject(ConfirmationService);
+
+  readonly rows = signal<Cliente[]>([]);
+  readonly loading = signal(true);
+  readonly saving = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly filter = signal('');
+
+  readonly visibleRows = computed(() =>
+    filterRows(this.rows(), this.filter(), (row) => [
+      row.tipo_documento,
+      row.numero_documento,
+      row.nombre,
+      row.telefono,
+      row.email,
+    ]),
+  );
+
+  readonly dialogVisible = signal(false);
+  readonly editing = signal<Cliente | null>(null);
+  readonly resetKey = signal(0);
+  readonly title = computed(() => (this.editing() ? 'Editar cliente' : 'Nuevo cliente'));
+
+  constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.api.list().subscribe({
+      next: (rows) => {
+        this.rows.set(rows);
+        this.loading.set(false);
+      },
+      error: (error: unknown) => {
+        this.rows.set([]);
+        this.error.set(toApiMessage(error));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  setFilter(event: Event): void {
+    const target = event.target;
+    if (target instanceof HTMLInputElement) {
+      this.filter.set(target.value);
+    }
+  }
+
+  openCreate(): void {
+    this.editing.set(null);
+    this.resetKey.update((key) => key + 1);
+    this.dialogVisible.set(true);
+  }
+
+  openEdit(cliente: Cliente): void {
+    this.editing.set(cliente);
+    this.resetKey.update((key) => key + 1);
+    this.dialogVisible.set(true);
+  }
+
+  save(payload: ClientePayload): void {
+    const current = this.editing();
+    this.saving.set(true);
+
+    const request = current ? this.api.update(current.id, payload) : this.api.create(payload);
+
+    request.subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.dialogVisible.set(false);
+        this.notify.success(current ? 'Cliente actualizado' : 'Cliente creado');
+        this.load();
+      },
+      error: (error: unknown) => {
+        this.saving.set(false);
+        this.notify.error('No se pudo guardar', toApiMessage(error));
+      },
+    });
+  }
+
+  deactivate(cliente: Cliente): void {
+    this.confirmation.confirm({
+      header: 'Desactivar cliente',
+      message: `¿Desactivar a ${cliente.nombre}? Dejará de aparecer en el listado de activos.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Desactivar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-warning',
+      accept: () => {
+        this.api.deactivate(cliente.id).subscribe({
+          next: () => {
+            this.notify.warn('Cliente desactivado');
+            this.load();
+          },
+          error: (error: unknown) => {
+            this.notify.error('No se pudo desactivar', toApiMessage(error));
+          },
+        });
+      },
+    });
+  }
+
+  remove(cliente: Cliente): void {
+    this.confirmation.confirm({
+      header: 'Eliminar definitivamente',
+      message: `Se eliminará permanentemente a ${cliente.nombre}. Esta acción no se puede deshacer.`,
+      icon: 'pi pi-trash',
+      acceptLabel: 'Eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.api.remove(cliente.id).subscribe({
+          next: () => {
+            this.notify.success('Cliente eliminado');
+            this.load();
+          },
+          error: (error: unknown) => {
+            this.notify.error('No se pudo eliminar', toApiMessage(error));
+          },
+        });
+      },
+    });
+  }
+}
+```
+
+`src/app/features/clientes/cliente-list/cliente-list.html`
+
+```html
+<app-page-header
+  title="Clientes"
+  subtitle="Administra los datos de contacto y documentos de los clientes de CelebraHub."
+>
+  <p-tag [value]="rows().length + ' clientes activos'" severity="info" [rounded]="true" />
+  <button pButton type="button" (click)="openCreate()">
+    <i pButtonIcon class="pi pi-plus"></i>
+    <span pButtonLabel>Nuevo cliente</span>
+  </button>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">
+    {{ error() }}
+  </p-message>
+}
+
+<div class="rounded-xl border border-slate-200 bg-white">
+  <p-table
+    [value]="visibleRows()"
+    [loading]="loading()"
+    [paginator]="visibleRows().length > 10"
+    [rows]="10"
+    dataKey="id"
+    tableStyleClass="min-w-[64rem]"
+  >
+    <ng-template #caption>
+      <div class="flex items-center gap-2">
+        <i class="pi pi-search text-slate-400" aria-hidden="true"></i>
+        <input
+          pInputText
+          type="search"
+          aria-label="Buscar clientes"
+          placeholder="Buscar por nombre, documento, teléfono o correo…"
+          [value]="filter()"
+          (input)="setFilter($event)"
+          class="w-full"
+        />
+      </div>
+      @if (filter()) {
+        <p class="mt-2 text-xs text-slate-500">
+          {{ visibleRows().length }} de {{ rows().length }} clientes coinciden con «{{ filter() }}».
+        </p>
+      }
+    </ng-template>
+
+    <ng-template #header>
+      <tr>
+        <th pSortableColumn="nombre">
+          <div class="flex items-center gap-1">Cliente <p-sort-icon field="nombre" /></div>
+        </th>
+        <th>Documento</th>
+        <th>Teléfono</th>
+        <th>Correo electrónico</th>
+        <th>Estado</th>
+        <th class="w-36 text-right">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-row>
+      <tr>
+        <td>
+          <p class="font-medium text-slate-800">{{ row.nombre }}</p>
+          <p class="text-xs text-slate-400">#{{ row.id }}</p>
+        </td>
+        <td>
+          <span class="text-sm text-slate-600">
+            {{ row.tipo_documento }} · {{ row.numero_documento }}
+          </span>
+        </td>
+        <td><span class="text-sm text-slate-600">{{ row.telefono }}</span></td>
+        <td><span class="text-sm text-slate-600">{{ row.email }}</span></td>
+        <td><app-status-tag [isActive]="row.is_active" /></td>
+        <td>
+          <div class="flex justify-end gap-1">
+            <button
+              pButton
+              type="button"
+              text
+              rounded
+              severity="secondary"
+              icon="pi pi-pencil"
+              aria-label="Editar cliente"
+              pTooltip="Editar"
+              (click)="openEdit(row)"
+            ></button>
+            <button
+              pButton
+              type="button"
+              text
+              rounded
+              severity="warn"
+              icon="pi pi-ban"
+              aria-label="Desactivar cliente"
+              pTooltip="Desactivar"
+              (click)="deactivate(row)"
+            ></button>
+            <button
+              pButton
+              type="button"
+              text
+              rounded
+              severity="danger"
+              icon="pi pi-trash"
+              aria-label="Eliminar definitivamente"
+              pTooltip="Eliminar definitivamente"
+              (click)="remove(row)"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6">
+          @if (filter()) {
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Ningún cliente coincide con la búsqueda. Borra el filtro para ver todos."
+            />
+          } @else {
+            <app-empty-state
+              icon="pi pi-users"
+              title="Sin clientes activos"
+              message="Crea el primer cliente o verifica que existan clientes activos en el backend."
+            />
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [header]="title()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  styleClass="mx-4 w-full max-w-2xl"
+>
+  <app-cliente-form
+    [cliente]="editing()"
+    [saving]="saving()"
+    [resetKey]="resetKey()"
+    (saved)="save($event)"
+    (cancelled)="dialogVisible.set(false)"
+  />
+</p-dialog>
+```
+
+### 3.7 Enrutamiento y menú
+
+Registrar el componente de forma lazy dentro de las rutas de `Shell`:
+
+`src/app/app.routes.ts`
+
+```typescript
+{
+  path: 'clientes',
+  title: 'Clientes · CelebraHub',
+  loadComponent: () =>
+    import('./features/clientes/cliente-list/cliente-list').then((m) => m.ClienteList),
+},
+```
+
+Agregar el acceso en `src/app/layout/shell/shell.ts`:
+
+```typescript
+{ label: 'Clientes', icon: 'pi pi-users', routerLink: '/clientes' },
+```
+
+El shell debe proveer `ConfirmDialogModule` y `ToastModule`, y la configuración global debe incluir `ConfirmationService` y `MessageService` para las confirmaciones y notificaciones del módulo. No se agregan guards ni servicios de sesión.
+
+Los estilos locales pueden permanecer vacíos; la pantalla usa las clases Tailwind y componentes PrimeNG existentes.
+
+### 3.8 Pruebas
+
+Probar el filtro sin montar Angular:
+
+`src/app/core/utils/filter-rows.spec.ts`
+
+```typescript
+import { filterRows } from './filter-rows';
+
+interface Row {
+  name: string;
+  note: string | null;
+}
+
+const ROWS: Row[] = [
+  { name: 'Alfa', note: 'Primera' },
+  { name: 'Beta', note: null },
+];
+const pick = (row: Row) => [row.name, row.note];
+
+describe('filterRows', () => {
+  it('returns a copy when there is no query', () => {
+    const result = filterRows(ROWS, '   ', pick);
+    expect(result).toEqual(ROWS);
+    expect(result).not.toBe(ROWS);
+  });
+
+  it('matches without case sensitivity', () => {
+    expect(filterRows(ROWS, 'ALFA', pick)).toEqual([ROWS[0]]);
+  });
+
+  it('tolerates null values and trims the query', () => {
+    expect(filterRows(ROWS, '  prim ', pick)).toEqual([ROWS[0]]);
+  });
+
+  it('returns an empty array when there are no matches', () => {
+    expect(filterRows(ROWS, 'inexistente', pick)).toEqual([]);
+  });
+});
+```
+
+Probar el servicio HTTP con `HttpTestingController`: verificar `GET` y su envoltura `clientes`, las envolturas `cliente` para lectura y escritura, los payloads `POST`/`PATCH`/`PUT` y las rutas de baja lógica y física. Las pruebas deben usar las rutas y respuestas documentadas en 3.1, sin simular endpoints de autenticación.
+
+### Criterios de aceptación
+
+- `/clientes` carga el listado de clientes activos desde el backend.
+- El filtro busca por nombre, tipo/número de documento, teléfono y correo sin distinguir mayúsculas.
+- El formulario valida campos obligatorios, longitudes y formato de correo, y funciona para crear y editar.
+- Crear y actualizar envían únicamente los campos de negocio definidos por `ClientePayload`.
+- Desactivar usa `PATCH /api/clientes/:id/deactivate`; eliminar permanentemente usa `DELETE /api/clientes/:id`, con confirmación en ambos casos.
+- Los errores HTTP son visibles y no se presentan como operaciones exitosas.
+- La funcionalidad no implementa ni cambia autenticación.
+---------------------------------------------------------------------------------------------

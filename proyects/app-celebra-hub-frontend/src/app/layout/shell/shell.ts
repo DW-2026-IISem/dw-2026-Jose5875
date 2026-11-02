@@ -24,6 +24,7 @@ export class Shell {
 
   readonly items: MenuItem[] = [
     { label: 'Inicio', icon: 'pi pi-home', routerLink: '/inicio' },
+    { label: 'Clientes', icon: 'pi pi-users', routerLink: '/clientes' },
   ];
 
   protected onMenuToggle(): void {

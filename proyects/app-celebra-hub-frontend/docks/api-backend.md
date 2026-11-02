@@ -15,11 +15,11 @@ Esta guia describe la API del sistema de gestion de eventos CelebraHub. Las ruta
 
 | Nivel | Significado |
 | --- | --- |
-| Abierto | No requiere access token. Se limita a los endpoints de inicio, renovacion y cierre de sesion indicados mas abajo. |
+| Abierto | No requiere access token. Consulta las tablas de rutas para identificar los endpoints abiertos. |
 | Autenticacion | Requiere un access token valido. |
 | Autenticacion + permiso | Requiere un access token y un permiso RBAC para el metodo y la ruta solicitados. |
 
-Las rutas de negocio de clientes y eventos requieren autenticacion. Los otros recursos de negocio documentados aqui requieren autenticacion y autorizacion RBAC. Las rutas de administracion de roles, recursos y usuarios tambien aplican RBAC. En asignaciones y concesiones, la consulta de la coleccion requiere autenticacion y las demas operaciones requieren el permiso correspondiente. Una solicitud sin autenticacion puede responder `401`; sin el permiso requerido, `403`.
+Las rutas de clientes son publicas y no requieren access token. Las rutas de eventos requieren autenticacion; los otros recursos de negocio documentados aqui requieren autenticacion y autorizacion RBAC. Las rutas de administracion de roles, recursos y usuarios tambien aplican RBAC. En asignaciones y concesiones, la consulta de la coleccion requiere autenticacion y las demas operaciones requieren el permiso correspondiente. Las rutas protegidas pueden responder `401` sin autenticacion o `403` sin el permiso requerido.
 
 ## Recursos de CelebraHub
 
@@ -27,7 +27,7 @@ En las tablas, `CRUD` representa `GET /<recurso>`, `POST /<recurso>`, `GET /<rec
 
 | Recurso | Ruta base | Operaciones | Acceso |
 | --- | --- | --- | --- |
-| Clientes | `/api/clientes` | CRUD; `PATCH /:id/deactivate` | Autenticacion |
+| Clientes | `/api/clientes` | CRUD; `PATCH /:id/deactivate` | Abierto |
 | Servicios | `/api/servicios` | CRUD; `PATCH /:id/deactivate` | Autenticacion + permiso |
 | Salones | `/api/salones` | CRUD; `PATCH /:id/deactivate` | Autenticacion + permiso |
 | Reservas | `/api/reservas` | CRUD | Autenticacion + permiso |

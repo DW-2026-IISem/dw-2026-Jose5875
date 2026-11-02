@@ -2,6 +2,10 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.3.
 
+## Módulo de clientes
+
+La ruta `/clientes` permite consultar, buscar, crear, editar, desactivar y eliminar clientes mediante la API pública de CelebraHub (`/api/clientes`); no requiere iniciar sesión.
+
 ## Development server
 
 To start a local development server, run:

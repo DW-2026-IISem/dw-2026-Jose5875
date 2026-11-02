@@ -15,8 +15,13 @@ export const routes: Routes = [
       {
         path: 'inicio',
         title: 'Inicio · CelebraHub',
+        loadComponent: () => import('./features/inicio/inicio').then((m) => m.Inicio),
+      },
+      {
+        path: 'clientes',
+        title: 'Clientes · CelebraHub',
         loadComponent: () =>
-          import('./features/inicio/inicio').then((m) => m.Inicio),
+          import('./features/clientes/cliente-list/cliente-list').then((m) => m.ClienteList),
       },
     ],
   },

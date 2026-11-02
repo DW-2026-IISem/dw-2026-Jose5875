@@ -1,0 +1,119 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label for="cliente-tipo-documento" class="mb-1 block text-sm font-medium text-slate-700">
+        Tipo de documento <span class="text-red-500">*</span>
+      </label>
+      <p-select
+        [fluid]="true"
+        inputId="cliente-tipo-documento"
+        formControlName="tipo_documento"
+        [options]="documentTypes"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Selecciona un tipo"
+      />
+      @if (form.controls.tipo_documento.touched && form.controls.tipo_documento.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          Selecciona el tipo de documento.
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="cliente-numero-documento" class="mb-1 block text-sm font-medium text-slate-700">
+        Número de documento <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="cliente-numero-documento"
+        pInputText
+        formControlName="numero_documento"
+        maxlength="30"
+        autocomplete="off"
+        class="w-full"
+      />
+      @if (form.controls.numero_documento.touched && form.controls.numero_documento.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El documento es obligatorio (máximo 30 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div class="sm:col-span-2">
+      <label for="cliente-nombre" class="mb-1 block text-sm font-medium text-slate-700">
+        Nombre completo <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="cliente-nombre"
+        pInputText
+        formControlName="nombre"
+        maxlength="150"
+        autocomplete="name"
+        class="w-full"
+      />
+      @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El nombre es obligatorio (máximo 150 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="cliente-telefono" class="mb-1 block text-sm font-medium text-slate-700">
+        Teléfono <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="cliente-telefono"
+        pInputText
+        type="tel"
+        formControlName="telefono"
+        maxlength="30"
+        autocomplete="tel"
+        class="w-full"
+      />
+      @if (form.controls.telefono.touched && form.controls.telefono.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El teléfono es obligatorio (máximo 30 caracteres).
+        </p-message>
+      }
+    </div>
+
+    <div>
+      <label for="cliente-email" class="mb-1 block text-sm font-medium text-slate-700">
+        Correo electrónico <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="cliente-email"
+        pInputText
+        type="email"
+        formControlName="email"
+        maxlength="150"
+        autocomplete="email"
+        class="w-full"
+      />
+      @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El correo electrónico es obligatorio.
+        </p-message>
+      } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          Escribe un correo electrónico válido.
+        </p-message>
+      } @else if (form.controls.email.touched && form.controls.email.hasError('maxlength')) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+          El correo no puede superar 150 caracteres.
+        </p-message>
+      }
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+    <button pButton type="button" severity="secondary" outlined (click)="cancelled.emit()">
+      <span pButtonLabel>Cancelar</span>
+    </button>
+    <button pButton type="submit" [loading]="saving()">
+      <i pButtonIcon class="pi pi-check"></i>
+      <span pButtonLabel>Guardar</span>
+    </button>
+  </div>
+</form>
