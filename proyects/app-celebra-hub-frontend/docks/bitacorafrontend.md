@@ -1791,21 +1791,570 @@ Verifica la estructura:
 
 ---------------------------------------------------------------------------------------------
 
-## Fase I: Frontend — ISS-02 — Núcleo: environment, modelos, servicios y layout
+## 2.2 Modelos: representar el dominio de CelebraHub
 
-## 2.2 Modelos: reflejar el backend, no inventarlo
+Crear los modelos bajo `src/app/core/models/`. Una entidad puede compartir `id`, pero no se debe asumir que todas usan el mismo estado, fechas, timestamps o campos de activación.
+
 ```bash
-Tras ISS-01, app.config.ts registra PrimeNG así:
-
-
-providePrimeNG({
-  license: environment.primeUiLicense || undefined,
-  // ...
+ng generate interface core/models/api --type=model --defaults
+ng generate interface core/models/cliente --type=model --defaults
+ng generate interface core/models/servicio --type=model --defaults
+ng generate interface core/models/salon --type=model --defaults
+ng generate interface core/models/reserva --type=model --defaults
+ng generate interface core/models/proveedor --type=model --defaults
+ng generate interface core/models/contrato --type=model --defaults
+ng generate interface core/models/cambio-contrato --type=model --defaults
+ng generate interface core/models/pago --type=model --defaults
+ng generate interface core/models/cancelacion --type=model --defaults
+ng generate interface core/models/evento-servicio --type=model --defaults
+ng generate interface core/models/evento --type=model --defaults
+ng generate interface core/models/usuario --type=model --defaults
+ng generate interface core/models/rol --type=model --defaults
+ng generate interface core/models/recurso --type=model --defaults
+ng generate interface core/models/asignacion-rol --type=model --defaults
+ng generate interface core/models/concesion-rol --type=model --defaults
+ng generate interface core/models/auth --type=model --defaults
 ```
 Verifica la estructura:
 <p align="center">
-  <img src="capturas/Captura de pantalla 2026-11-01 115117.png">
+  <img src="capturas/Captura de pantalla 2026-11-01 182918.png">
 </p>
 
+
+---------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+
+### Campos de dominio documentados
+
+Esta tabla enumera los nombres de negocio conocidos. No establece por sí sola obligatoriedad, nulabilidad, tipo de fecha, enums ni los campos admitidos en cada operación; eso se obtiene del DTO correspondiente.
+
+| Modelo | Ruta base | Campos de negocio documentados |
+|---|---|---|
+| `Cliente` | `/api/clientes` | `tipo_documento`, `numero_documento`, `nombre`, `telefono`, `email`, `is_active` |
+| `Servicio` | `/api/servicios` | `nombre`, `descripcion`, `is_active` |
+| `Salon` | `/api/salones` | `nombre`, `descripcion`, `is_active` |
+| `Reserva` | `/api/reservas` | `cliente_id`, `fecha_inicio`, `fecha_fin`, `estado`, `observaciones` |
+| `Proveedor` | `/api/proveedores` | `nit`, `razon_social`, `contacto`, `telefono`, `email`, `is_active` |
+| `Contrato` | `/api/contratos` | `cliente_id`, `numero`, `fecha_inicio`, `fecha_fin`, `valor`, `estado` |
+| `CambioContrato` | `/api/cambios-contrato` | `nombre`, `descripcion`, `is_active` |
+| `Pago` | `/api/pagos` | `referencia_tipo`, `referencia_id`, `metodo`, `monto`, `fecha`, `estado` |
+| `Cancelacion` | `/api/cancelaciones` | `nombre`, `descripcion`, `is_active` |
+| `EventoServicio` | `/api/evento-servicios` | `referencia_id`, `tipo`, `fecha`, `cantidad`, `observaciones`, `estado` |
+| `Evento` | `/api/eventos` | `referencia_id`, `tipo`, `fecha`, `cantidad`, `observaciones`, `estado` |
+
+`Reserva.cliente_id` y `Contrato.cliente_id` son referencias documentadas al cliente. En pagos, eventos y servicios de evento, los campos de referencia son genéricos; no modelar una relación Sequelize que el backend no declare. `CambioContrato` y `Cancelacion` son catálogos, no registros de una modificación contractual o cancelación de reserva.
+
+Ejemplo de tipos comunes — ajustar campos y nullabilidad con DTO/OpenAPI:
+
+```typescript
+export type Money = number | string;
+
+export interface EntityId {
+  id: number;
+}
+
+export interface ApiError {
+  error: string;
+  detail?: string;
+}
+
+export function toNumber(value: Money | null | undefined): number {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+```
+### Recursos de autenticación y RBAC
+
+El backend también expone usuarios, roles, recursos y dos pivotes de asignación. Consultar los DTO antes de definir propiedades adicionales; la guía de API solo documenta sus rutas y operaciones, no el esquema completo de esos modelos.
+
+| Modelo | Ruta | Notas |
+|---|---|---|
+| Usuario | `/api/usuarios` | CRUD, desactivar, cambiar contraseña y consultar permisos por usuario. No exponer hashes ni contraseñas en modelos de lectura. |
+| Rol | `/api/roles` | CRUD y desactivación. |
+| Recurso RBAC | `/api/recursos` | CRUD y desactivación; representa permisos asociados a método y ruta. |
+| Asignación de rol | `/api/asignaciones-rol` | Lista/creación, detalle, desactivar y reactivar. |
+| Concesión de recurso a rol | `/api/concesiones-rol` | Lista/creación, detalle, desactivar y reactivar. |
+| Sesión propia | `/api/sesiones` | Solo datos de la sesión autenticada; nunca incluir `token_hash`. |
+
+No reutilizar un enum común entre `is_active`, `status` y `estado`. Son conceptos diferentes: bandera de activación de algunos catálogos, estado de acceso/RBAC si así lo define el DTO y estado del flujo de negocio. No inventar valores como `active/inactive` o `pendiente/aprobada` sin leer el contrato.
+
+Operaciones específicas de administración y sesión documentadas:
+
+| Recurso | Operaciones específicas |
+|---|---|
+| Usuarios | `PATCH /usuarios/:id/deactivate`, `PATCH /usuarios/:id/password`, `GET /usuarios/:id/permisos` |
+| Roles y recursos RBAC | `PATCH /:id/deactivate` |
+| Asignaciones de rol | `PATCH /asignaciones-rol/:id/deactivate`, `PATCH /asignaciones-rol/:id/reactivate` |
+| Concesiones de rol | `PATCH /concesiones-rol/:id/deactivate`, `PATCH /concesiones-rol/:id/reactivate` |
+| Sesión actual | `POST /sesion/login`, `POST /sesion/refresh`, `POST /sesion/logout`, `GET /sesion/perfil`, `GET /permisos` |
+| Sesiones propias | `GET /sesiones`, `DELETE /sesiones`, `GET /sesiones/:id`, `PATCH /sesiones/deactivate-all`, `PATCH /sesiones/:id/deactivate` |
+
+`login` recibe `identifier` y `password`; `logout` usa el refresh token. Los detalles de payload y respuesta restantes se verifican en DTO/OpenAPI.
+---------------------------------------------------------------------------------------------
+## 2.3 Servicios HTTP por recurso
+
+Los servicios se ubican por dominio bajo `src/app/features/` y reciben `HttpClient` por inyección. Todos forman su URL desde `environment.apiUrl`; ningún método debe incrustar `http://localhost:4000`.
+
+| Servicio | Ruta relativa |
+|---|---|
+| `ClienteApi` | `/clientes` |
+| `ServicioApi` | `/servicios` |
+| `SalonApi` | `/salones` |
+| `ReservaApi` | `/reservas` |
+| `ProveedorApi` | `/proveedores` |
+| `ContratoApi` | `/contratos` |
+| `CambioContratoApi` | `/cambios-contrato` |
+| `PagoApi` | `/pagos` |
+| `CancelacionApi` | `/cancelaciones` |
+| `EventoServicioApi` | `/evento-servicios` |
+| `EventoApi` | `/eventos` |
+| `UsuarioApi` | `/usuarios` |
+| `RolApi` | `/roles` |
+| `RecursoApi` | `/recursos` |
+| `AsignacionRolApi` | `/asignaciones-rol` |
+| `ConcesionRolApi` | `/concesiones-rol` |
+| `SesionApi` | `/sesion` y `/permisos` |
+| Sesiones propias | `/sesiones` |
+
+Las rutas de esta tabla son relativas a `http://localhost:4000/api`. La API permite CRUD mediante `GET`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` y `DELETE /:id`, salvo los recursos de asignaciones/concesiones, cuyos métodos están detallados en `api-backend.md`. Solo implementar `PATCH /:id/deactivate` para clientes, servicios, salones, proveedores y servicios de evento. No ofrecer desactivación lógica en reservas, contratos, pagos, cancelaciones ni eventos si el backend no expone esa operación.
+
+Las listas de asignaciones y concesiones requieren autenticación; las demás operaciones de estos recursos requieren el permiso RBAC registrado. Clientes y eventos requieren autenticación; el resto de rutas de negocio requiere autenticación y permiso, conforme al resumen del backend.
+
+Comandos de generación sugeridos (ejecutar solo para servicios que aún no existan):
+
+```bash
+ng generate service features/clientes/cliente-api --skip-tests --defaults
+ng generate service features/servicios/servicio-api --skip-tests --defaults
+ng generate service features/salones/salon-api --skip-tests --defaults
+ng generate service features/reservas/reserva-api --skip-tests --defaults
+ng generate service features/proveedores/proveedor-api --skip-tests --defaults
+ng generate service features/contratos/contrato-api --skip-tests --defaults
+ng generate service features/cambios-contrato/cambio-contrato-api --skip-tests --defaults
+ng generate service features/pagos/pago-api --skip-tests --defaults
+ng generate service features/cancelaciones/cancelacion-api --skip-tests --defaults
+ng generate service features/evento-servicios/evento-servicio-api --skip-tests --defaults
+ng generate service features/eventos/evento-api --skip-tests --defaults
+ng generate service features/admin/usuarios/usuario-api --skip-tests --defaults
+ng generate service features/admin/roles/rol-api --skip-tests --defaults
+ng generate service features/admin/recursos/recurso-api --skip-tests --defaults
+ng generate service features/admin/asignaciones-rol/asignacion-rol-api --skip-tests --defaults
+ng generate service features/admin/concesiones-rol/concesion-rol-api --skip-tests --defaults
+ng generate service features/auth/sesion-api --skip-tests --defaults
+ng generate service features/auth/sesiones-api --skip-tests --defaults
+ng generate service core/services/notification --skip-tests --defaults
+```
+
+Verifica la estructura:
+<p align="center">
+  <img src="capturas/Captura de pantalla 2026-11-01 183851.png">
+</p>
+---------------------------------------------------------------------------------------------
+
+### Contratos HTTP y envolturas
+
+Antes de desenvolver una respuesta con `map`, verificar el nombre de la clave y la forma de lista/detalle en OpenAPI o en el controlador. No usar nombres plurales traducidos de otro backend ni asumir `{ entidad }`, `{ data }`, `{ assignments }` o `{ grants }` sin verificar el contrato de CelebraHub. El servicio debe entregar un tipo de dominio al componente, pero el tipo y el normalizador se escriben a partir de la respuesta real.
+
+Patrón estructural — configurar la URL una vez y usar la respuesta confirmada en OpenAPI:
+
+```typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+@Injectable({ providedIn: 'root' })
+export class ClienteApi {
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/clientes`;
+
+  deactivate(id: number): Observable<unknown> {
+    return this.http.patch(`${this.base}/${id}/deactivate`, {});
+  }
+}
+
+
+```
+El ejemplo de `deactivate` usa una ruta documentada para clientes. En cada método `list/get/create/update/replace`, declarar el tipo de respuesta y, si hace falta, desenvolverla con `map` a partir de la respuesta real del controlador. No escribir claves placeholder como `ClienteListResponse` ni asumir una envoltura: la documentación resumida de la API no especifica esas formas JSON. El mismo cuidado aplica a respuestas de creación, actualización, eliminación y desactivación.
+
+El login es `POST /api/sesion/login` y recibe `identifier` y `password`. `POST /api/sesion/refresh` y `POST /api/sesion/logout` son abiertos; `GET /api/sesion/perfil`, `GET /api/permisos` y las operaciones de `/api/sesiones` requieren un token válido. Los nombres exactos de las propiedades de los tokens y perfiles se toman de OpenAPI. No persistir ni registrar credenciales o tokens en logs.
+
+Las pruebas de servicios usan `HttpTestingController`; no necesitan levantar el backend:
+
+```typescript
+TestBed.configureTestingModule({
+  providers: [provideHttpClient(), provideHttpClientTesting()],
+});
+```
+
+Para cada servicio comprobar al menos: URL relativa correcta, método HTTP, cuerpo enviado, clave/formato real de respuesta y método de desactivación únicamente donde exista. Usar `http.verify()` en `afterEach` para detectar solicitudes no resueltas.
+
+## 2.4 Errores HTTP y notificaciones
+Crear `src/app/core/utils/api-error.ts`. El backend puede devolver errores con `error` y opcionalmente `detail`, de acuerdo con su contrato. No mostrar detalles internos de autorización RBAC al usuario.
+
+```typescript
+import { HttpErrorResponse } from '@angular/common/http';
+
+export function toApiMessage(error: unknown): string {
+  if (error instanceof HttpErrorResponse) {
+    if (error.status === 0) {
+      return 'No se pudo conectar con CelebraHub. Verifica que la API esté activa en http://localhost:4000.';
+    }
+    if (error.status === 401) {
+      return 'La sesión no es válida o expiró. Inicia sesión nuevamente.';
+    }
+    if (error.status === 403) {
+      return 'No tienes permiso para realizar esta operación.';
+    }
+
+    const body: unknown = error.error;
+    if (typeof body === 'string' && body.trim()) {
+      return body;
+    }
+    if (body && typeof body === 'object' && 'error' in body) {
+      if (typeof body.error === 'string') {
+        return body.error;
+      }
+    }
+    return error.message;
+  }
+
+  return error instanceof Error ? error.message : 'Ocurrió un error inesperado.';
+}
+```
+
+No concatenar `detail` automáticamente para errores `403`; el backend puede mantener opacos los permisos requeridos. Para otros errores, incluir detalle solo si el equipo confirma que es apropiado para el usuario final.
+
+Crear `src/app/core/services/notification.ts` como adaptador pequeño sobre PrimeNG `MessageService`:
+
+```typescript
+import { Injectable, inject } from '@angular/core';
+import { MessageService } from 'primeng/api';
+
+@Injectable({ providedIn: 'root' })
+export class NotificationService {
+  private readonly messages = inject(MessageService);
+
+  success(summary: string, detail?: string): void {
+    this.messages.add({ severity: 'success', summary, detail, life: 3000 });
+  }
+
+  info(summary: string, detail?: string): void {
+    this.messages.add({ severity: 'info', summary, detail, life: 3500 });
+  }
+
+  warn(summary: string, detail?: string): void {
+    this.messages.add({ severity: 'warn', summary, detail, life: 4500 });
+  }
+
+  error(summary: string, detail?: string): void {
+    this.messages.add({ severity: 'error', summary, detail, life: 6000 });
+  }
+}
+```
+
+Los componentes que llaman servicios deben manejar explícitamente los errores y presentar un mensaje útil; no convertir errores de HTTP en listas vacías ni respuestas de éxito.
+
+Los componentes que llaman servicios deben manejar explícitamente los errores y presentar un mensaje útil; no convertir errores de HTTP en listas vacías ni respuestas de éxito.
+
+## 2.5 Componentes compartidos
+
+Crear bajo `src/app/shared/ui/`:
+
+```bash
+ng generate component shared/ui/page-header --skip-tests --defaults
+ng generate component shared/ui/empty-state --skip-tests --defaults
+ng generate component shared/ui/status-tag --skip-tests --defaults
+```
+
+Los componentes son standalone, siguen el patrón de nombres del proyecto (`.ts`, `.html`, `.css`) y usan Tailwind/PrimeNG sin CSS propio innecesario.
+
+### `PageHeader`
+
+`PageHeader` recibe un título obligatorio, un subtítulo opcional y proyecta acciones:
+
+```typescript
+import { Component, input } from '@angular/core';
+
+@Component({
+  host: { class: 'block' },
+  selector: 'app-page-header',
+  templateUrl: './page-header.html',
+  styleUrl: './page-header.css',
+})
+export class PageHeader {
+  readonly title = input.required<string>();
+  readonly subtitle = input('');
+}
+```
+
+```html
+<header class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight text-slate-900">{{ title() }}</h1>
+    @if (subtitle()) {
+      <p class="mt-1 max-w-2xl text-sm text-slate-500">{{ subtitle() }}</p>
+    }
+  </div>
+  <div class="flex flex-wrap items-center gap-2"><ng-content /></div>
+</header>
+```
+
+Ejemplo de uso:
+
+```html
+<app-page-header
+  title="Clientes"
+  subtitle="Consulta y administra los clientes registrados en CelebraHub."
+>
+  <!-- Acciones disponibles según permisos y pantalla. -->
+</app-page-header>
+```
+
+### `EmptyState`
+
+`EmptyState` comunica una lista vacía y permite proyectar una acción opcional. No debe confundir un error de red con la ausencia de registros.
+
+```typescript
+import { Component, input } from '@angular/core';
+
+@Component({
+  host: { class: 'block' },
+  selector: 'app-empty-state',
+  templateUrl: './empty-state.html',
+  styleUrl: './empty-state.css',
+})
+export class EmptyState {
+  readonly icon = input('pi pi-inbox');
+  readonly title = input('Sin registros');
+  readonly message = input('Todavía no hay datos para mostrar.');
+}
+```
+
+```html
+<div class="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
+  <div class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+    <i [class]="icon()" class="text-xl" aria-hidden="true"></i>
+  </div>
+  <p class="mt-2 text-sm font-semibold text-slate-700">{{ title() }}</p>
+  <p class="max-w-sm text-sm text-slate-500">{{ message() }}</p>
+  <div class="mt-3"><ng-content /></div>
+</div>
+```
+
+### `StatusTag`
+
+`StatusTag` representa exclusivamente `is_active` de catálogos que exponen esa bandera, como clientes, servicios, salones, proveedores, cambios de contrato, cancelaciones y servicios de evento. No representar con este componente `Reserva.estado`, `Contrato.estado`, `Pago.estado`, `Evento.estado` ni estados de sesión/RBAC; esos estados necesitan etiquetas específicas según sus enums reales.
+
+```typescript
+import { Component, computed, input } from '@angular/core';
+import { TagModule } from 'primeng/tag';
+
+@Component({
+  host: { class: 'inline-block' },
+  selector: 'app-status-tag',
+  imports: [TagModule],
+  templateUrl: './status-tag.html',
+  styleUrl: './status-tag.css',
+})
+export class StatusTag {
+  readonly isActive = input.required<boolean>();
+  readonly label = computed(() => (this.isActive() ? 'Activo' : 'Inactivo'));
+  readonly severity = computed<'success' | 'danger'>(() =>
+    this.isActive() ? 'success' : 'danger',
+  );
+}
+```
+
+```html
+<p-tag [value]="label()" [severity]="severity()" [rounded]="true" />
+```
+
+Probar que cambiar `isActive` con `fixture.componentRef.setInput(...)` actualiza el texto y severidad.
+
+## 2.6 Shell persistente y navegación
+
+El Shell reemplaza la composición del layout repetida dentro de las pantallas. La pantalla Inicio que existe actualmente deberá convertirse en contenido hijo del Shell, sin volver a crear Header/Aside/Footer dentro de ella.
+
+```bash
+ng generate component layout/shell --skip-tests --defaults
+```
+
+`src/app/layout/shell/shell.ts`:
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { MenuItem } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DrawerModule } from 'primeng/drawer';
+import { ToastModule } from 'primeng/toast';
+import { watchMediaQuery } from '../../core/utils/media-query';
+import { Aside } from '../aside/aside';
+import { Footer } from '../footer/footer';
+import { Header } from '../header/header';
+
+@Component({
+  host: { class: 'block' },
+  selector: 'app-shell',
+  imports: [
+    RouterOutlet,
+    Header,
+    Aside,
+    Footer,
+    ConfirmDialogModule,
+    DrawerModule,
+    ToastModule,
+  ],
+  templateUrl: './shell.html',
+  styleUrl: './shell.css',
+})
+export class Shell {
+  private readonly isDesktop = watchMediaQuery('(min-width: 1024px)');
+  readonly sidebarCollapsed = signal(false);
+  readonly mobileOpen = signal(false);
+
+  readonly items: MenuItem[] = [
+    { label: 'Inicio', icon: 'pi pi-home', routerLink: '/inicio' },
+  ];
+
+  protected onMenuToggle(): void {
+    if (this.isDesktop()) {
+      this.sidebarCollapsed.update((collapsed) => !collapsed);
+      return;
+    }
+    this.mobileOpen.set(true);
+  }
+}
+```
+
+El resto del menú de gestión de eventos y administración se agrega cuando existan sus pantallas y rutas. Al implementarlo, filtrar los enlaces según `GET /api/permisos`; ocultar una opción no reemplaza la autorización del backend. No enlazar recursos inexistentes ni convertir la lista del catálogo de API en enlaces ficticios.
+
+`src/app/layout/shell/shell.html`:
+
+```html
+<div class="flex min-h-screen flex-col bg-slate-100">
+  <app-header (menuRequested)="onMenuToggle()" />
+
+  <div class="flex flex-1">
+    @if (!sidebarCollapsed()) {
+      <aside class="hidden w-72 shrink-0 lg:block">
+        <app-aside [items]="items" (navigated)="mobileOpen.set(false)" />
+      </aside>
+    }
+
+    <main id="contenido" class="min-w-0 flex-1 p-4 sm:p-6">
+      <div class="mx-auto w-full max-w-7xl">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
+
+  <app-footer />
+</div>
+
+<p-drawer [(visible)]="mobileOpen" header="Menú" position="left" styleClass="w-72">
+  <app-aside [items]="items" (navigated)="mobileOpen.set(false)" />
+</p-drawer>
+
+<p-toast position="top-right" />
+<p-confirmdialog />
+```
+
+`MessageService` y `ConfirmationService` deben estar registrados una sola vez en `app.config.ts`. El Shell no inyecta todavía un `AuthService` ni una sesión inexistente.
+
+### Rutas
+
+El punto de entrada de la aplicación contiene `RouterOutlet`. El Shell es la ruta padre y Inicio se conserva como ruta hija. Las rutas de recursos que todavía no tienen pantalla no se declaran ni se anuncian como implementadas.
+
+`src/app/app.routes.ts` — esqueleto de esta fase:
+
+```typescript
+import { Routes } from '@angular/router';
+
+export const routes: Routes = [
+  {
+    path: '',
+    loadComponent: () => import('./layout/shell/shell').then((module) => module.Shell),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'inicio',
+      },
+      {
+        path: 'inicio',
+        title: 'Inicio · CelebraHub',
+        loadComponent: () =>
+          import('./features/inicio/inicio').then((module) => module.Inicio),
+      },
+    ],
+  },
+  { path: '**', redirectTo: 'inicio' },
+];
+```
+
+Antes de aplicar la ruta, refactorizar `Inicio` para que su plantilla represente solo el contenido de la página. El Header, Aside, Footer y Drawer deben estar en Shell, no duplicados en Inicio.
+
+En ISS-02 `/` redirige a `/inicio`. Las rutas de clientes, servicios, salones, reservas, proveedores, contratos, cambios de contrato, pagos, cancelaciones, servicios de evento, eventos, administración y sesiones se incorporarán conforme se implementen sus pantallas.
+
+## 2.7 Registrar HttpClient
+
+Añadir `provideHttpClient()` a los providers de `src/app/app.config.ts` para habilitar los servicios:
+
+```typescript
+import { provideHttpClient } from '@angular/common/http';
+
+// Dentro de providers:
+provideHttpClient(),
+```
+
+No agregar `withInterceptors(...)` en esta fase. El interceptor que adjunta el token depende del flujo de sesión y debe implementarse junto con autenticación. Cada servicio protegido deberá integrarse cuando exista ese mecanismo; no simular autenticación ni exponer rutas protegidas como públicas.
+
+Mantener los providers PrimeNG que correspondan:
+
+```typescript
+MessageService,
+ConfirmationService,
+```
+
+## 2.8 Pruebas y verificación
+
+Las pruebas de infraestructura deben cubrir los contratos observables:
+
+- Entornos: URL base y reemplazo de desarrollo.
+- Modelos: campos y estados contrastados con DTO/OpenAPI.
+- Servicios: endpoint, método, payload, respuesta y errores por recurso.
+- Errores: `status === 0`, `401`, `403`, error JSON y error no HTTP.
+- UI: proyección de contenido, valores por defecto y actualización de `StatusTag`.
+- Shell: layout único, outlet, navegación, drawer móvil y alternancia de aside en escritorio.
+- Accesibilidad: botón con etiqueta accesible y navegación del menú por teclado.
+- Sin llamadas automáticas a la API durante la navegación local de Inicio.
+
+Comandos del proyecto (ejecutar desde `app-celebra-hub-frontend`):
+
+```bash
+npm run build
+npm test -- --watch=false
+npm start
+```
+
+`ng` está disponible a través de los scripts/dependencias locales; si no está instalado globalmente, usar `npm run build` en vez de `ng build`.
+
+Verificación rápida adicional:
+
+```bash
+# Configuración de entorno
+grep -n "apiUrl" src/environments/environment.ts src/environments/environment.development.ts
+grep -n "environment.development.ts" angular.json
+
+# HttpClient sin interceptor de sesión en esta fase
+grep -n "provideHttpClient" src/app/app.config.ts
+grep -n "withInterceptors" src/app/app.config.ts
+
+# Recursos de CelebraHub en la especificación del menú/servicios
+grep -R -nE "clientes|servicios|salones|reservas|proveedores|contratos|evento-servicios|eventos" src/app
+```
+
+No marcar criterios de aceptación hasta ejecutar las pruebas y comprobar la aplicación. La API puede responder `401` o `403` cuando una pantalla protegida se pruebe sin sesión o permisos; eso es comportamiento de autorización, no un fallo que se deba ocultar.
 
 ---------------------------------------------------------------------------------------------

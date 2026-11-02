@@ -1,0 +1,37 @@
+import { Component, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { MenuItem } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DrawerModule } from 'primeng/drawer';
+import { ToastModule } from 'primeng/toast';
+import { watchMediaQuery } from '../../core/utils/media-query';
+import { Aside } from '../aside/aside';
+import { Footer } from '../footer/footer';
+import { Header } from '../header/header';
+
+@Component({
+  host: { class: 'block' },
+  selector: 'app-shell',
+  imports: [RouterOutlet, Header, Aside, Footer, ConfirmDialogModule, DrawerModule, ToastModule],
+  templateUrl: './shell.html',
+  styleUrl: './shell.css',
+})
+export class Shell {
+  private readonly isDesktop = watchMediaQuery('(min-width: 1024px)');
+
+  readonly sidebarCollapsed = signal(false);
+  readonly mobileOpen = signal(false);
+
+  readonly items: MenuItem[] = [
+    { label: 'Inicio', icon: 'pi pi-home', routerLink: '/inicio' },
+  ];
+
+  protected onMenuToggle(): void {
+    if (this.isDesktop()) {
+      this.sidebarCollapsed.update((collapsed) => !collapsed);
+      return;
+    }
+
+    this.mobileOpen.set(true);
+  }
+}

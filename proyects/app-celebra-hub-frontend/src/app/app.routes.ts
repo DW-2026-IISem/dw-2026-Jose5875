@@ -8,10 +8,17 @@ import { Routes } from '@angular/router';
  */
 export const routes: Routes = [
   {
-    path: 'inicio',
-    loadComponent: () =>
-      import('./features/inicio/inicio').then((m) => m.Inicio),
+    path: '',
+    loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'inicio' },
+      {
+        path: 'inicio',
+        title: 'Inicio · CelebraHub',
+        loadComponent: () =>
+          import('./features/inicio/inicio').then((m) => m.Inicio),
+      },
+    ],
   },
-  { path: '', pathMatch: 'full', redirectTo: 'inicio' },
   { path: '**', redirectTo: 'inicio' },
 ];

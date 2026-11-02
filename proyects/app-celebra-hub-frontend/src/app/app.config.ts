@@ -2,6 +2,7 @@ import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
 import {
   provideRouter,
   withComponentInputBinding,
@@ -23,6 +24,7 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'top' }),
     ),
+    provideHttpClient(),
 
     // PrimeNG 22: tema Aura. El modo oscuro se activa con la clase .app-dark.
     providePrimeNG({
